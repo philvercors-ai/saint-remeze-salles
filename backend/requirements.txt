@@ -1,12 +1,12 @@
 # Django core
-Django>=5.1,<5.2
+Django>=5.2,<6.0
 djangorestframework>=3.15
 djangorestframework-simplejwt>=5.3
 django-cors-headers>=4.4
-django-filter>=24.0
+django-filter>=25.0
 
 # MongoDB (remplace PostgreSQL)
-django-mongodb-backend>=5.1
+django-mongodb-backend>=5.2
 pymongo[srv]>=4.7
 dnspython>=2.6        # requis pour les URI mongodb+srv://
 
