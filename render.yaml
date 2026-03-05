@@ -89,8 +89,6 @@ services:
   - type: web
     name: saint-remeze-frontend
     runtime: static
-    region: frankfurt
-    plan: starter
     rootDir: frontend
     buildCommand: "npm ci && npm run build"
     staticPublishPath: dist
