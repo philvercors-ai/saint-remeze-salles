@@ -10,22 +10,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-in-production")
 
 INSTALLED_APPS = [
+    # MongoDB backend DOIT être en premier pour que DEFAULT_AUTO_FIELD
+    # s'applique aux apps Django built-in (admin, auth, contenttypes…)
+    "django_mongodb_backend",
+    # Django built-ins
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # MongoDB backend (doit être avant les apps locales)
-    "django_mongodb_backend",
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
+    # token_blacklist supprimé : utilise BigAutoField, incompatible MongoDB
     "corsheaders",
     "django_filters",
     "drf_spectacular",
-    "django_celery_beat",
+    # django_celery_beat supprimé : utilise AutoField, incompatible MongoDB
     # Local apps
     "apps.accounts",
     "apps.rooms",
@@ -126,7 +128,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION": False,  # token_blacklist incompatible MongoDB
     "AUTH_HEADER_TYPES": ("Bearer",),
     "TOKEN_OBTAIN_SERIALIZER": "apps.accounts.serializers.CustomTokenObtainPairSerializer",
 }
@@ -143,7 +145,7 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULER = "celery.beat:PersistentScheduler"  # django_celery_beat supprimé
 
 # ── RGPD ────────────────────────────────────────────────────────────────────────
 RGPD_POLICY_VERSION = "1.0"

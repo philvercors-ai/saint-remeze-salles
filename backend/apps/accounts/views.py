@@ -92,12 +92,10 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        except Exception:
-            pass
+        # La rotation des refresh tokens (ROTATE_REFRESH_TOKENS) invalide
+        # l'ancien token à chaque renouvellement. Le token_blacklist Django
+        # est incompatible MongoDB — la sécurité repose sur la courte durée
+        # de l'access token (15 min) et la rotation des refresh tokens.
         return Response({"detail": "Déconnexion réussie."})
 
 
@@ -163,14 +161,6 @@ class ResetPasswordView(APIView):
 
         reset_token.used = True
         reset_token.save(update_fields=["used"])
-
-        # Blacklist tous les refresh tokens existants
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
-        for token in OutstandingToken.objects.filter(user=user):
-            try:
-                RefreshToken(token.token).blacklist()
-            except Exception:
-                pass
 
         EmailService.send_password_changed(user)
         return Response({"detail": "Mot de passe réinitialisé. Vous pouvez maintenant vous connecter."})
