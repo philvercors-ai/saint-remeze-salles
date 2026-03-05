@@ -10,13 +10,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-in-production")
 
 INSTALLED_APPS = [
-    # MongoDB backend DOIT être en premier pour que DEFAULT_AUTO_FIELD
-    # s'applique aux apps Django built-in (admin, auth, contenttypes…)
     "django_mongodb_backend",
-    # Django built-ins
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
+    # Wrappers qui forcent default_auto_field = ObjectIdAutoField sur les
+    # apps Django built-in (admin, auth, contenttypes ne le déclarent pas)
+    "apps.compat.apps.AdminConfig",
+    "apps.compat.apps.AuthConfig",
+    "apps.compat.apps.ContentTypesConfig",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
