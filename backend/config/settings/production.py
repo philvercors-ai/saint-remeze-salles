@@ -2,9 +2,14 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = [h for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h]
 
-CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+# Render injecte RENDER_EXTERNAL_HOSTNAME automatiquement (ex: saint-remeze-backend-ic8p.onrender.com)
+# Cela évite de devoir connaître le suffixe généré à l'avance.
+if _render_host := os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(_render_host)
+
+CORS_ALLOWED_ORIGINS = [o for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o]
 
 # Sécurité HTTPS
 SECURE_SSL_REDIRECT = True
