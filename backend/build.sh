@@ -10,10 +10,7 @@ pip install -r requirements.txt
 echo "==> Collecte des fichiers statiques"
 python manage.py collectstatic --noinput
 
-echo "==> Migrations MongoDB"
-python manage.py migrate --noinput
-
-echo "==> Chargement des fixtures initiales (ignoré si déjà présentes)"
-python manage.py loaddata apps/rooms/fixtures.json apps/notifications/fixtures.json 2>/dev/null || true
+# Les migrations et fixtures sont exécutées au démarrage (startCommand)
+# car MONGODB_URI doit être disponible à ce moment-là.
 
 echo "==> Build terminé"
