@@ -1,0 +1,103 @@
+/* ── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap');
+
+/* ── Variables CSS ──────────────────────────────────────────────────────────── */
+:root {
+  --color-navy:   #1a3a5a;
+  --color-gold:   #c9a84c;
+  --color-bg:     #f7f4ef;
+  --color-white:  #ffffff;
+  --color-border: #d4cfc7;
+  --color-text:   #374151;
+  --color-muted:  #6b7280;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+
+  --shadow-sm:  0 1px 4px rgba(26,58,90,.08);
+  --shadow-md:  0 4px 16px rgba(26,58,90,.10);
+  --shadow-lg:  0 8px 32px rgba(26,58,90,.13);
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); color: var(--color-navy); }
+
+/* ── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slidein {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.animate-fadein  { animation: fadein .4s ease both; }
+.animate-slidein { animation: slidein .3s ease both; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────────── */
+.card-hover {
+  transition: box-shadow .2s, transform .2s;
+  cursor: pointer;
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* ── Badges de statut ───────────────────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-green  { background: #d1fae5; color: #065f46; }
+.badge-yellow { background: #fef9c3; color: #854d0e; }
+.badge-red    { background: #fee2e2; color: #991b1b; }
+.badge-blue   { background: #dbeafe; color: #1e40af; }
+.badge-gray   { background: #f1f5f9; color: #475569; }
+
+/* ── Onglets ────────────────────────────────────────────────────────────────── */
+.tab-active { border-bottom: 3px solid var(--color-gold); color: var(--color-navy); }
+
+/* ── Formulaires ────────────────────────────────────────────────────────────── */
+input, select, textarea {
+  font-family: var(--font-body);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  color: var(--color-text);
+  background: var(--color-white);
+  transition: border-color .2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-navy);
+  box-shadow: 0 0 0 3px rgba(26,58,90,.08);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }

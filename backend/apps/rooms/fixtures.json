@@ -1,0 +1,66 @@
+[
+  {
+    "model": "rooms.room",
+    "pk": 1,
+    "fields": {
+      "name": "Salle des Fêtes",
+      "capacity": 200,
+      "area_sqm": 300,
+      "hourly_rate": "80.00",
+      "equipment": ["Scène", "Sono", "Éclairage", "Cuisine équipée", "Climatisation", "WiFi"],
+      "description": "Grande salle polyvalente pour événements festifs et cérémonies.",
+      "image_emoji": "🎪",
+      "color": "#1a3a5a",
+      "is_active": true,
+      "requires_admin_only": false
+    }
+  },
+  {
+    "model": "rooms.room",
+    "pk": 2,
+    "fields": {
+      "name": "Salle du Conseil",
+      "capacity": 30,
+      "area_sqm": 60,
+      "hourly_rate": "0.00",
+      "equipment": ["Vidéoprojecteur", "Tableau blanc", "Climatisation", "WiFi", "Microphones"],
+      "description": "Salle de réunion officielle, réservée aux instances municipales.",
+      "image_emoji": "🏛️",
+      "color": "#c9a84c",
+      "is_active": true,
+      "requires_admin_only": true
+    }
+  },
+  {
+    "model": "rooms.room",
+    "pk": 3,
+    "fields": {
+      "name": "Salle Polyvalente",
+      "capacity": 80,
+      "area_sqm": 120,
+      "hourly_rate": "40.00",
+      "equipment": ["Tables pliantes", "Chaises", "WiFi", "Vidéoprojecteur"],
+      "description": "Salle modulable pour réunions, ateliers et formations.",
+      "image_emoji": "🏫",
+      "color": "#2d6a4f",
+      "is_active": true,
+      "requires_admin_only": false
+    }
+  },
+  {
+    "model": "rooms.room",
+    "pk": 4,
+    "fields": {
+      "name": "Terrain de Sport",
+      "capacity": 50,
+      "area_sqm": 500,
+      "hourly_rate": "20.00",
+      "equipment": ["Vestiaires", "Éclairage", "Filets de tennis", "Paniers de basket"],
+      "description": "Terrain multisport en plein air, couvert partiellement.",
+      "image_emoji": "⚽",
+      "color": "#1d4ed8",
+      "is_active": true,
+      "requires_admin_only": false
+    }
+  }
+]

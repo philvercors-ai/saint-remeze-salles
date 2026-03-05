@@ -1,0 +1,118 @@
+## Render.com — Infrastructure as Code
+## https://render.com/docs/blueprint-spec
+##
+## Prérequis :
+##   - Compte Render
+##   - Cluster MongoDB Atlas (URI en variable MONGODB_URI)
+##   - Clé API Resend (RESEND_API_KEY)
+##
+## Déploiement :
+##   1. Poussez ce repo sur GitHub
+##   2. Sur Render > New > Blueprint > sélectionnez ce repo
+##   3. Renseignez les variables marquées "sync: false" dans le dashboard
+
+services:
+
+  # ── Backend Django / Gunicorn ───────────────────────────────────────────────
+  - type: web
+    name: saint-remeze-backend
+    runtime: python
+    region: frankfurt          # le plus proche de la France
+    plan: starter              # 512 MB RAM — suffisant pour ce volume
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    healthCheckPath: /api/health/
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        generateValue: true      # Render génère une valeur aléatoire sécurisée
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: saint-remeze-backend.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://saint-remeze-frontend.onrender.com
+      - key: MONGODB_URI
+        sync: false              # À renseigner manuellement : mongodb+srv://...
+      - key: MONGODB_DB
+        value: saint_remeze
+      - key: REDIS_URL
+        fromService:
+          name: saint-remeze-redis
+          type: redis
+          property: connectionString
+      - key: RESEND_API_KEY
+        sync: false              # À renseigner manuellement
+      - key: FROM_EMAIL
+        value: "Mairie de Saint-Rémèze <mairie@saint-remeze.fr>"
+      - key: FRONTEND_URL
+        value: https://saint-remeze-frontend.onrender.com
+
+  # ── Celery Worker + Beat (RGPD, emails async) ──────────────────────────────
+  - type: worker
+    name: saint-remeze-celery
+    runtime: python
+    region: frankfurt
+    plan: starter
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A config worker -B --loglevel=info --concurrency=2"
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        fromService:
+          name: saint-remeze-backend
+          type: web
+          envVarKey: SECRET_KEY
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: saint_remeze
+      - key: REDIS_URL
+        fromService:
+          name: saint-remeze-redis
+          type: redis
+          property: connectionString
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: "Mairie de Saint-Rémèze <mairie@saint-remeze.fr>"
+      - key: FRONTEND_URL
+        value: https://saint-remeze-frontend.onrender.com
+
+  # ── Frontend React (site statique) ─────────────────────────────────────────
+  - type: web
+    name: saint-remeze-frontend
+    runtime: static
+    region: frankfurt
+    plan: starter
+    rootDir: frontend
+    buildCommand: "npm ci && npm run build"
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://saint-remeze-backend.onrender.com/api
+
+  # ── Redis (Celery broker + JWT blacklist) ──────────────────────────────────
+  - type: redis
+    name: saint-remeze-redis
+    region: frankfurt
+    plan: starter              # 25 MB — amplement suffisant
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []            # accessible uniquement depuis les services Render
