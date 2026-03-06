@@ -34,6 +34,7 @@ services:
     startCommand: >-
       sh -c "python manage.py migrate --noinput &&
              python manage.py loaddata apps/rooms/fixtures.json apps/notifications/fixtures.json 2>/dev/null || true &&
+             python manage.py ensure_superuser &&
              gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     healthCheckPath: /api/health/
     autoDeploy: true
@@ -60,6 +61,10 @@ services:
         value: "Mairie de Saint-Rémèze <mairie@saint-remeze.fr>"
       - key: FRONTEND_URL
         value: https://saint-remeze-frontend.onrender.com
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false              # email du compte admin initial
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false              # mot de passe du compte admin initial
 
   # ── Frontend React (site statique — gratuit permanent) ─────────────────────
   - type: web
