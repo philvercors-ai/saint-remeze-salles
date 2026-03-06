@@ -81,4 +81,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://saint-remeze-backend.onrender.com/api
+        value: https://saint-remeze-backend-ic8p.onrender.com/api
