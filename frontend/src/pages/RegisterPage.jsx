@@ -1,8 +1,27 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { authApi } from "../api/auth";
 import { useUiStore } from "../store/uiStore";
 import Button from "../components/ui/Button";
+
+const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
+
+function Field({ label, type = "text", required, placeholder, value, onChange, error, autoComplete }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}{required && " *"}</label>
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+      />
+      {error && <p style={{ color: "#991b1b", fontSize: 12, marginTop: 4 }}>{error}</p>}
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -50,22 +69,6 @@ export default function RegisterPage() {
     );
   }
 
-  const Field = ({ name, label, type = "text", required, placeholder }) => (
-    <div>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" }}>
-        {label}{required && " *"}
-      </label>
-      <input
-        type={type}
-        required={required}
-        value={form[name]}
-        onChange={set(name)}
-        placeholder={placeholder}
-      />
-      {errors[name] && <p style={{ color: "#991b1b", fontSize: 12, marginTop: 4 }}>{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <div style={{ minHeight: "100vh", background: "#f7f4ef", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 480, boxShadow: "0 4px 24px rgba(26,58,90,.1)", alignSelf: "start" }}>
@@ -80,15 +83,14 @@ export default function RegisterPage() {
           )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field name="first_name" label="Prénom" required />
-            <Field name="last_name"  label="Nom"    required />
+            <Field label="Prénom" required value={form.first_name} onChange={set("first_name")} error={errors.first_name} autoComplete="given-name" />
+            <Field label="Nom"    required value={form.last_name}  onChange={set("last_name")}  error={errors.last_name}  autoComplete="family-name" />
           </div>
-          <Field name="email"       label="Email"       type="email"    required placeholder="vous@exemple.fr" />
-          <Field name="phone"       label="Téléphone"   type="tel"               placeholder="06 00 00 00 00" />
-          <Field name="association" label="Association / Organisme"              placeholder="Facultatif" />
-          <Field name="password"         label="Mot de passe"    type="password" required placeholder="8 caractères minimum" />
-          <Field name="password_confirm" label="Confirmer le mot de passe" type="password" required placeholder="Répétez le mot de passe" />
-          {errors.password_confirm && <p style={{ color: "#991b1b", fontSize: 12 }}>{errors.password_confirm}</p>}
+          <Field label="Email"     type="email" required value={form.email}       onChange={set("email")}       error={errors.email}       placeholder="vous@exemple.fr"  autoComplete="email" />
+          <Field label="Téléphone" type="tel"            value={form.phone}       onChange={set("phone")}       error={errors.phone}       placeholder="06 00 00 00 00"   autoComplete="tel" />
+          <Field label="Association / Organisme"         value={form.association} onChange={set("association")} error={errors.association} placeholder="Facultatif"        autoComplete="organization" />
+          <Field label="Mot de passe"         type="password" required value={form.password}         onChange={set("password")}         error={errors.password}         placeholder="8 caractères minimum" autoComplete="new-password" />
+          <Field label="Confirmer le mot de passe" type="password" required value={form.password_confirm} onChange={set("password_confirm")} error={errors.password_confirm} placeholder="Répétez le mot de passe" autoComplete="new-password" />
 
           {/* Consentement RGPD obligatoire */}
           <div style={{ background: "#f7f4ef", padding: 16, borderRadius: 10, borderLeft: "3px solid #c9a84c" }}>
