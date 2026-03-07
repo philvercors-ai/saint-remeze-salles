@@ -29,16 +29,19 @@ class ContentTypesConfig(_ContentTypesConfig):
 
     def ready(self):
         super().ready()
-        # Patch ContentType.__hash__ pour django-mongodb-backend :
-        # lors du signal post_migrate, Django met des instances ContentType
-        # dans un set() avant qu'elles aient un PK (ObjectId). Sans PK,
-        # Model.__hash__ lève TypeError. On retombe sur (app_label, model)
-        # comme clé de hachage naturelle et unique.
-        from django.contrib.contenttypes.models import ContentType
+        # Patch Model.__hash__ pour django-mongodb-backend :
+        # lors du signal post_migrate, Django crée des modèles "fake" historiques
+        # (__fake__.ContentType) sans PK (ObjectId non encore assigné) et les met
+        # dans un set(). Ces classes fake héritent de Model mais ne sont pas la
+        # vraie classe ContentType, donc patcher ContentType ne suffit pas.
+        # On patche Model (classe de base) pour retomber sur l'identité objet
+        # quand pk est None — cohérent avec Model.__eq__ qui fait "self is other"
+        # quand pk est None.
+        from django.db.models.base import Model
 
-        def _ct_hash(self):
+        def _safe_model_hash(self):
             if self.pk is not None:
                 return hash(self.pk)
-            return hash((self.app_label, self.model))
+            return object.__hash__(self)
 
-        ContentType.__hash__ = _ct_hash
+        Model.__hash__ = _safe_model_hash
