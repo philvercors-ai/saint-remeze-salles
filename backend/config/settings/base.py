@@ -85,9 +85,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django_mongodb_backend",
         "NAME": os.environ.get("MONGODB_DB", "saint_remeze"),
-        "CLIENT": {
-            "host": os.environ.get("MONGODB_URI", "mongodb://localhost:27017/saint_remeze"),
-        },
+        "HOST": os.environ.get("MONGODB_URI", "mongodb://localhost:27017/saint_remeze"),
         "CONN_MAX_AGE": 0,
     }
 }
