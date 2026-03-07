@@ -26,3 +26,19 @@ class AuthConfig(_AuthConfig):
 
 class ContentTypesConfig(_ContentTypesConfig):
     default_auto_field = _MONGO
+
+    def ready(self):
+        super().ready()
+        # Patch ContentType.__hash__ pour django-mongodb-backend :
+        # lors du signal post_migrate, Django met des instances ContentType
+        # dans un set() avant qu'elles aient un PK (ObjectId). Sans PK,
+        # Model.__hash__ lève TypeError. On retombe sur (app_label, model)
+        # comme clé de hachage naturelle et unique.
+        from django.contrib.contenttypes.models import ContentType
+
+        def _ct_hash(self):
+            if self.pk is not None:
+                return hash(self.pk)
+            return hash((self.app_label, self.model))
+
+        ContentType.__hash__ = _ct_hash
