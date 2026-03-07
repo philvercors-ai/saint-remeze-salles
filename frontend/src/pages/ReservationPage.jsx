@@ -29,7 +29,7 @@ export default function ReservationPage() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const selectedRoom = rooms.find((r) => r.id === parseInt(form.room));
+  const selectedRoom = rooms.find((r) => r.id === form.room);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -37,7 +37,7 @@ export default function ReservationPage() {
     try {
       await reservationsApi.create({
         ...form,
-        room: parseInt(form.room),
+        room: form.room,
         attendees: parseInt(form.attendees) || 0,
       });
       setSubmitted(true);

@@ -22,6 +22,6 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class SendNotificationSerializer(serializers.Serializer):
-    service_ids = serializers.ListField(child=serializers.IntegerField(), min_length=1)
+    service_ids = serializers.ListField(child=serializers.CharField(), min_length=1)
     message = serializers.CharField(min_length=10)
     priority = serializers.ChoiceField(choices=["low", "normal", "high"], default="normal")
