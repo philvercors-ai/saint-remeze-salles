@@ -32,7 +32,7 @@ services:
     rootDir: backend
     buildCommand: "./build.sh"
     startCommand: >-
-      sh -c "python manage.py migrate accounts 0001_initial --fake 2>/dev/null || true;
+      sh -c "python manage.py fix_migration_history;
              python manage.py migrate --noinput;
              (python manage.py loaddata apps/rooms/fixtures.json apps/notifications/fixtures.json 2>/dev/null || true) &&
              python manage.py ensure_superuser &&
