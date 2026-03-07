@@ -3,6 +3,8 @@ from .models import Manifestation
 
 
 class ManifestationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    equipment_needs = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:

@@ -3,6 +3,8 @@ from .models import Room
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    equipment = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     reservation_count = serializers.SerializerMethodField()
 
     class Meta:

@@ -19,6 +19,19 @@ _MONGO = "django_mongodb_backend.fields.ObjectIdAutoField"
 class AdminConfig(_AdminConfig):
     default_auto_field = _MONGO
 
+    def ready(self):
+        super().ready()
+        # Patch DRF field mapping : ObjectIdAutoField → CharField
+        # (DRF mappe AutoField → IntegerField par défaut, int(bson.ObjectId) lève TypeError)
+        try:
+            from rest_framework import serializers
+            from django_mongodb_backend.fields import ObjectIdAutoField
+            serializers.ModelSerializer.serializer_field_mapping[ObjectIdAutoField] = (
+                serializers.CharField
+            )
+        except ImportError:
+            pass
+
 
 class AuthConfig(_AuthConfig):
     default_auto_field = _MONGO
