@@ -9,6 +9,8 @@ Ces classes remplacent "django.contrib.admin/auth/contenttypes" dans
 INSTALLED_APPS — elles héritent du comportement complet (auto-discovery, etc.)
 en ajoutant seulement default_auto_field = ObjectIdAutoField.
 """
+import sys
+
 from django.contrib.admin.apps import AdminConfig as _AdminConfig
 from django.contrib.auth.apps import AuthConfig as _AuthConfig
 from django.contrib.contenttypes.apps import ContentTypesConfig as _ContentTypesConfig
@@ -29,19 +31,32 @@ class ContentTypesConfig(_ContentTypesConfig):
 
     def ready(self):
         super().ready()
-        # Patch Model.__hash__ pour django-mongodb-backend :
-        # lors du signal post_migrate, Django crée des modèles "fake" historiques
-        # (__fake__.ContentType) sans PK (ObjectId non encore assigné) et les met
-        # dans un set(). Ces classes fake héritent de Model mais ne sont pas la
-        # vraie classe ContentType, donc patcher ContentType ne suffit pas.
-        # On patche Model (classe de base) pour retomber sur l'identité objet
-        # quand pk est None — cohérent avec Model.__eq__ qui fait "self is other"
-        # quand pk est None.
-        from django.db.models.base import Model
+        # Workaround django-mongodb-backend : create_permissions (signal post_migrate
+        # de django.contrib.auth) utilise les modèles "fake" historiques
+        # (__fake__.ContentType) dont les PKs ObjectId ne sont pas encore assignés.
+        # set(ctypes.values()) lève TypeError car ces instances sont unhashable.
+        #
+        # Solution : on remplace le handler par une version qui passe `apps=real_apps`
+        # (le vrai registre) au lieu des apps historiques, pour que ContentType.objects
+        # interroge MongoDB avec les vrais modèles et obtienne des PKs réels.
+        from django.apps import apps as real_apps
+        from django.contrib.auth.management import create_permissions
+        from django.db.models.signals import post_migrate
 
-        def _safe_model_hash(self):
-            if self.pk is not None:
-                return hash(self.pk)
-            return object.__hash__(self)
+        _UID = "django.contrib.auth.management.create_permissions"
 
-        Model.__hash__ = _safe_model_hash
+        def safe_create_permissions(sender, **kwargs):
+            kwargs["apps"] = real_apps
+            try:
+                create_permissions(sender, **kwargs)
+            except Exception as exc:
+                print(
+                    f"[COMPAT] safe_create_permissions non-fatal error: {exc}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+        # AuthConfig.ready() a déjà connecté create_permissions avec ce dispatch_uid.
+        # On le remplace par notre wrapper.
+        post_migrate.disconnect(dispatch_uid=_UID)
+        post_migrate.connect(safe_create_permissions, dispatch_uid=_UID)
