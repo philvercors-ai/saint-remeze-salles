@@ -49,7 +49,7 @@ services:
       - key: ALLOWED_HOSTS
         value: .onrender.com,localhost
       - key: CORS_ALLOWED_ORIGINS
-        value: https://saint-remeze-frontend.onrender.com
+        value: https://saint-remeze-frontend-ic8p.onrender.com
       - key: MONGODB_URI
         sync: false              # mongodb+srv://user:pass@cluster.mongodb.net/saint_remeze
       - key: MONGODB_DB
@@ -61,7 +61,7 @@ services:
       - key: FROM_EMAIL
         value: "Mairie de Saint-Rémèze <mairie@saint-remeze.fr>"
       - key: FRONTEND_URL
-        value: https://saint-remeze-frontend.onrender.com
+        value: https://saint-remeze-frontend-ic8p.onrender.com
       - key: DJANGO_SUPERUSER_EMAIL
         sync: false              # email du compte admin initial
       - key: DJANGO_SUPERUSER_PASSWORD

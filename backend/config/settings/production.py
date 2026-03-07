@@ -11,6 +11,11 @@ if _render_host := os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
 
 CORS_ALLOWED_ORIGINS = [o for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o]
 
+# Autorise automatiquement les domaines *.onrender.com (suffixe généré par Render)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://[\w-]+\.onrender\.com$",
+]
+
 # Sécurité HTTPS
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
