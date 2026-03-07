@@ -32,12 +32,13 @@ export default function TopBar({ pendingCount = 0 }) {
         >
           <Menu size={22} />
         </button>
-        <Link to="/" style={{ textDecoration: "none" }}>
+        <Link to="/" style={{ textDecoration: "none", color: "#fff", display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/logo-saint-remeze.png" alt="Logo Saint-Rémèze" style={{ height: 38, width: 38, objectFit: "contain", borderRadius: 6 }} />
           <div>
             <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: "1.5px", textTransform: "uppercase", lineHeight: 1 }}>
               Mairie de
             </div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, lineHeight: 1.2 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, lineHeight: 1.2, color: "#fff" }}>
               Saint-Rémèze
             </div>
           </div>
