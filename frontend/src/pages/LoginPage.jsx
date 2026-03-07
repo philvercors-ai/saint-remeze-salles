@@ -57,6 +57,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               placeholder="vous@exemple.fr"
+              autoComplete="email"
             />
           </div>
 
@@ -70,6 +71,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
               placeholder="••••••••"
+              autoComplete="current-password"
             />
             <div style={{ textAlign: "right", marginTop: 4 }}>
               <Link to="/mot-de-passe-oublie" style={{ fontSize: 12, color: "#1a3a5a" }}>
