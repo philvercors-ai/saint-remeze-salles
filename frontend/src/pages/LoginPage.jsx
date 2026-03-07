@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authApi } from "../api/auth";
 import { useAuthStore } from "../store/authStore";
 import { useUiStore } from "../store/uiStore";
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const { setAuth } = useAuthStore();
   const { showToast } = useUiStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +23,7 @@ export default function LoginPage() {
       const { data } = await authApi.login(form.email, form.password);
       setAuth(data.user, data.access, data.refresh);
       showToast(`Bienvenue ${data.user.first_name || data.user.email} !`);
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.detail || err.response?.data?.email?.[0] || "Email ou mot de passe incorrect.";
       setError(msg);

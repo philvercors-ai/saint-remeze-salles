@@ -29,8 +29,9 @@ import AdminPage          from "./pages/AdminPage";
 // ── Route guards ──────────────────────────────────────────────────────────────
 function PrivateRoute({ children, roles }) {
   const { user, accessToken, isLoading } = useAuthStore();
+  const location = useLocation();
   if (isLoading) return <div style={{ padding: 40, textAlign: "center" }}>Chargement…</div>;
-  if (!accessToken || !user) return <Navigate to="/login" replace />;
+  if (!accessToken || !user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
   return children;
 }
