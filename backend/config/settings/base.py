@@ -2,12 +2,20 @@
 Paramètres Django de base — Saint-Rémèze Salles Communales.
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "changeme-in-production")
+
+# ── Diagnostic de connexion MongoDB (visible dans les logs Render) ───────────
+_mongo_uri = os.environ.get("MONGODB_URI", "")
+print(
+    f"[DIAG] MONGODB_URI={'atlas(ok)' if _mongo_uri.startswith('mongodb+srv') else ('vide/absent' if not _mongo_uri else 'format inconnu')}",
+    file=sys.stderr, flush=True,
+)
 
 INSTALLED_APPS = [
     "django_mongodb_backend",
