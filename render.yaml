@@ -59,7 +59,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: FROM_EMAIL
-        value: "Mairie de Saint-Rémèze <mairie@saint-remeze.fr>"
+        sync: false   # Ex: "Mairie de Saint-Rémèze <onboarding@resend.dev>" (sans domaine vérifié) ou "noreply@saint-remeze.fr" (avec domaine vérifié Resend)
       - key: FRONTEND_URL
         value: https://saint-remeze-frontend-ic8p.onrender.com
       - key: DJANGO_SUPERUSER_EMAIL

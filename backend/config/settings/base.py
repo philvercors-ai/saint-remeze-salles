@@ -136,7 +136,9 @@ SIMPLE_JWT = {
 
 # ── Resend (emails) ─────────────────────────────────────────────────────────────
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_FROM_EMAIL = os.environ.get("FROM_EMAIL", "mairie@saint-remeze.fr")
+# Sans domaine vérifié dans Resend, utiliser onboarding@resend.dev
+# Avec domaine vérifié : "Mairie de Saint-Rémèze <noreply@saint-remeze.fr>"
+DEFAULT_FROM_EMAIL = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # ── Redis / Celery ──────────────────────────────────────────────────────────────

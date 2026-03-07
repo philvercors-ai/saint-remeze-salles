@@ -14,21 +14,30 @@ class EmailService:
     def _send(cls, to: str | list, subject: str, html: str) -> bool:
         """Envoi générique via l'API Resend."""
         if not settings.RESEND_API_KEY:
-            logger.warning("RESEND_API_KEY non configurée — email non envoyé à %s", to)
+            logger.error(
+                "[EMAIL] RESEND_API_KEY non configurée — email NON envoyé à %s | sujet: %s",
+                to, subject,
+            )
             return False
 
         resend.api_key = settings.RESEND_API_KEY
+        recipients = to if isinstance(to, list) else [to]
         try:
             params = {
                 "from": settings.DEFAULT_FROM_EMAIL,
-                "to": to if isinstance(to, list) else [to],
+                "to": recipients,
                 "subject": subject,
                 "html": html,
             }
-            resend.Emails.send(params)
+            result = resend.Emails.send(params)
+            email_id = result.get("id") if isinstance(result, dict) else getattr(result, "id", str(result))
+            logger.info("[EMAIL] Envoyé à %s | id=%s", recipients, email_id)
             return True
         except Exception as exc:
-            logger.error("Erreur Resend : %s", exc)
+            logger.error(
+                "[EMAIL] Échec Resend — destinataire=%s | from=%s | erreur=%s",
+                recipients, settings.DEFAULT_FROM_EMAIL, exc,
+            )
             return False
 
     # ── Auth ──────────────────────────────────────────────────────────────────
