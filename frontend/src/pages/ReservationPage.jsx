@@ -32,6 +32,7 @@ export default function ReservationPage() {
     title: "", association: "",
     contact_name: user?.first_name ? `${user.first_name} ${user.last_name}` : "",
     contact_email: user?.email || "", contact_phone: user?.phone || "", notes: "",
+    is_public: true,
   });
 
   const [recurrence, setRecurrence] = useState({
@@ -249,6 +250,13 @@ export default function ReservationPage() {
             )}
           </div>
 
+          {/* ── Visibilité ── */}
+          <VisibilityToggle
+            value={form.is_public}
+            onChange={(v) => setForm((f) => ({ ...f, is_public: v }))}
+            label="réservation"
+          />
+
           <Button onClick={() => setStep(1)} disabled={!step0Valid}>
             Suivant →
           </Button>
@@ -301,6 +309,7 @@ export default function ReservationPage() {
               ["Participants", form.attendees],
               ["Événement", form.title],
               ["Contact", `${form.contact_name} (${form.contact_email})`],
+              ["Visibilité", form.is_public ? "🌐 Public" : "🔒 Privé"],
               ...(recurrence.enabled ? [
                 ["Récurrence", RECURRENCE_OPTIONS.find(o => o.value === recurrence.type)?.label],
                 ["Jusqu'au", fmtDateFr(recurrence.end_date)],
@@ -331,6 +340,40 @@ export default function ReservationPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Toggle public / privé réutilisable. */
+function VisibilityToggle({ value, onChange, label }) {
+  return (
+    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ padding: "10px 14px", background: "#fafafa", fontSize: 12, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 1 }}>
+        Visibilité sur le planning
+      </div>
+      <div style={{ display: "flex" }}>
+        <label style={{
+          flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+          cursor: "pointer", background: value ? "#eff6ff" : "#fff",
+          borderRight: "1px solid #e5e7eb", transition: "background .15s",
+        }}>
+          <input type="radio" name={`vis_${label}`} checked={value} onChange={() => onChange(true)} style={{ accentColor: "#1d4ed8" }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>🌐 Public</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>Titre et salle visibles de tous</div>
+          </div>
+        </label>
+        <label style={{
+          flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+          cursor: "pointer", background: !value ? "#fef2f2" : "#fff", transition: "background .15s",
+        }}>
+          <input type="radio" name={`vis_${label}`} checked={!value} onChange={() => onChange(false)} style={{ accentColor: "#dc2626" }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>🔒 Privé</div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>Créneau grisé « Réservé » pour les autres</div>
+          </div>
+        </label>
+      </div>
     </div>
   );
 }

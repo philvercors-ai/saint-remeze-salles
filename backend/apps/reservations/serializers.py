@@ -17,7 +17,7 @@ class ReservationSerializer(serializers.ModelSerializer):
             "title", "association", "contact_name", "contact_email", "contact_phone",
             "date", "start_time", "end_time", "attendees",
             "status", "status_display", "notes", "admin_comment",
-            "reviewed_at", "created_at", "recurrence_group",
+            "reviewed_at", "created_at", "recurrence_group", "is_public",
         ]
         read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at", "recurrence_group"]
 
@@ -71,6 +71,7 @@ class RecurringReservationSerializer(serializers.Serializer):
     end_time = serializers.TimeField()
     attendees = serializers.IntegerField(min_value=1)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+    is_public = serializers.BooleanField(default=True)
     recurrence_type = serializers.ChoiceField(choices=RECURRENCE_CHOICES)
     recurrence_end_date = serializers.DateField()
 
@@ -87,11 +88,28 @@ class RecurringReservationSerializer(serializers.Serializer):
 
 
 class PlanningReservationSerializer(serializers.ModelSerializer):
-    """Données minimales pour l'affichage du planning (public)."""
+    """Données minimales pour l'affichage du planning (public).
+    Les réservations privées sont masquées pour les non-propriétaires."""
     room_name = serializers.CharField(source="room.name", read_only=True)
     room_color = serializers.CharField(source="room.color", read_only=True)
     room_emoji = serializers.CharField(source="room.image_emoji", read_only=True)
 
     class Meta:
         model = Reservation
-        fields = ["id", "room", "room_name", "room_color", "room_emoji", "title", "date", "start_time", "end_time", "status", "recurrence_group"]
+        fields = ["id", "room", "room_name", "room_color", "room_emoji",
+                  "title", "date", "start_time", "end_time", "status",
+                  "recurrence_group", "is_public"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data.get("is_public", True):
+            request = self.context.get("request")
+            user = getattr(request, "user", None)
+            is_owner = (user and user.is_authenticated
+                        and instance.user_id
+                        and str(instance.user_id) == str(user.pk))
+            is_agent = (user and user.is_authenticated
+                        and user.role in ("agent", "admin"))
+            if not (is_owner or is_agent):
+                data["title"] = "Réservé"
+        return data

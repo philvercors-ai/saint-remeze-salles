@@ -43,6 +43,9 @@ class Reservation(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Traité le")
 
+    # Visibilité publique
+    is_public = models.BooleanField(default=True, verbose_name="Réservation publique")
+
     # Récurrence — UUID partagé par toutes les occurrences d'une même série
     recurrence_group = models.CharField(max_length=36, blank=True, db_index=True, verbose_name="Groupe récurrence")
 

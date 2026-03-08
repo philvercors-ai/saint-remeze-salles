@@ -98,7 +98,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         ).select_related("room")
         if room_id:
             qs = qs.filter(room_id=room_id)
-        serializer = PlanningReservationSerializer(qs, many=True)
+        serializer = PlanningReservationSerializer(qs, many=True, context={"request": request})
         return Response({"week_start": str(start), "week_end": str(end), "reservations": serializer.data})
 
     @action(detail=True, methods=["post"], permission_classes=[IsAgent])
@@ -182,6 +182,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 contact_phone=data["contact_phone"], date=d,
                 start_time=data["start_time"], end_time=data["end_time"],
                 attendees=data["attendees"], notes=data["notes"],
+                is_public=data.get("is_public", True),
                 recurrence_group=group_id, status="pending",
             )
             try:

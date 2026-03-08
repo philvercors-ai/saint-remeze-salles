@@ -14,8 +14,29 @@ class ManifestationSerializer(serializers.ModelSerializer):
             "date_start", "date_end", "location", "expected_attendees",
             "description", "budget", "equipment_needs",
             "status", "status_display", "admin_comment", "reviewed_at", "created_at",
+            "is_public",
         ]
         read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data.get("is_public", True):
+            request = self.context.get("request")
+            user = getattr(request, "user", None)
+            is_owner = (user and user.is_authenticated
+                        and instance.user_id
+                        and str(instance.user_id) == str(user.pk))
+            is_agent = (user and user.is_authenticated
+                        and user.role in ("agent", "admin"))
+            if not (is_owner or is_agent):
+                data["title"] = "Réservé"
+                data["association"] = ""
+                data["contact_name"] = ""
+                data["contact_email"] = ""
+                data["contact_phone"] = ""
+                data["description"] = ""
+                data["location"] = "Lieu privé"
+        return data
 
     def create(self, validated_data):
         instance = Manifestation(**validated_data)

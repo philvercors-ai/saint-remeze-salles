@@ -162,29 +162,36 @@ export default function PlanningPage() {
                   return (
                     <td key={fmtDate(day)} style={{ border: "1px solid #f1f5f9", padding: 2, verticalAlign: "top", minHeight: 28 }}>
                       {events.map((ev) => {
-                        const color = getRoomColor(ev);
+                        const isPrivate = ev.is_public === false;
+                        const color = isPrivate ? "#94a3b8" : getRoomColor(ev);
                         return (
                           <div
                             key={ev.id}
-                            title={`${ev.title}\n${ev.room_name}\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`}
+                            title={isPrivate
+                              ? `Créneau privé\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
+                              : `${ev.title}\n${ev.room_name}\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
+                            }
                             style={{
-                              background: color,
-                              color: "#fff",
+                              background: isPrivate ? "#f1f5f9" : color,
+                              color: isPrivate ? "#64748b" : "#fff",
                               borderRadius: 4,
                               padding: "2px 5px",
                               fontSize: 10,
                               marginBottom: 2,
                               overflow: "hidden",
                               lineHeight: 1.4,
-                              borderLeft: `3px solid ${color}dd`,
+                              borderLeft: `3px solid ${isPrivate ? "#94a3b8" : color}`,
+                              border: isPrivate ? "1px solid #cbd5e1" : "none",
                             }}
                           >
                             <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {ev.title}
+                              {isPrivate ? "🔒 Réservé" : ev.title}
                             </div>
-                            <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {ev.room_name}
-                            </div>
+                            {!isPrivate && (
+                              <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {ev.room_name}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

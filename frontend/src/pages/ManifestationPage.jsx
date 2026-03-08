@@ -20,6 +20,7 @@ export default function ManifestationPage() {
     date_start: "", date_end: "", location: "Saint Remèze",
     expected_attendees: "", description: "", budget: "",
     equipment_needs: [],
+    is_public: true,
   });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -141,6 +142,36 @@ export default function ManifestationPage() {
                 {item}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Visibilité */}
+        <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", background: "#fafafa", fontSize: 12, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 1 }}>
+            Visibilité sur l'agenda
+          </div>
+          <div style={{ display: "flex" }}>
+            <label style={{
+              flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+              cursor: "pointer", background: form.is_public ? "#eff6ff" : "#fff",
+              borderRight: "1px solid #e5e7eb",
+            }}>
+              <input type="radio" name="vis_manif" checked={form.is_public} onChange={() => setForm((f) => ({ ...f, is_public: true }))} style={{ accentColor: "#1d4ed8" }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>🌐 Public</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>Détails visibles de tous</div>
+              </div>
+            </label>
+            <label style={{
+              flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+              cursor: "pointer", background: !form.is_public ? "#fef2f2" : "#fff",
+            }}>
+              <input type="radio" name="vis_manif" checked={!form.is_public} onChange={() => setForm((f) => ({ ...f, is_public: false }))} style={{ accentColor: "#dc2626" }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>🔒 Privé</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>Affiché « Réservé » pour les autres</div>
+              </div>
+            </label>
           </div>
         </div>
 

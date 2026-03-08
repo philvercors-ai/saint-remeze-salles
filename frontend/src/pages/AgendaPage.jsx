@@ -30,24 +30,48 @@ export default function AgendaPage() {
   const upcoming = events.filter((e) => (e.date || e.date_start) >= today);
   const past = events.filter((e) => (e.date || e.date_start) < today);
 
-  const EventCard = ({ event }) => (
-    <div style={{ background: "#fff", borderRadius: 10, padding: "14px 18px", boxShadow: "0 2px 8px rgba(26,58,90,.06)", display: "flex", alignItems: "flex-start", gap: 14 }}>
-      <span style={{ fontSize: 28 }}>{event._type === "reservation" ? (event.room_emoji || "🏛️") : "🎪"}</span>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-          <p style={{ fontWeight: 600, fontSize: 14 }}>{event.title}</p>
-          <StatusBadge status={event.status} />
+  const EventCard = ({ event }) => {
+    const isPrivate = event.is_public === false;
+    if (isPrivate) {
+      return (
+        <div style={{
+          background: "#f8fafc", borderRadius: 10, padding: "14px 18px",
+          boxShadow: "0 2px 8px rgba(26,58,90,.04)",
+          border: "1px solid #e2e8f0",
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <span style={{ fontSize: 24, filter: "grayscale(1)", opacity: .5 }}>🔒</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Réservé</p>
+            <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>
+              {event._type === "reservation"
+                ? `${fmtDateFr(event.date)} · ${fmtTime(event.start_time)}–${fmtTime(event.end_time)}`
+                : `${fmtDateFr(event.date_start)}${event.date_end !== event.date_start ? ` – ${fmtDateFr(event.date_end)}` : ""}`
+              }
+            </p>
+          </div>
         </div>
-        <p style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
-          {event._type === "reservation"
-            ? `${event.room_name} · ${fmtDateFr(event.date)} · ${fmtTime(event.start_time)}–${fmtTime(event.end_time)}`
-            : `${event.location} · ${fmtDateFr(event.date_start)}${event.date_end !== event.date_start ? ` – ${fmtDateFr(event.date_end)}` : ""}`
-          }
-        </p>
-        {event.association && <p style={{ color: "#9ca3af", fontSize: 11, marginTop: 2 }}>{event.association}</p>}
+      );
+    }
+    return (
+      <div style={{ background: "#fff", borderRadius: 10, padding: "14px 18px", boxShadow: "0 2px 8px rgba(26,58,90,.06)", display: "flex", alignItems: "flex-start", gap: 14 }}>
+        <span style={{ fontSize: 28 }}>{event._type === "reservation" ? (event.room_emoji || "🏛️") : "🎪"}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+            <p style={{ fontWeight: 600, fontSize: 14 }}>{event.title}</p>
+            <StatusBadge status={event.status} />
+          </div>
+          <p style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
+            {event._type === "reservation"
+              ? `${event.room_name} · ${fmtDateFr(event.date)} · ${fmtTime(event.start_time)}–${fmtTime(event.end_time)}`
+              : `${event.location} · ${fmtDateFr(event.date_start)}${event.date_end !== event.date_start ? ` – ${fmtDateFr(event.date_end)}` : ""}`
+            }
+          </p>
+          {event.association && <p style={{ color: "#9ca3af", fontSize: 11, marginTop: 2 }}>{event.association}</p>}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ padding: "24px 20px 80px", maxWidth: 720, margin: "0 auto" }}>

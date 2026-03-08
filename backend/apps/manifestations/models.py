@@ -30,6 +30,8 @@ class Manifestation(models.Model):
         models.CharField(max_length=100), blank=True, default=list, verbose_name="Besoins logistiques"
     )
 
+    is_public = models.BooleanField(default=True, verbose_name="Manifestation publique")
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Statut")
     admin_comment = models.TextField(blank=True, verbose_name="Commentaire mairie")
     reviewed_by = models.ForeignKey(
