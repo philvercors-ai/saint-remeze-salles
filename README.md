@@ -1,4 +1,4 @@
-# Saint-Rémèze — Salles Communales
+# Saint Remèze — Salles Communales
 
 Application fullstack de gestion des réservations de salles communales.
 

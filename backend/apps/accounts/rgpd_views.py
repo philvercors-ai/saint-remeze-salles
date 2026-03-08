@@ -198,7 +198,7 @@ class PrivacyPolicyView(APIView):
         return Response({
             "version": settings.RGPD_POLICY_VERSION,
             "derniere_mise_a_jour": "2026-01-01",
-            "responsable_traitement": "Mairie de Saint-Rémèze",
+            "responsable_traitement": "Mairie de Saint Remèze",
             "contact_dpo": "dpo@saint-remeze.fr",
             "traitements": [
                 {
@@ -206,7 +206,7 @@ class PrivacyPolicyView(APIView):
                     "finalite": "Gestion des demandes de réservation de salles communales",
                     "base_legale": "Exécution d'un contrat (Art. 6.1.b RGPD)",
                     "duree_conservation": "5 ans (archives légales)",
-                    "destinataires": "Agents municipaux de Saint-Rémèze",
+                    "destinataires": "Agents municipaux de Saint Remèze",
                 },
                 {
                     "nom": "Gestion des comptes utilisateurs",

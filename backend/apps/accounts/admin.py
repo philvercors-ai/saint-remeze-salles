@@ -10,7 +10,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ["email", "first_name", "last_name"]
     ordering = ["-date_joined"]
     fieldsets = UserAdmin.fieldsets + (
-        ("Saint-Rémèze", {"fields": ("phone", "association", "role", "email_verified")}),
+        ("Saint Remèze", {"fields": ("phone", "association", "role", "email_verified")}),
         ("RGPD", {"fields": ("rgpd_consent_date", "deletion_requested_at", "anonymized_at")}),
     )
     actions = ["anonymize_users"]

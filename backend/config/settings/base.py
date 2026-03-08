@@ -1,5 +1,5 @@
 """
-Paramètres Django de base — Saint-Rémèze Salles Communales.
+Paramètres Django de base — Saint Remèze Salles Communales.
 """
 import os
 from datetime import timedelta
@@ -137,7 +137,7 @@ SIMPLE_JWT = {
 # ── Resend (emails) ─────────────────────────────────────────────────────────────
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 # Sans domaine vérifié dans Resend, utiliser onboarding@resend.dev
-# Avec domaine vérifié : "Mairie de Saint-Rémèze <noreply@saint-remeze.fr>"
+# Avec domaine vérifié : "Mairie de Saint Remèze <noreply@saint-remeze.fr>"
 DEFAULT_FROM_EMAIL = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
@@ -158,7 +158,7 @@ RGPD_LEGAL_RETENTION_YEARS = 5        # Conservation légale données contractue
 
 # ── Spectacular (OpenAPI) ───────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Saint-Rémèze — Salles Communales API",
+    "TITLE": "Saint Remèze — Salles Communales API",
     "DESCRIPTION": "API de gestion des réservations de salles communales.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

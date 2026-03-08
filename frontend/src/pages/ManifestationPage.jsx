@@ -17,7 +17,7 @@ export default function ManifestationPage() {
     title: "", association: "",
     contact_name: user?.first_name ? `${user.first_name} ${user.last_name}` : "",
     contact_email: user?.email || "", contact_phone: user?.phone || "",
-    date_start: "", date_end: "", location: "Saint-Rémèze",
+    date_start: "", date_end: "", location: "Saint Remèze",
     expected_attendees: "", description: "", budget: "",
     equipment_needs: [],
   });
@@ -71,7 +71,7 @@ export default function ManifestationPage() {
     <div style={{ padding: "24px 20px 80px", maxWidth: 560, margin: "0 auto" }}>
       <h1 style={{ fontSize: 22, marginBottom: 6 }}>Proposer une manifestation</h1>
       <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 28 }}>
-        Déposez votre dossier pour organiser un événement à Saint-Rémèze.
+        Déposez votre dossier pour organiser un événement à Saint Remèze.
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>

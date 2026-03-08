@@ -73,7 +73,7 @@ export default function RegisterPage() {
     <div style={{ minHeight: "100vh", background: "#f7f4ef", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 480, boxShadow: "0 4px 24px rgba(26,58,90,.1)", alignSelf: "start" }}>
         <h2 style={{ color: "#1a3a5a", marginBottom: 4 }}>Créer un compte</h2>
-        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 28 }}>Saint-Rémèze — Salles communales</p>
+        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 28 }}>Saint Remèze — Salles communales</p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {errors.detail && (
@@ -107,7 +107,7 @@ export default function RegisterPage() {
                 <a href="/confidentialite" target="_blank" style={{ color: "#1a3a5a", fontWeight: 600 }}>
                   politique de confidentialité
                 </a>{" "}
-                et le traitement de mes données personnelles par la Mairie de Saint-Rémèze. *
+                et le traitement de mes données personnelles par la Mairie de Saint Remèze. *
               </span>
             </label>
             {errors.rgpd_consent && <p style={{ color: "#991b1b", fontSize: 12, marginTop: 6 }}>{errors.rgpd_consent}</p>}

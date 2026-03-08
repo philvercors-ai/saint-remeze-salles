@@ -55,7 +55,7 @@ class EmailService:
                 <p style="color:#666;font-size:13px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
             """,
         )
-        return cls._send(user.email, "Activez votre compte — Saint-Rémèze", html)
+        return cls._send(user.email, "Activez votre compte — Saint Remèze", html)
 
     @classmethod
     def send_password_reset(cls, user, token: str) -> bool:
@@ -70,7 +70,7 @@ class EmailService:
                 <p style="color:#666;font-size:13px;">Si vous n'avez pas fait cette demande, ignorez cet email.</p>
             """,
         )
-        return cls._send(user.email, "Réinitialisation de mot de passe — Saint-Rémèze", html)
+        return cls._send(user.email, "Réinitialisation de mot de passe — Saint Remèze", html)
 
     @classmethod
     def send_password_changed(cls, user) -> bool:
@@ -83,7 +83,7 @@ class EmailService:
                 contactez immédiatement la mairie : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
             """,
         )
-        return cls._send(user.email, "Mot de passe modifié — Saint-Rémèze", html)
+        return cls._send(user.email, "Mot de passe modifié — Saint Remèze", html)
 
     # ── Réservations ──────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ class EmailService:
                 <p>La mairie traitera votre demande sous 48 heures ouvrées.</p>
             """,
         )
-        return cls._send(reservation.contact_email, "Demande de réservation reçue — Saint-Rémèze", html)
+        return cls._send(reservation.contact_email, "Demande de réservation reçue — Saint Remèze", html)
 
     @classmethod
     def send_reservation_approved(cls, reservation) -> bool:
@@ -112,7 +112,7 @@ class EmailService:
                 <p>En cas de question, contactez-nous : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
             """,
         )
-        return cls._send(reservation.contact_email, "Réservation approuvée — Saint-Rémèze", html)
+        return cls._send(reservation.contact_email, "Réservation approuvée — Saint Remèze", html)
 
     @classmethod
     def send_reservation_rejected(cls, reservation) -> bool:
@@ -126,7 +126,7 @@ class EmailService:
                 <p>Pour plus d'informations : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
             """,
         )
-        return cls._send(reservation.contact_email, "Réservation non accordée — Saint-Rémèze", html)
+        return cls._send(reservation.contact_email, "Réservation non accordée — Saint Remèze", html)
 
     # ── RGPD ──────────────────────────────────────────────────────────────────
 
@@ -142,7 +142,7 @@ class EmailService:
                 <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saint-remeze.fr">dpo@saint-remeze.fr</a></p>
             """,
         )
-        return cls._send(user.email, "Demande de suppression — Saint-Rémèze", html)
+        return cls._send(user.email, "Demande de suppression — Saint Remèze", html)
 
     @classmethod
     def send_anonymization_warning(cls, user) -> bool:
@@ -150,13 +150,13 @@ class EmailService:
             title="Votre compte sera bientôt anonymisé",
             body=f"""
                 <p>Bonjour,</p>
-                <p>Votre compte Saint-Rémèze est inactif depuis longtemps.</p>
+                <p>Votre compte Saint Remèze est inactif depuis longtemps.</p>
                 <p>Conformément à notre politique de confidentialité, il sera <strong>anonymisé dans 30 jours</strong>.</p>
                 <p>Pour conserver votre compte, connectez-vous avant cette date.</p>
                 <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saint-remeze.fr">dpo@saint-remeze.fr</a></p>
             """,
         )
-        return cls._send(user.email, "Votre compte sera anonymisé — Saint-Rémèze", html)
+        return cls._send(user.email, "Votre compte sera anonymisé — Saint Remèze", html)
 
     # ── Notifications services ────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ class EmailService:
         priority_label = {"low": "Normale", "normal": "Importante", "high": "URGENTE"}.get(priority, "Normale")
         priority_color = {"low": "#475569", "normal": "#c9a84c", "high": "#991b1b"}.get(priority, "#475569")
         html = cls._base_template(
-            title=f"[{priority_label}] Notification — Mairie de Saint-Rémèze",
+            title=f"[{priority_label}] Notification — Mairie de Saint Remèze",
             body=f"""
                 <p>Service {service_name},</p>
                 <p style="padding:12px;border-left:4px solid {priority_color};background:#f8f8f8;">
@@ -174,7 +174,7 @@ class EmailService:
                 <p style="color:#666;font-size:13px;">Priorité : <strong style="color:{priority_color}">{priority_label}</strong></p>
             """,
         )
-        return cls._send(service_email, f"[{priority_label}] Notification mairie — Saint-Rémèze", html)
+        return cls._send(service_email, f"[{priority_label}] Notification mairie — Saint Remèze", html)
 
     # ── Templates ─────────────────────────────────────────────────────────────
 
@@ -213,7 +213,7 @@ class EmailService:
                 <!-- Header -->
                 <tr>
                   <td style="background:#1a3a5a;padding:24px 32px;">
-                    <p style="margin:0;color:#c9a84c;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Mairie de Saint-Rémèze</p>
+                    <p style="margin:0;color:#c9a84c;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Mairie de Saint Remèze</p>
                     <h1 style="margin:8px 0 0;color:#fff;font-size:20px;">{title}</h1>
                   </td>
                 </tr>
@@ -227,7 +227,7 @@ class EmailService:
                 <tr>
                   <td style="padding:16px 32px;background:#f7f4ef;border-top:1px solid #e5e7eb;">
                     <p style="margin:0;color:#9ca3af;font-size:12px;">
-                      Mairie de Saint-Rémèze — 07700 Saint-Rémèze<br>
+                      Mairie de Saint Remèze — 07700 Saint Remèze<br>
                       <a href="mailto:mairie@saint-remeze.fr" style="color:#1a3a5a;">mairie@saint-remeze.fr</a>
                     </p>
                   </td>

@@ -185,7 +185,7 @@ export default function ReservationPage() {
             ))}
           </div>
           <p style={{ fontSize: 12, color: "#9ca3af" }}>
-            En soumettant ce formulaire, vous acceptez que la Mairie de Saint-Rémèze traite vos données conformément à sa{" "}
+            En soumettant ce formulaire, vous acceptez que la Mairie de Saint Remèze traite vos données conformément à sa{" "}
             <a href="/confidentialite" style={{ color: "#1a3a5a" }}>politique de confidentialité</a>.
           </p>
           <div style={{ display: "flex", gap: 10 }}>

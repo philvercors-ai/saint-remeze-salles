@@ -38,7 +38,7 @@ export default function LoginPage() {
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <p style={{ color: "#c9a84c", fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>Mairie de</p>
-          <h1 style={{ fontSize: 26, margin: "4px 0 8px", color: "#1a3a5a" }}>Saint-Rémèze</h1>
+          <h1 style={{ fontSize: 26, margin: "4px 0 8px", color: "#1a3a5a" }}>Saint Remèze</h1>
           <p style={{ color: "#6b7280", fontSize: 14 }}>Salles communales</p>
         </div>
 
