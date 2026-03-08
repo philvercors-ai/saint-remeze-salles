@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import Reservation
 
+RECURRENCE_CHOICES = ["weekly", "biweekly", "monthly"]
+RECURRENCE_LABELS = {"weekly": "Hebdomadaire", "biweekly": "Bimensuelle", "monthly": "Mensuelle"}
+
 
 class ReservationSerializer(serializers.ModelSerializer):
     room_name = serializers.CharField(source="room.name", read_only=True)
@@ -14,12 +17,11 @@ class ReservationSerializer(serializers.ModelSerializer):
             "title", "association", "contact_name", "contact_email", "contact_phone",
             "date", "start_time", "end_time", "attendees",
             "status", "status_display", "notes", "admin_comment",
-            "reviewed_at", "created_at",
+            "reviewed_at", "created_at", "recurrence_group",
         ]
-        read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at"]
+        read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at", "recurrence_group"]
 
     def validate(self, data):
-        from apps.rooms.models import Room
         room = data.get("room") or (self.instance.room if self.instance else None)
         attendees = data.get("attendees", 0)
         if room and attendees > room.capacity:
@@ -41,7 +43,7 @@ class ReservationAdminSerializer(ReservationSerializer):
 
     class Meta(ReservationSerializer.Meta):
         fields = ReservationSerializer.Meta.fields + ["user", "reviewed_by", "reviewed_by_name", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at", "recurrence_group"]
 
     def get_reviewed_by_name(self, obj):
         return obj.reviewed_by.get_full_name() if obj.reviewed_by else None
@@ -49,6 +51,39 @@ class ReservationAdminSerializer(ReservationSerializer):
 
 class ReservationApproveSerializer(serializers.Serializer):
     comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class GroupActionSerializer(serializers.Serializer):
+    group_id = serializers.CharField()
+    comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class RecurringReservationSerializer(serializers.Serializer):
+    """Crée une série de réservations récurrentes."""
+    room = serializers.CharField()
+    title = serializers.CharField(max_length=200)
+    association = serializers.CharField(max_length=200, required=False, allow_blank=True, default="")
+    contact_name = serializers.CharField(max_length=100)
+    contact_email = serializers.EmailField()
+    contact_phone = serializers.CharField(max_length=20, required=False, allow_blank=True, default="")
+    date = serializers.DateField()
+    start_time = serializers.TimeField()
+    end_time = serializers.TimeField()
+    attendees = serializers.IntegerField(min_value=1)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    recurrence_type = serializers.ChoiceField(choices=RECURRENCE_CHOICES)
+    recurrence_end_date = serializers.DateField()
+
+    def validate(self, data):
+        if data["recurrence_end_date"] <= data["date"]:
+            raise serializers.ValidationError(
+                {"recurrence_end_date": "La date de fin doit être après la première occurrence."}
+            )
+        if data["start_time"] >= data["end_time"]:
+            raise serializers.ValidationError(
+                {"end_time": "L'heure de fin doit être après l'heure de début."}
+            )
+        return data
 
 
 class PlanningReservationSerializer(serializers.ModelSerializer):
@@ -59,4 +94,4 @@ class PlanningReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ["id", "room", "room_name", "room_color", "room_emoji", "title", "date", "start_time", "end_time", "status"]
+        fields = ["id", "room", "room_name", "room_color", "room_emoji", "title", "date", "start_time", "end_time", "status", "recurrence_group"]

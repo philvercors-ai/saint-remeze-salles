@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { roomsApi } from "../api/rooms";
 import { reservationsApi } from "../api/reservations";
 import { useAuthStore } from "../store/authStore";
@@ -8,6 +9,14 @@ import Button from "../components/ui/Button";
 
 const STEPS = ["Salle & date", "Vos coordonnées", "Confirmation"];
 
+const RECURRENCE_OPTIONS = [
+  { value: "weekly",   label: "Chaque semaine" },
+  { value: "biweekly", label: "Toutes les 2 semaines" },
+  { value: "monthly",  label: "Chaque mois (même jour)" },
+];
+
+const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
+
 export default function ReservationPage() {
   const { user } = useAuthStore();
   const { showToast } = useUiStore();
@@ -15,12 +24,20 @@ export default function ReservationPage() {
   const [rooms, setRooms] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null);
   const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
     room: "", date: "", start_time: "", end_time: "", attendees: "",
-    title: "", association: "", contact_name: user?.first_name ? `${user.first_name} ${user.last_name}` : "",
+    title: "", association: "",
+    contact_name: user?.first_name ? `${user.first_name} ${user.last_name}` : "",
     contact_email: user?.email || "", contact_phone: user?.phone || "", notes: "",
+  });
+
+  const [recurrence, setRecurrence] = useState({
+    enabled: false,
+    type: "weekly",
+    end_date: "",
   });
 
   useEffect(() => {
@@ -28,6 +45,7 @@ export default function ReservationPage() {
   }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setRec = (k) => (e) => setRecurrence((r) => ({ ...r, [k]: e.target.value }));
 
   const selectedRoom = rooms.find((r) => r.id === form.room);
 
@@ -35,36 +53,77 @@ export default function ReservationPage() {
     setSubmitting(true);
     setErrors({});
     try {
-      await reservationsApi.create({
-        ...form,
-        room: form.room,
-        attendees: parseInt(form.attendees) || 0,
-      });
+      if (recurrence.enabled) {
+        const { data } = await reservationsApi.createRecurring({
+          ...form,
+          room: form.room,
+          attendees: parseInt(form.attendees) || 0,
+          recurrence_type: recurrence.type,
+          recurrence_end_date: recurrence.end_date,
+        });
+        setSubmitResult({ recurring: true, count: data.created, skipped: data.skipped });
+      } else {
+        await reservationsApi.create({
+          ...form,
+          room: form.room,
+          attendees: parseInt(form.attendees) || 0,
+        });
+        setSubmitResult({ recurring: false });
+      }
       setSubmitted(true);
-      showToast("Demande envoyée ! Réponse sous 48h.");
+      showToast(recurrence.enabled ? `Série créée (${submitResult?.count || ""} dates) !` : "Demande envoyée ! Réponse sous 48h.");
     } catch (err) {
       setErrors(err.response?.data || {});
-      showToast(err.response?.data?.date?.[0] || "Erreur lors de l'envoi.", "error");
+      const msg = err.response?.data?.detail || err.response?.data?.date?.[0] || "Erreur lors de l'envoi.";
+      showToast(msg, "error");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const resetForm = () => {
+    setSubmitted(false);
+    setSubmitResult(null);
+    setStep(0);
+    setForm((f) => ({ ...f, date: "", start_time: "", end_time: "" }));
+    setRecurrence({ enabled: false, type: "weekly", end_date: "" });
+  };
+
   if (submitted) {
+    const count = submitResult?.count;
+    const skipped = submitResult?.skipped || [];
     return (
       <div style={{ padding: "40px 20px 80px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-        <h2 style={{ color: "#1a3a5a", marginBottom: 12 }}>Demande envoyée !</h2>
-        <p style={{ color: "#6b7280", fontSize: 14 }}>
-          Votre demande a bien été transmise à la mairie.<br />
-          Vous recevrez une réponse à <strong>{form.contact_email}</strong> sous 48 heures ouvrées.
+        <h2 style={{ color: "#1a3a5a", marginBottom: 12 }}>
+          {submitResult?.recurring ? "Série créée !" : "Demande envoyée !"}
+        </h2>
+        <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 8 }}>
+          {submitResult?.recurring
+            ? <><strong>{count}</strong> réservation{count > 1 ? "s" : ""} créée{count > 1 ? "s" : ""}.<br />Un email de confirmation a été envoyé à <strong>{form.contact_email}</strong>.</>
+            : <>Votre demande a bien été transmise à la mairie.<br />Vous recevrez une réponse à <strong>{form.contact_email}</strong> sous 48 heures ouvrées.</>
+          }
         </p>
-        <Button onClick={() => { setSubmitted(false); setStep(0); setForm({ ...form, date: "", start_time: "", end_time: "" }); }} style={{ marginTop: 24 }}>
+        {skipped.length > 0 && (
+          <p style={{ color: "#92400e", background: "#fef3c7", borderRadius: 8, padding: "8px 12px", fontSize: 13, marginTop: 8 }}>
+            {skipped.length} date{skipped.length > 1 ? "s" : ""} ignorée{skipped.length > 1 ? "s" : ""} (créneau déjà occupé) :<br />
+            {skipped.join(", ")}
+          </p>
+        )}
+        <Button onClick={resetForm} style={{ marginTop: 24 }}>
           Nouvelle réservation
         </Button>
       </div>
     );
   }
+
+  // Date min pour la fin de récurrence = date de début + 1 jour
+  const minEndDate = form.date
+    ? new Date(new Date(form.date).getTime() + 86400000).toISOString().split("T")[0]
+    : fmtDate(new Date());
+
+  const step0Valid = form.room && form.date && form.start_time && form.end_time && form.title &&
+    (!recurrence.enabled || recurrence.end_date);
 
   return (
     <div style={{ padding: "24px 20px 80px", maxWidth: 560, margin: "0 auto" }}>
@@ -127,7 +186,70 @@ export default function ReservationPage() {
             <label style={labelStyle}>Titre de l'événement *</label>
             <input type="text" value={form.title} onChange={set("title")} placeholder="Réunion annuelle, concert…" />
           </div>
-          <Button onClick={() => setStep(1)} disabled={!form.room || !form.date || !form.start_time || !form.end_time || !form.title}>
+
+          {/* ── Panneau récurrence ── */}
+          <div style={{ border: `1.5px solid ${recurrence.enabled ? "#1a3a5a" : "#e5e7eb"}`, borderRadius: 10, overflow: "hidden", transition: "border-color .2s" }}>
+            <label style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 16px", cursor: "pointer",
+              background: recurrence.enabled ? "#f0f4f8" : "#fafafa",
+            }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#1a3a5a" }}>
+                <RefreshCw size={15} />
+                Réservation récurrente
+              </span>
+              <input
+                type="checkbox"
+                checked={recurrence.enabled}
+                onChange={(e) => setRecurrence((r) => ({ ...r, enabled: e.target.checked }))}
+                style={{ width: 16, height: 16, accentColor: "#1a3a5a" }}
+              />
+            </label>
+            {recurrence.enabled && (
+              <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, borderTop: "1px solid #e5e7eb" }}>
+                <div>
+                  <label style={labelStyle}>Fréquence</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {RECURRENCE_OPTIONS.map(({ value, label }) => (
+                      <label key={value} style={{
+                        display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                        padding: "9px 12px", borderRadius: 8,
+                        background: recurrence.type === value ? "#f0f4f8" : "#fff",
+                        border: `1.5px solid ${recurrence.type === value ? "#1a3a5a" : "#e5e7eb"}`,
+                        fontSize: 14,
+                      }}>
+                        <input
+                          type="radio"
+                          name="recurrence_type"
+                          value={value}
+                          checked={recurrence.type === value}
+                          onChange={setRec("type")}
+                          style={{ accentColor: "#1a3a5a" }}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Répéter jusqu'au *</label>
+                  <input
+                    type="date"
+                    value={recurrence.end_date}
+                    onChange={setRec("end_date")}
+                    min={minEndDate}
+                  />
+                  {recurrence.end_date && form.date && (
+                    <p style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                      ≈ {countOccurrences(form.date, recurrence.end_date, recurrence.type)} occurrence(s)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Button onClick={() => setStep(1)} disabled={!step0Valid}>
             Suivant →
           </Button>
         </div>
@@ -172,11 +294,18 @@ export default function ReservationPage() {
             <h3 style={{ fontSize: 15, marginBottom: 12 }}>Récapitulatif</h3>
             {[
               ["Salle", selectedRoom?.name],
-              ["Date", fmtDateFr(form.date)],
+              recurrence.enabled
+                ? ["Première date", fmtDateFr(form.date)]
+                : ["Date", fmtDateFr(form.date)],
               ["Horaires", `${form.start_time} – ${form.end_time}`],
               ["Participants", form.attendees],
               ["Événement", form.title],
               ["Contact", `${form.contact_name} (${form.contact_email})`],
+              ...(recurrence.enabled ? [
+                ["Récurrence", RECURRENCE_OPTIONS.find(o => o.value === recurrence.type)?.label],
+                ["Jusqu'au", fmtDateFr(recurrence.end_date)],
+                ["Nb d'occurrences", `≈ ${countOccurrences(form.date, recurrence.end_date, recurrence.type)}`],
+              ] : []),
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e5e7eb", fontSize: 14 }}>
                 <span style={{ color: "#6b7280" }}>{k}</span>
@@ -184,6 +313,12 @@ export default function ReservationPage() {
               </div>
             ))}
           </div>
+          {recurrence.enabled && (
+            <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#1e40af", display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <RefreshCw size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+              Chaque occurrence sera soumise individuellement à validation. La mairie peut approuver ou refuser toute la série en un clic.
+            </div>
+          )}
           <p style={{ fontSize: 12, color: "#9ca3af" }}>
             En soumettant ce formulaire, vous acceptez que la Mairie de Saint Remèze traite vos données conformément à sa{" "}
             <a href="/confidentialite" style={{ color: "#1a3a5a" }}>politique de confidentialité</a>.
@@ -191,7 +326,7 @@ export default function ReservationPage() {
           <div style={{ display: "flex", gap: 10 }}>
             <Button variant="secondary" onClick={() => setStep(1)}>← Retour</Button>
             <Button onClick={handleSubmit} loading={submitting} style={{ flex: 1 }}>
-              Envoyer la demande ✓
+              {recurrence.enabled ? "Envoyer la série ✓" : "Envoyer la demande ✓"}
             </Button>
           </div>
         </div>
@@ -200,4 +335,14 @@ export default function ReservationPage() {
   );
 }
 
-const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
+/** Compte approximativement le nombre d'occurrences pour l'affichage. */
+function countOccurrences(startDate, endDate, type) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const days = Math.max(0, Math.round((end - start) / 86400000));
+  if (type === "weekly")   return Math.min(52, Math.floor(days / 7) + 1);
+  if (type === "biweekly") return Math.min(52, Math.floor(days / 14) + 1);
+  if (type === "monthly")  return Math.min(52, Math.floor(days / 30) + 1);
+  return 1;
+}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   CalendarDays, Sparkles, Bell, Download,
-  Clock, MapPin, Users, Mail, Phone,
+  Clock, MapPin, Users, Mail,
   CheckCircle, XCircle, ChevronRight,
-  AlertCircle, FileSpreadsheet, Send,
+  AlertCircle, FileSpreadsheet, Send, Repeat,
 } from "lucide-react";
 import { reservationsApi } from "../api/reservations";
 import { manifestationsApi } from "../api/manifestations";
@@ -80,6 +80,22 @@ export default function AdminPage() {
       if (action === "approve") isRes ? await reservationsApi.approve(id, comment) : await manifestationsApi.approve(id, comment);
       else                      isRes ? await reservationsApi.reject(id, comment)  : await manifestationsApi.reject(id, comment);
       showToast(`${isRes ? "Réservation" : "Manifestation"} ${action === "approve" ? "approuvée ✓" : "refusée"} !`);
+      setSelected(null);
+      setComment("");
+      reload();
+    } catch (_) {
+      showToast("Une erreur est survenue.", "error");
+    } finally {
+      setAL(false);
+    }
+  };
+
+  const handleGroupAction = async (action) => {
+    setAL(true);
+    try {
+      if (action === "approve") await reservationsApi.approveGroup(selected.recurrence_group, comment);
+      else                      await reservationsApi.rejectGroup(selected.recurrence_group, comment);
+      showToast(`Toute la série ${action === "approve" ? "approuvée ✓" : "refusée"} !`);
       setSelected(null);
       setComment("");
       reload();
@@ -245,9 +261,16 @@ export default function AdminPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Header modal */}
             <div>
-              <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: C.gold, fontWeight: 600 }}>
-                {selected._type === "reservation" ? "Réservation" : "Manifestation"} en attente
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: C.gold, fontWeight: 600 }}>
+                  {selected._type === "reservation" ? "Réservation" : "Manifestation"} en attente
+                </span>
+                {selected.recurrence_group && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#ede9fe", color: "#6d28d9", borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 600 }}>
+                    <Repeat size={10} /> Série récurrente
+                  </span>
+                )}
+              </div>
               <h3 style={{ margin: "6px 0 0", fontSize: 20, color: C.navy }}>{selected.title}</h3>
             </div>
 
@@ -285,35 +308,77 @@ export default function AdminPage() {
               />
             </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={() => handleAction(selected.id, "reject")}
-                disabled={actionLoading}
-                style={{
-                  padding: "11px 20px", borderRadius: 8, border: `1.5px solid ${C.red}`,
-                  background: "#fff", color: C.red, fontWeight: 600, fontSize: 14,
-                  cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
-                  display: "flex", alignItems: "center", gap: 7,
-                }}
-              >
-                <XCircle size={16} />
-                {actionLoading ? "…" : "Refuser"}
-              </button>
-              <button
-                onClick={() => handleAction(selected.id, "approve")}
-                disabled={actionLoading}
-                style={{
-                  flex: 1, padding: "11px 20px", borderRadius: 8, border: "none",
-                  background: C.green, color: "#fff", fontWeight: 600, fontSize: 14,
-                  cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                }}
-              >
-                <CheckCircle size={16} />
-                {actionLoading ? "…" : "Approuver"}
-              </button>
+            {/* Actions — occurrence unique */}
+            <div>
+              <p style={{ fontSize: 12, color: C.muted, margin: "0 0 8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
+                Cette occurrence
+              </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => handleAction(selected.id, "reject")}
+                  disabled={actionLoading}
+                  style={{
+                    padding: "11px 20px", borderRadius: 8, border: `1.5px solid ${C.red}`,
+                    background: "#fff", color: C.red, fontWeight: 600, fontSize: 14,
+                    cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
+                    display: "flex", alignItems: "center", gap: 7,
+                  }}
+                >
+                  <XCircle size={16} />
+                  {actionLoading ? "…" : "Refuser"}
+                </button>
+                <button
+                  onClick={() => handleAction(selected.id, "approve")}
+                  disabled={actionLoading}
+                  style={{
+                    flex: 1, padding: "11px 20px", borderRadius: 8, border: "none",
+                    background: C.green, color: "#fff", fontWeight: 600, fontSize: 14,
+                    cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                  }}
+                >
+                  <CheckCircle size={16} />
+                  {actionLoading ? "…" : "Approuver"}
+                </button>
+              </div>
             </div>
+
+            {/* Actions de groupe (réservations récurrentes) */}
+            {selected._type === "reservation" && selected.recurrence_group && (
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                <p style={{ fontSize: 12, color: C.muted, margin: "0 0 8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 5 }}>
+                  <Repeat size={12} /> Toute la série récurrente
+                </p>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    onClick={() => handleGroupAction("reject")}
+                    disabled={actionLoading}
+                    style={{
+                      padding: "10px 16px", borderRadius: 8, border: `1.5px solid ${C.red}`,
+                      background: "#fff", color: C.red, fontWeight: 600, fontSize: 13,
+                      cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    <XCircle size={14} />
+                    Refuser la série
+                  </button>
+                  <button
+                    onClick={() => handleGroupAction("approve")}
+                    disabled={actionLoading}
+                    style={{
+                      flex: 1, padding: "10px 16px", borderRadius: 8, border: "none",
+                      background: "#059669", color: "#fff", fontWeight: 600, fontSize: 13,
+                      cursor: actionLoading ? "not-allowed" : "pointer", opacity: actionLoading ? .6 : 1,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                  >
+                    <CheckCircle size={14} />
+                    Approuver la série
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -369,8 +434,15 @@ function ReservationCard({ item: r, onProcess }) {
         <CalendarDays size={20} color={C.navy} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, color: C.navy, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {r.title}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontWeight: 600, fontSize: 15, color: C.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {r.title}
+          </div>
+          {r.recurrence_group && (
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 3, background: "#ede9fe", color: "#6d28d9", borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 600 }}>
+              <Repeat size={10} /> Récurrente
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
           <span style={meta}><MapPin size={12} />{r.room_name}</span>
