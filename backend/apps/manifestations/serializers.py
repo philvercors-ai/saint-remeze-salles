@@ -6,17 +6,19 @@ class ManifestationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
     equipment_needs = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    room_name = serializers.CharField(source="room.name", read_only=True)
 
     class Meta:
         model = Manifestation
         fields = [
             "id", "title", "association", "contact_name", "contact_email", "contact_phone",
-            "date_start", "date_end", "location", "expected_attendees",
-            "description", "budget", "equipment_needs",
+            "date_start", "date_end",
+            "location_type", "room", "room_name", "location", "gps_lat", "gps_lng",
+            "expected_attendees", "description", "budget", "equipment_needs",
             "status", "status_display", "admin_comment", "reviewed_at", "created_at",
             "is_public",
         ]
-        read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at"]
+        read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at", "room_name"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -36,9 +38,14 @@ class ManifestationSerializer(serializers.ModelSerializer):
                 data["contact_phone"] = ""
                 data["description"] = ""
                 data["location"] = "Lieu privé"
+                data["gps_lat"] = None
+                data["gps_lng"] = None
         return data
 
     def create(self, validated_data):
+        # Auto-remplir location depuis le nom de la salle si type = room
+        if validated_data.get("location_type") == "room" and validated_data.get("room"):
+            validated_data["location"] = validated_data["room"].name
         instance = Manifestation(**validated_data)
         instance.full_clean()
         instance.save()

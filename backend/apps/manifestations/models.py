@@ -20,9 +20,24 @@ class Manifestation(models.Model):
     contact_email = models.EmailField(verbose_name="Email")
     contact_phone = models.CharField(max_length=20, blank=True, verbose_name="Téléphone")
 
+    LOCATION_TYPE_CHOICES = [
+        ("room", "Salle communale"),
+        ("exterior", "Lieu extérieur"),
+    ]
+
     date_start = models.DateField(verbose_name="Date de début")
     date_end = models.DateField(verbose_name="Date de fin")
-    location = models.CharField(max_length=200, verbose_name="Lieu")
+    location_type = models.CharField(
+        max_length=10, choices=LOCATION_TYPE_CHOICES, default="exterior",
+        verbose_name="Type de lieu",
+    )
+    room = models.ForeignKey(
+        "rooms.Room", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="manifestations", verbose_name="Salle communale",
+    )
+    location = models.CharField(max_length=200, blank=True, verbose_name="Lieu / Adresse")
+    gps_lat = models.FloatField(null=True, blank=True, verbose_name="Latitude GPS")
+    gps_lng = models.FloatField(null=True, blank=True, verbose_name="Longitude GPS")
     expected_attendees = models.PositiveIntegerField(default=0, verbose_name="Participants attendus")
     description = models.TextField(verbose_name="Description")
     budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Budget estimé (€)")
@@ -56,6 +71,10 @@ class Manifestation(models.Model):
     def clean(self):
         if self.date_start and self.date_end and self.date_start > self.date_end:
             raise ValidationError({"date_end": "La date de fin doit être après la date de début."})
+        if self.location_type == "room" and not self.room_id:
+            raise ValidationError({"room": "Veuillez sélectionner une salle."})
+        if self.location_type == "exterior" and not self.location:
+            raise ValidationError({"location": "Veuillez indiquer le lieu."})
 
     def approve(self, agent, comment=""):
         self.status = "approved"
