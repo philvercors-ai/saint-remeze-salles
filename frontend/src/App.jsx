@@ -61,7 +61,7 @@ function AppLayout({ children }) {
 
 // ── Bootstrap: restore auth from refresh token ────────────────────────────────
 function AuthBootstrap() {
-  const { setAuth, logout, setLoading } = useAuthStore();
+  const { setAuth, logout, setLoading, setAccessToken } = useAuthStore();
 
   useEffect(() => {
     const refresh = localStorage.getItem("refreshToken");
@@ -69,6 +69,8 @@ function AuthBootstrap() {
 
     authApi.refreshToken(refresh)
       .then(({ data }) => {
+        // Stocker le token AVANT d'appeler me() pour que l'intercepteur l'injecte
+        setAccessToken(data.access);
         authApi.me().then(({ data: user }) => {
           setAuth(user, data.access, data.refresh || refresh);
         }).catch(() => logout());
