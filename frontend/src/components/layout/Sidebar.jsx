@@ -1,14 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { Home, CalendarDays, Calendar, ClipboardList, Shield, Plus, User, FileText } from "lucide-react";
+import { Home, CalendarDays, Calendar, Sparkles, Shield, Plus, User, FileText } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 
 const NAV_ITEMS = [
-  { to: "/",              icon: Home,          label: "Accueil" },
-  { to: "/planning",      icon: CalendarDays,   label: "Planning" },
-  { to: "/agenda",        icon: Calendar,       label: "Agenda" },
-  { to: "/reservation",   icon: Plus,           label: "Réserver" },
-  { to: "/manifestation", icon: ClipboardList,  label: "Manifestation" },
+  { to: "/",              icon: Home,         label: "Accueil" },
+  { to: "/reservation",   icon: Plus,         label: "Réserver" },
+  { to: "/manifestation", icon: Sparkles,     label: "Manifestation" },
+  { to: "/planning",      icon: CalendarDays, label: "Planning" },
+  { to: "/agenda",        icon: Calendar,     label: "Agenda" },
 ];
 
 const ADMIN_ITEMS = [

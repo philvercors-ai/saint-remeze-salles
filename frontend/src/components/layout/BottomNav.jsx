@@ -1,15 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { Home, CalendarDays, Plus, ClipboardList, Shield, User } from "lucide-react";
+import { CalendarDays, Calendar, Plus, Sparkles, Shield, User } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
 export default function BottomNav() {
   const { isAgent, user } = useAuthStore();
 
   const items = [
-    { to: "/",            icon: Home,         label: "Accueil" },
-    { to: "/planning",    icon: CalendarDays,  label: "Planning" },
-    { to: "/reservation", icon: Plus,          label: "Réserver" },
-    { to: "/agenda",      icon: ClipboardList, label: "Agenda" },
+    { to: "/reservation",   icon: Plus,       label: "Réserver" },
+    { to: "/manifestation", icon: Sparkles,   label: "Manifestation" },
+    { to: "/planning",      icon: CalendarDays, label: "Planning" },
+    { to: "/agenda",        icon: Calendar,   label: "Agenda" },
     isAgent
       ? { to: "/admin",  icon: Shield, label: "Admin" }
       : { to: "/profil", icon: User,   label: "Profil", hidden: !user },

@@ -38,10 +38,10 @@ export default function DashboardPage() {
       {/* Quick actions */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 32 }}>
         {[
-          { to: "/reservation",   icon: Plus,       label: "Réserver", color: "#1a3a5a" },
-          { to: "/planning",      icon: Calendar,   label: "Planning",  color: "#2d6a4f" },
-          { to: "/agenda",        icon: Clock,      label: "Agenda",    color: "#854d0e" },
-          { to: "/manifestation", icon: Users,      label: "Manifestation", color: "#1d4ed8" },
+          { to: "/reservation",   icon: Plus,      label: "Réserver",       color: "#1a3a5a" },
+          { to: "/manifestation", icon: Users,     label: "Manifestation",  color: "#1d4ed8" },
+          { to: "/planning",      icon: Calendar,  label: "Planning",       color: "#2d6a4f" },
+          { to: "/agenda",        icon: Clock,     label: "Agenda",         color: "#854d0e" },
         ].map(({ to, icon: Icon, label, color }) => (
           <Link key={to} to={to} style={{
             background: "#fff", borderRadius: 12, padding: "18px 16px",
