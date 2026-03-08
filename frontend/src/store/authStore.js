@@ -1,35 +1,32 @@
 import { create } from "zustand";
 
-export const useAuthStore = create((set, get) => ({
+const computeDerived = (user, accessToken) => ({
+  isAuthenticated: !!accessToken && !!user,
+  isAdmin:  user?.role === "admin",
+  isAgent:  ["agent", "admin"].includes(user?.role),
+});
+
+export const useAuthStore = create((set) => ({
   user: null,
   accessToken: null,
   isLoading: true,
+  isAuthenticated: false,
+  isAdmin: false,
+  isAgent: false,
 
   setAuth: (user, accessToken, refreshToken) => {
     if (refreshToken) {
       localStorage.setItem("refreshToken", refreshToken);
     }
-    set({ user, accessToken, isLoading: false });
+    set({ user, accessToken, isLoading: false, ...computeDerived(user, accessToken) });
   },
 
-  setAccessToken: (accessToken) => set({ accessToken }),
+  setAccessToken: (accessToken) => set((s) => ({ accessToken, ...computeDerived(s.user, accessToken) })),
 
   logout: () => {
     localStorage.removeItem("refreshToken");
-    set({ user: null, accessToken: null, isLoading: false });
+    set({ user: null, accessToken: null, isLoading: false, ...computeDerived(null, null) });
   },
 
   setLoading: (isLoading) => set({ isLoading }),
-
-  get isAuthenticated() {
-    return !!get().accessToken && !!get().user;
-  },
-
-  get isAdmin() {
-    return get().user?.role === "admin";
-  },
-
-  get isAgent() {
-    return ["agent", "admin"].includes(get().user?.role);
-  },
 }));
