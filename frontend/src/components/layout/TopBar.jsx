@@ -1,5 +1,5 @@
 import { Menu, Bell, LogOut, User } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { authApi } from "../../api/auth";
@@ -8,6 +8,8 @@ export default function TopBar({ pendingCount = 0 }) {
   const { user, isAgent, logout, accessToken } = useAuthStore();
   const { toggleSidebar, showToast } = useUiStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminMode = location.pathname.startsWith("/admin");
 
   const handleLogout = async () => {
     const refresh = localStorage.getItem("refreshToken");
@@ -47,6 +49,37 @@ export default function TopBar({ pendingCount = 0 }) {
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Admin / Citoyen switch */}
+        {isAgent && (
+          <div style={{
+            display: "flex", background: "rgba(255,255,255,.15)", borderRadius: 20,
+            padding: 3, gap: 2,
+          }}>
+            <button
+              onClick={() => navigate("/")}
+              style={{
+                padding: "4px 12px", borderRadius: 16, border: "none", fontSize: 12, fontWeight: 600,
+                cursor: "pointer", transition: "all .15s",
+                background: isAdminMode ? "transparent" : "#c9a84c",
+                color: "#fff",
+              }}
+            >
+              Citoyen
+            </button>
+            <button
+              onClick={() => navigate("/admin")}
+              style={{
+                padding: "4px 12px", borderRadius: 16, border: "none", fontSize: 12, fontWeight: 600,
+                cursor: "pointer", transition: "all .15s",
+                background: isAdminMode ? "#c9a84c" : "transparent",
+                color: "#fff",
+              }}
+            >
+              Admin
+            </button>
+          </div>
+        )}
+
         {isAgent && pendingCount > 0 && (
           <Link to="/admin" style={{ position: "relative", color: "#fff", padding: 8 }}>
             <Bell size={20} />

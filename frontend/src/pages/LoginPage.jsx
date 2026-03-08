@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { showToast } = useUiStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || "/";
+  const from = location.state?.from || null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +23,10 @@ export default function LoginPage() {
       const { data } = await authApi.login(form.email, form.password);
       setAuth(data.user, data.access, data.refresh);
       showToast(`Bienvenue ${data.user.first_name || data.user.email} !`);
-      navigate(from, { replace: true });
+      const isStaff = ["agent", "admin"].includes(data.user.role);
+      // from = page d'origine si redirigé, sinon /admin pour les agents/admins
+      const dest = (from && from !== "/") ? from : (isStaff ? "/admin" : "/");
+      navigate(dest, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.detail || err.response?.data?.email?.[0] || "Email ou mot de passe incorrect.";
       setError(msg);
