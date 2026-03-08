@@ -3,7 +3,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { reservationsApi } from "../api/reservations";
 import { roomsApi } from "../api/rooms";
 import { getWeekDays, fmtDate, fmtDateFr, HOURS } from "../utils/dates";
-import { addWeeks, subWeeks } from "date-fns";
+import { addWeeks, subWeeks, getISOWeek, getISOWeekYear } from "date-fns";
+
+/** Formate une date en numéro de semaine ISO : "2026-W10" */
+function toISOWeekParam(date) {
+  const w = String(getISOWeek(date)).padStart(2, "0");
+  return `${getISOWeekYear(date)}-W${w}`;
+}
 
 export default function PlanningPage() {
   const [week, setWeek] = useState(new Date());
@@ -17,11 +23,11 @@ export default function PlanningPage() {
   }, []);
 
   useEffect(() => {
-    const params = {};
+    const params = { week: toISOWeekParam(week) };
     if (selectedRoom) params.room = selectedRoom;
     reservationsApi.planning(params).then(({ data }) => {
       setReservations(data.reservations || []);
-    });
+    }).catch(() => {});
   }, [week, selectedRoom]);
 
   const getSlotEvents = (day, hour) => {

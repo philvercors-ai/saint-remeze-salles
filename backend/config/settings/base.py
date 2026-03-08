@@ -105,7 +105,7 @@ DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 # ── REST Framework ─────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "apps.compat.authentication.SilentJWTAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": [
         "apps.compat.renderers.MongoJSONRenderer",
