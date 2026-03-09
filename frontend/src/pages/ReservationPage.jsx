@@ -17,8 +17,12 @@ const RECURRENCE_OPTIONS = [
 
 const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
 
-/** Convertit "HH:MM" ou "HH:MM:SS" en minutes depuis minuit. */
-const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+/** Convertit "HH:MM" ou "HH:MM:SS" en minutes depuis minuit. Retourne -1 si invalide. */
+const toMin = (t) => {
+  if (!t || typeof t !== "string") return -1;
+  const [h, m] = t.split(":").map(Number);
+  return isNaN(h) || isNaN(m) ? -1 : h * 60 + m;
+};
 
 export default function ReservationPage() {
   const { user } = useAuthStore();
@@ -73,10 +77,13 @@ export default function ReservationPage() {
     if (!form.start_time || !form.end_time || bookedSlots.length === 0) return null;
     const s = toMin(form.start_time);
     const e = toMin(form.end_time);
-    if (e <= s) return null; // heure de fin invalide, autre erreur
-    return bookedSlots.find(
-      (slot) => s < toMin(slot.end_time) && e > toMin(slot.start_time)
-    ) || null;
+    if (s < 0 || e < 0 || e <= s) return null;
+    return bookedSlots.find((slot) => {
+      const bs = toMin(slot.start_time);
+      const be = toMin(slot.end_time);
+      if (bs < 0 || be < 0) return false;
+      return s < be && e > bs;
+    }) || null;
   })();
 
   const handleSubmit = async () => {

@@ -37,8 +37,20 @@ class RoomViewSet(viewsets.ModelViewSet):
             status__in=["pending", "approved"],
         ).values("start_time", "end_time", "title", "status")
 
+        # Conversion explicite en "HH:MM" : .values() retourne des objets
+        # datetime.time que MongoJSONEncoder ne sait pas sérialiser.
+        booked_slots = [
+            {
+                "start_time": str(r["start_time"])[:5],
+                "end_time":   str(r["end_time"])[:5],
+                "title":      r["title"],
+                "status":     r["status"],
+            }
+            for r in reservations
+        ]
+
         return Response({
             "date": date_str,
             "room": room.name,
-            "booked_slots": list(reservations),
+            "booked_slots": booked_slots,
         })
