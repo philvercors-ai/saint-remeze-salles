@@ -17,6 +17,9 @@ const RECURRENCE_OPTIONS = [
 
 const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
 
+/** Convertit "HH:MM" ou "HH:MM:SS" en minutes depuis minuit. */
+const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+
 export default function ReservationPage() {
   const { user } = useAuthStore();
   const { showToast } = useUiStore();
@@ -26,6 +29,9 @@ export default function ReservationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
   const [errors, setErrors] = useState({});
+
+  /* Disponibilité : créneaux déjà occupés pour la salle+date choisie */
+  const [bookedSlots, setBookedSlots] = useState([]);
 
   const [form, setForm] = useState({
     room: "", date: "", start_time: "", end_time: "", attendees: "",
@@ -45,10 +51,33 @@ export default function ReservationPage() {
     roomsApi.list().then(({ data }) => setRooms(data.results || data));
   }, []);
 
+  /* Recharge les créneaux occupés dès que la salle ou la date change */
+  useEffect(() => {
+    if (!form.room || !form.date) { setBookedSlots([]); return; }
+    roomsApi.availability(form.room, form.date)
+      .then(({ data }) => setBookedSlots(data.booked_slots || []))
+      .catch(() => setBookedSlots([]));
+  }, [form.room, form.date]);
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setRec = (k) => (e) => setRecurrence((r) => ({ ...r, [k]: e.target.value }));
 
   const selectedRoom = rooms.find((r) => r.id === form.room);
+
+  /* ── Validations temps réel ── */
+  const overCapacity = selectedRoom && form.attendees
+    ? parseInt(form.attendees) > selectedRoom.capacity
+    : false;
+
+  const slotConflict = (() => {
+    if (!form.start_time || !form.end_time || bookedSlots.length === 0) return null;
+    const s = toMin(form.start_time);
+    const e = toMin(form.end_time);
+    if (e <= s) return null; // heure de fin invalide, autre erreur
+    return bookedSlots.find(
+      (slot) => s < toMin(slot.end_time) && e > toMin(slot.start_time)
+    ) || null;
+  })();
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -124,7 +153,8 @@ export default function ReservationPage() {
     : fmtDate(new Date());
 
   const step0Valid = form.room && form.date && form.start_time && form.end_time && form.title &&
-    (!recurrence.enabled || recurrence.end_date);
+    (!recurrence.enabled || recurrence.end_date) &&
+    !overCapacity && !slotConflict;
 
   return (
     <div style={{ padding: "24px 20px 80px", maxWidth: 560, margin: "0 auto" }}>
@@ -170,17 +200,48 @@ export default function ReservationPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>Début *</label>
-              <input type="time" value={form.start_time} onChange={set("start_time")} min="07:00" max="21:00" step="1800" />
+              <input type="time" value={form.start_time} onChange={set("start_time")} min="07:00" max="21:00" step="1800"
+                style={slotConflict ? { borderColor: "#dc2626" } : {}} />
             </div>
             <div>
               <label style={labelStyle}>Fin *</label>
-              <input type="time" value={form.end_time} onChange={set("end_time")} min="07:00" max="21:00" step="1800" />
+              <input type="time" value={form.end_time} onChange={set("end_time")} min="07:00" max="21:00" step="1800"
+                style={slotConflict ? { borderColor: "#dc2626" } : {}} />
             </div>
           </div>
+          {slotConflict && (
+            <div style={{ background: "#fef2f2", border: "1.5px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#991b1b", display: "flex", flexDirection: "column", gap: 4 }}>
+              <strong>⛔ Créneau déjà réservé</strong>
+              <span>
+                {slotConflict.title
+                  ? `« ${slotConflict.title} » occupe ce créneau (${slotConflict.start_time?.slice(0,5)}–${slotConflict.end_time?.slice(0,5)}).`
+                  : `Un événement occupe déjà ce créneau (${slotConflict.start_time?.slice(0,5)}–${slotConflict.end_time?.slice(0,5)}).`
+                }
+              </span>
+            </div>
+          )}
+          {bookedSlots.length > 0 && !slotConflict && form.date && (
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#64748b" }}>
+              <strong style={{ color: "#374151" }}>Créneaux déjà occupés ce jour-là :</strong>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", marginTop: 6 }}>
+                {bookedSlots.map((s, i) => (
+                  <span key={i} style={{ background: "#e2e8f0", borderRadius: 4, padding: "2px 8px" }}>
+                    {s.start_time?.slice(0,5)}–{s.end_time?.slice(0,5)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {errors.date && <p style={{ color: "#991b1b", fontSize: 12 }}>{errors.date}</p>}
           <div>
             <label style={labelStyle}>Nombre de participants *</label>
-            <input type="number" min="1" max={selectedRoom?.capacity || 999} value={form.attendees} onChange={set("attendees")} placeholder="Ex : 50" />
+            <input type="number" min="1" max={selectedRoom?.capacity || 999} value={form.attendees} onChange={set("attendees")} placeholder="Ex : 50"
+              style={overCapacity ? { borderColor: "#dc2626" } : {}} />
+            {overCapacity && (
+              <p style={{ color: "#991b1b", fontSize: 12, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                ⛔ Dépasse la capacité de la salle ({selectedRoom.capacity} pers. max)
+              </p>
+            )}
             {errors.attendees && <p style={{ color: "#991b1b", fontSize: 12, marginTop: 4 }}>{errors.attendees}</p>}
           </div>
           <div>
