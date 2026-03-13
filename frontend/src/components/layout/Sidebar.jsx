@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { Home, CalendarDays, Calendar, Sparkles, Shield, Plus, User, FileText } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
+import { APP_VERSION } from "../../data/changelog";
 
 const NAV_ITEMS = [
   { to: "/",              icon: Home,         label: "Accueil" },
@@ -65,6 +66,18 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
+
+        <div style={{ padding: "16px 20px 0", borderTop: "1px solid #f1f5f9", marginTop: 8 }}>
+          <NavLink
+            to="/profil"
+            onClick={closeSidebar}
+            style={{ textDecoration: "none" }}
+          >
+            <span style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.03em" }}>
+              v{APP_VERSION}
+            </span>
+          </NavLink>
+        </div>
       </nav>
     </>
   );

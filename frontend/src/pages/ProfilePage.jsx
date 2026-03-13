@@ -5,6 +5,7 @@ import { useUiStore } from "../store/uiStore";
 import { authApi } from "../api/auth";
 import { rgpdApi } from "../api/rgpd";
 import Button from "../components/ui/Button";
+import { APP_VERSION, CHANGELOG } from "../data/changelog";
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -54,6 +55,7 @@ export default function ProfilePage() {
     { id: "profil",   label: "Mon profil" },
     { id: "security", label: "Sécurité" },
     { id: "rgpd",     label: "Mes données (RGPD)" },
+    { id: "about",    label: `À propos  v${APP_VERSION}` },
   ];
 
   return (
@@ -148,6 +150,29 @@ export default function ProfilePage() {
             {" · "}
             <a href="/confidentialite" style={{ color: "#1a3a5a" }}>Politique de confidentialité</a>
           </p>
+        </div>
+      )}
+
+      {/* À propos */}
+      {tab === "about" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <p style={{ fontSize: 13, color: "#6b7280" }}>
+            Salles communales de Saint Remèze — application de réservation en ligne.
+          </p>
+          {CHANGELOG.map((entry) => (
+            <div key={entry.version} style={{ borderLeft: "3px solid #c9a84c", paddingLeft: 16 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "#1a3a5a" }}>v{entry.version}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{entry.label}</span>
+                <span style={{ fontSize: 11, color: "#9ca3af", marginLeft: "auto" }}>{entry.date}</span>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 3 }}>
+                {entry.changes.map((c, i) => (
+                  <li key={i} style={{ fontSize: 13, color: "#4b5563" }}>{c}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       )}
     </div>
