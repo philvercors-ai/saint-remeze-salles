@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icons/*.png", "offline.html"],
       manifest: {
-        name: "Saint Remèze — Salles Communales",
-        short_name: "Saint Remèze",
-        description: "Réservation des salles communales de Saint Remèze",
+        name: "Saint Remèze - Web Service",
+        short_name: "Web Service",
+        description: "Saint Remèze - Web Service — réservation des salles communales",
         start_url: "/",
         display: "standalone",
         background_color: "#f7f4ef",

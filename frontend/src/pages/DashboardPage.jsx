@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAgent } = useAuthStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     Promise.all([
@@ -32,7 +32,7 @@ export default function DashboardPage() {
         <h1 style={{ fontSize: 26, marginBottom: 4 }}>
           {user ? `Bonjour, ${user.first_name || ""}` : "Bienvenue"}
         </h1>
-        <p style={{ color: "#6b7280", fontSize: 14 }}>Mairie de Saint Remèze — Salles communales</p>
+        <p style={{ color: "#6b7280", fontSize: 14 }}>Saint Remèze - Web Service</p>
       </div>
 
       {/* Quick actions */}

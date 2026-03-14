@@ -5,7 +5,7 @@ import { useUiStore } from "../../store/uiStore";
 import { authApi } from "../../api/auth";
 
 export default function TopBar({ pendingCount = 0 }) {
-  const { user, isAgent, logout, accessToken } = useAuthStore();
+  const { user, isAgent, logout } = useAuthStore();
   const { toggleSidebar, showToast } = useUiStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,10 +38,10 @@ export default function TopBar({ pendingCount = 0 }) {
           <img src="/logo-saint-remeze.png" alt="Logo Saint Remèze" style={{ height: 38, width: 38, objectFit: "contain", borderRadius: 6 }} />
           <div>
             <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: "1.5px", textTransform: "uppercase", lineHeight: 1 }}>
-              Mairie de
+              Saint Remèze
             </div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, lineHeight: 1.2, color: "#fff" }}>
-              Saint Remèze
+              Web Service
             </div>
           </div>
         </Link>

@@ -40,9 +40,9 @@ export default function LoginPage() {
       <div style={{ background: "#fff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 420, boxShadow: "0 4px 24px rgba(26,58,90,.1)" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <p style={{ color: "#c9a84c", fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>Mairie de</p>
-          <h1 style={{ fontSize: 26, margin: "4px 0 8px", color: "#1a3a5a" }}>Saint Remèze</h1>
-          <p style={{ color: "#6b7280", fontSize: 14 }}>Salles communales</p>
+          <p style={{ color: "#c9a84c", fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>Saint Remèze</p>
+          <h1 style={{ fontSize: 26, margin: "4px 0 8px", color: "#1a3a5a" }}>Web Service</h1>
+          <p style={{ color: "#6b7280", fontSize: 14 }}>Réservation des salles communales</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>

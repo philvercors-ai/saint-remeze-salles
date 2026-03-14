@@ -157,7 +157,7 @@ export default function ProfilePage() {
       {tab === "about" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <p style={{ fontSize: 13, color: "#6b7280" }}>
-            Salles communales de Saint Remèze — application de réservation en ligne.
+            Saint Remèze - Web Service — application de réservation des salles communales.
           </p>
           {CHANGELOG.map((entry) => (
             <div key={entry.version} style={{ borderLeft: "3px solid #c9a84c", paddingLeft: 16 }}>
