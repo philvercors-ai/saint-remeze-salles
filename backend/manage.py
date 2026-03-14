@@ -3,6 +3,15 @@
 import os
 import sys
 
+# Charge le .env avant que Django ne lise os.environ.
+# Sans cet appel, RESEND_API_KEY, MONGODB_URI… sont vides en développement
+# direct (hors Docker Compose qui injecte les vars automatiquement).
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
