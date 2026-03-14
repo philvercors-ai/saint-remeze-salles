@@ -651,27 +651,76 @@ Seules les occurrences en statut `pending` sont concernées par les actions grou
 
 ---
 
-## 9. Tâches planifiées Celery (RGPD)
+## 9. Tâches planifiées RGPD — Redis, Celery et automatisation
 
-Le worker Celery tourne avec `-B` (beat intégré) et gère trois tâches automatiques.
+### Pourquoi Redis et Celery pour le RGPD ?
 
-### Tâches définies
+Le RGPD impose des **obligations d'effacement automatique** des données personnelles :
+- Un utilisateur qui demande la suppression de son compte doit être anonymisé sous 30 jours
+- Un compte inactif depuis 3 ans doit être anonymisé automatiquement
+- L'utilisateur doit être prévenu 30 jours avant cette suppression
 
-#### `anonymize_pending_deletions`
-**Déclencheur** : à planifier (ex. quotidiennement)
-**Comportement** : anonymise les comptes dont `deletion_requested_at` date de plus de `RGPD_DELETION_DELAY_DAYS` jours (défaut : 30 jours).
+Ces opérations doivent tourner **en tâche de fond**, sans intervention manuelle, même la nuit. C'est le rôle de **Celery**, qui a besoin de **Redis** pour fonctionner.
 
-#### `anonymize_inactive_users`
-**Déclencheur** : à planifier (ex. mensuellement)
-**Comportement** : anonymise les comptes citoyen dont `last_login` date de plus de `RGPD_DATA_RETENTION_MONTHS` mois (défaut : 36 mois). Les agents et admins ne sont jamais anonymisés automatiquement.
+### Comment s'articulent Redis et Celery ?
 
-#### `warn_users_before_anonymization`
-**Déclencheur** : à planifier avant `anonymize_inactive_users`
-**Comportement** : envoie un email d'avertissement aux utilisateurs inactifs qui seront anonymisés dans 30 jours.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Chaque nuit / semaine                    │
+│                                                                 │
+│  Celery Beat          Redis              Celery Worker          │
+│  (planificateur)      (file d'attente)   (exécuteur)           │
+│                                                                 │
+│  "Il est 2h00,   →   [tâche déposée] →  Lit la tâche         │
+│   lancer la tâche     dans Redis         Connecte à MongoDB    │
+│   d'anonymisation"                       Anonymise les comptes │
+│                                          Écrit les logs        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Redis** est la boîte aux lettres : Django y dépose des messages, Celery les lit
+- **Celery Beat** est le planificateur : il déclenche les tâches aux heures programmées
+- **Celery Worker** est l'exécuteur : il fait vraiment le travail (accès MongoDB, envoi d'emails)
+
+> Sans Redis, Celery ne peut pas fonctionner. Sans Celery Worker, les tâches RGPD
+> ne s'exécutent jamais, même si elles sont programmées.
+
+### Les 3 tâches RGPD et leur rôle
+
+#### `anonymize_pending_deletions` — Tous les jours à 2h00
+
+Un citoyen clique "Supprimer mon compte" dans son profil. Le RGPD impose un délai
+de rétractation de 30 jours avant l'effacement effectif. Cette tâche vérifie chaque
+nuit si ce délai est écoulé et anonymise les comptes concernés.
+
+```
+Utilisateur clique          30 jours           Tâche s'exécute
+"Supprimer mon compte"      s'écoulent         automatiquement
+        │                       │                     │
+        ▼                       ▼                     ▼
+deletion_requested_at   [nuits passées]      user.anonymize()
+sauvé en base                                → données effacées
+```
+
+#### `warn_users_before_anonymization` — Chaque lundi à 3h00
+
+Avant d'anonymiser un compte inactif (tâche suivante), l'application envoie
+un email d'avertissement 30 jours à l'avance. L'utilisateur peut se reconnecter
+pour conserver son compte.
+
+#### `anonymize_inactive_users` — Le 1er de chaque mois à 4h00
+
+Un compte citoyen qui n'a pas été utilisé depuis **36 mois** est anonymisé
+automatiquement, conformément à l'article 5 du RGPD (limitation de la durée
+de conservation). Les agents et admins ne sont jamais concernés par cette règle.
+
+> Les 3 tâches s'exécutent dans cet ordre intentionnel : d'abord les avertissements
+> (lundi), ensuite les suppressions demandées (tous les jours), enfin les suppressions
+> pour inactivité (1er du mois).
 
 ### Planification (Celery Beat)
 
-Comme `django_celery_beat` est incompatible MongoDB, la planification se fait dans `config/celery.py` :
+La planification est définie dans `config/celery.py` :
 
 ```python
 from celery.schedules import crontab
@@ -692,17 +741,66 @@ app.conf.beat_schedule = {
 }
 ```
 
+### Mise en place sur Render (production)
+
+Le `render.yaml` ne déclare pas encore de worker Celery. Pour activer l'automatisation
+RGPD complète, il faut ajouter deux services dans le dashboard Render :
+
+#### 1 — Redis (Upstash — gratuit)
+
+1. Créer un compte sur [upstash.com](https://upstash.com)
+2. Créer une base Redis (région Frankfurt, plan gratuit)
+3. Copier l'URL de connexion (format `redis://default:xxx@xxx.upstash.io:6379`)
+4. Dans Render → service `saint-remeze-backend` → Environment → ajouter :
+   ```
+   REDIS_URL = redis://default:xxx@xxx.upstash.io:6379
+   ```
+
+#### 2 — Worker Celery (Render Background Worker)
+
+Dans le dashboard Render → **New** → **Background Worker** :
+
+| Paramètre | Valeur |
+|---|---|
+| Name | `saint-remeze-celery` |
+| Runtime | Python |
+| Root Directory | `backend` |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `celery -A config worker -B --loglevel=info` |
+
+Ajouter les mêmes variables d'environnement que le backend :
+`SECRET_KEY`, `MONGODB_URI`, `MONGODB_DB`, `REDIS_URL`, `RESEND_API_KEY`,
+`FROM_EMAIL`, `FRONTEND_URL`, `DJANGO_SETTINGS_MODULE`
+
+> Le `-B` dans la commande de démarrage intègre Celery Beat directement dans
+> le worker — un seul service suffit pour les deux rôles.
+
+> ⚠️ Sur le plan gratuit Render, le Background Worker s'endort après inactivité.
+> Pour les tâches RGPD nocturnes, un **plan payant (7 $/mois)** est nécessaire
+> pour garantir l'exécution. Sinon, déclencher manuellement (voir ci-dessous).
+
 ### Exécuter une tâche manuellement
 
+Via la console Render (onglet **Shell** du service backend) ou en Docker local :
+
 ```bash
-docker compose exec celery celery -A config call apps.accounts.tasks.anonymize_pending_deletions
+# Depuis Docker local
+docker compose exec backend python manage.py shell -c \
+  "from apps.accounts.tasks import anonymize_pending_deletions; print(anonymize_pending_deletions())"
+
+# Depuis la console Render (Shell)
+python manage.py shell -c \
+  "from apps.accounts.tasks import anonymize_pending_deletions; print(anonymize_pending_deletions())"
 ```
 
 ### Vérifier l'état du worker
 
 ```bash
+# En Docker local
 docker compose exec celery celery -A config inspect active
 docker compose logs celery --tail=50
+
+# Sur Render : consulter les logs du service saint-remeze-celery
 ```
 
 ### Processus d'anonymisation
