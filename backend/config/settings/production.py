@@ -39,7 +39,8 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "WARNING"},
     "loggers": {
         "django": {"handlers": ["console"], "level": "ERROR", "propagate": False},
-        "apps": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "services": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "apps": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "apps.accounts": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "services": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },
 }

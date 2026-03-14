@@ -1,6 +1,10 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from rest_framework import status
+
+logger = logging.getLogger(__name__)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -41,7 +45,13 @@ class RegisterView(APIView):
 
         # Envoie email de vérification
         token = user.generate_email_verify_token()
-        EmailService.send_email_verification(user, token)
+        email_sent = EmailService.send_email_verification(user, token)
+        if not email_sent:
+            logger.error(
+                "[REGISTER] Email de vérification NON envoyé pour %s — "
+                "vérifier RESEND_API_KEY et FROM_EMAIL (%s) dans les variables d'environnement.",
+                user.email, settings.DEFAULT_FROM_EMAIL,
+            )
 
         return Response(
             {"detail": "Compte créé. Vérifiez votre email pour activer votre compte."},
@@ -89,13 +99,13 @@ class LoginView(TokenObtainPairView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    # AllowAny : aucune opération serveur réelle (pas de blacklist JWT,
+    # incompatible MongoDB). La sécurité repose sur la courte durée de
+    # l'access token (15 min) et la rotation des refresh tokens.
+    # IsAuthenticated causait un 401 inutile si le token était expiré.
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        # La rotation des refresh tokens (ROTATE_REFRESH_TOKENS) invalide
-        # l'ancien token à chaque renouvellement. Le token_blacklist Django
-        # est incompatible MongoDB — la sécurité repose sur la courte durée
-        # de l'access token (15 min) et la rotation des refresh tokens.
         return Response({"detail": "Déconnexion réussie."})
 
 
