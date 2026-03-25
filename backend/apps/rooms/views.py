@@ -9,8 +9,14 @@ from .serializers import RoomSerializer
 
 
 class RoomViewSet(viewsets.ModelViewSet):
-    queryset = Room.objects.filter(is_active=True).order_by("name")
     serializer_class = RoomSerializer
+
+    def get_queryset(self):
+        qs = Room.objects.filter(is_active=True).order_by("name")
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category=category)
+        return qs
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):

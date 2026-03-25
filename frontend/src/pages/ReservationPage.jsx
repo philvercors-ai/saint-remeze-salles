@@ -52,7 +52,7 @@ export default function ReservationPage() {
   });
 
   useEffect(() => {
-    roomsApi.list().then(({ data }) => setRooms(data.results || data));
+    roomsApi.list({ category: "salle" }).then(({ data }) => setRooms(data.results || data));
   }, []);
 
   /* Recharge les créneaux occupés dès que la salle ou la date change */

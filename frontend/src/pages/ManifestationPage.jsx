@@ -222,7 +222,7 @@ export default function ManifestationPage() {
           {/* Toggle salle / extérieur */}
           <div style={{ display: "flex" }}>
             {[
-              { value: "room",     label: "🏛️ Salle communale" },
+              { value: "room",     label: "🏛️ Lieu communal" },
               { value: "exterior", label: "🌿 Lieu extérieur" },
             ].map(({ value, label }) => {
               const active = form.location_type === value;
@@ -251,14 +251,27 @@ export default function ManifestationPage() {
             {form.location_type === "room" ? (
               <>
                 <div>
-                  <label style={labelStyle}>Salle *</label>
+                  <label style={labelStyle}>Lieu *</label>
                   <select value={form.room} onChange={set("room")} required>
-                    <option value="">Choisir une salle…</option>
-                    {rooms.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.image_emoji} {r.name} ({r.capacity} pers.)
-                      </option>
-                    ))}
+                    <option value="">Choisir un lieu…</option>
+                    {rooms.filter(r => r.category === "salle").length > 0 && (
+                      <optgroup label="Salles">
+                        {rooms.filter(r => r.category === "salle").map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.image_emoji} {r.name} ({r.capacity} pers.)
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {rooms.filter(r => r.category === "lieu").length > 0 && (
+                      <optgroup label="Lieux">
+                        {rooms.filter(r => r.category === "lieu").map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.image_emoji} {r.name} ({r.capacity} pers.)
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   {errors.room && <p style={errStyle}>{errors.room}</p>}
                 </div>

@@ -4,6 +4,7 @@
     "pk": 1,
     "fields": {
       "name": "Salle des Fêtes",
+      "category": "salle",
       "capacity": 200,
       "area_sqm": 300,
       "hourly_rate": "80.00",
@@ -20,6 +21,7 @@
     "pk": 2,
     "fields": {
       "name": "Salle du Conseil",
+      "category": "salle",
       "capacity": 30,
       "area_sqm": 60,
       "hourly_rate": "0.00",
@@ -36,6 +38,7 @@
     "pk": 3,
     "fields": {
       "name": "Salle Polyvalente",
+      "category": "salle",
       "capacity": 80,
       "area_sqm": 120,
       "hourly_rate": "40.00",
@@ -52,6 +55,7 @@
     "pk": 4,
     "fields": {
       "name": "Terrain de Sport",
+      "category": "lieu",
       "capacity": 50,
       "area_sqm": 500,
       "hourly_rate": "20.00",

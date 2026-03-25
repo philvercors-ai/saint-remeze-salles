@@ -10,7 +10,7 @@ class RoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = [
-            "id", "name", "capacity", "area_sqm", "hourly_rate",
+            "id", "name", "category", "capacity", "area_sqm", "hourly_rate",
             "equipment", "description", "image_emoji", "color",
             "is_active", "requires_admin_only", "reservation_count",
         ]
