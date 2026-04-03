@@ -39,13 +39,12 @@ class Command(BaseCommand):
             if not user.is_superuser:
                 user.is_superuser = True
                 update_fields.append("is_superuser")
-            if update_fields:
-                user.save(update_fields=update_fields)
-                self.stdout.write(self.style.SUCCESS(
-                    f"ensure_superuser: {email} mis à jour ({', '.join(update_fields)})."
-                ))
-            else:
-                self.stdout.write(f"ensure_superuser: {email} déjà correct, ignoré.")
+            user.set_password(password)
+            update_fields.append("password")
+            user.save(update_fields=update_fields if update_fields else ["password"])
+            self.stdout.write(self.style.SUCCESS(
+                f"ensure_superuser: {email} mis à jour ({', '.join(update_fields)})."
+            ))
         except User.DoesNotExist:
             User.objects.create_superuser(
                 username=email,
