@@ -1194,24 +1194,41 @@ docker compose run --rm certbot certonly \
 
 Le projet inclut un fichier `render.yaml` pour déploiement sur [render.com](https://render.com).
 
+> **Plan utilisé : Free** — le service backend dort après 15 min d'inactivité (cold start ~30 s). Celery n'est pas disponible sur ce plan.
+
 ### Services Render
 
 - **Web Service** : backend Django (Gunicorn)
-- **Static Site** : frontend React
-- **Background Worker** : Celery
-- **Redis** : instance Redis managée Render
+- **Static Site** : frontend React (gratuit permanent)
+
+> Les services Celery et Redis managé Render nécessitent un plan payant. En production, utiliser **Upstash Redis** (gratuit) comme broker.
 
 ### Variables à configurer dans le dashboard Render
 
 ```
 SECRET_KEY
-MONGODB_URI        # MongoDB Atlas
+MONGODB_URI              # MongoDB Atlas (ex: mongodb+srv://...)
+MONGODB_DB               # saint_remeze
+REDIS_URL                # Upstash Redis (ex: redis://...)
 RESEND_API_KEY
-FROM_EMAIL
-FRONTEND_URL
-ALLOWED_HOSTS
-CORS_ALLOWED_ORIGINS
+FROM_EMAIL               # Ex: "Mairie de Saint Remèze <mairie@saint-remeze.fr>"
+FRONTEND_URL             # https://saint-remeze-frontend-ic8p.onrender.com
+ALLOWED_HOSTS            # .onrender.com,localhost
+CORS_ALLOWED_ORIGINS     # https://saint-remeze-frontend-ic8p.onrender.com
+DJANGO_SUPERUSER_EMAIL   # email du compte admin (ex: philvercors@gmail.com)
+DJANGO_SUPERUSER_PASSWORD # mot de passe du compte admin
 ```
+
+### Compte administrateur — création et réinitialisation du mot de passe
+
+Au démarrage, la commande `ensure_superuser` est exécutée automatiquement. Elle crée le compte si inexistant, et **force la mise à jour du mot de passe** à chaque déploiement depuis les variables d'environnement.
+
+**Pour réinitialiser le mot de passe en production (plan Free — sans accès Shell) :**
+
+1. Dashboard Render → service `saint-remeze-backend` → onglet **Environment**
+2. Modifier `DJANGO_SUPERUSER_EMAIL` et `DJANGO_SUPERUSER_PASSWORD` avec les nouvelles valeurs
+3. Sauvegarder — Render redémarre automatiquement
+4. Au démarrage, `ensure_superuser` met à jour le mot de passe
 
 ### Health check Render
 
@@ -1289,5 +1306,5 @@ La documentation OpenAPI interactive est disponible à :
 
 ---
 
-*Document mis à jour le 14 mars 2026 — Mairie de Saint Remèze*
-*Contact technique : admin@saint-remeze.fr*
+*Document mis à jour le 4 avril 2026 — Mairie de Saint Remèze*
+*Contact technique : philvercors@gmail.com*
