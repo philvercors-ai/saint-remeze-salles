@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.0 — Mars 2026
+> Version 1.6 — Avril 2026
 
 ---
 
@@ -23,6 +23,7 @@
 13. [Déploiement Docker](#13-déploiement-docker)
 14. [Déploiement Render (cloud)](#14-déploiement-render-cloud)
 15. [Opérations de maintenance](#15-opérations-de-maintenance)
+16. [Architecture globale — portail et applications](#16-architecture-globale--portail-et-applications)
 
 ---
 
@@ -1306,5 +1307,82 @@ La documentation OpenAPI interactive est disponible à :
 
 ---
 
-*Document mis à jour le 4 avril 2026 — Mairie de Saint Remèze*
+---
+
+## 16. Architecture globale — portail et applications
+
+La commune de Saint Remèze dispose de **deux services numériques indépendants** et d'un **portail d'accueil** qui les regroupe.
+
+### Vue d'ensemble
+
+```
+                     ┌──────────────────────────────┐
+                     │   Portail Web Services        │
+                     │  saint-remeze-WEB Services    │
+                     │  → services.saint-remeze.fr   │
+                     │  (React — site statique)      │
+                     └──────────────┬───────────────┘
+                                    │  liens externes
+               ┌────────────────────┴──────────────────────┐
+               ▼                                           ▼
+  ┌──────────────────────────┐             ┌──────────────────────────┐
+  │  Votre Avis Compte       │             │  Salles Communales       │
+  │  (Remarques Citoyennes)  │             │  saint-remeze-salles     │
+  │  → avis.saint-remeze.fr  │             │  → salles.saint-remeze.fr│
+  │                          │             │                          │
+  │  Frontend : React (CRA)  │             │  Frontend : React (Vite) │
+  │  Backend  : Node.js      │             │  Backend  : Django/DRF   │
+  │  BDD      : MongoDB      │             │  BDD      : MongoDB      │
+  │  Déploiement : Vercel    │             │  Déploiement : Render    │
+  └──────────────────────────┘             └──────────────────────────┘
+```
+
+### Les trois dépôts Git
+
+| Dépôt | Rôle | URL de prod |
+|---|---|---|
+| `saint-remeze-WEB Services` | Portail d'accueil — 2 cartes de navigation | `services.saint-remeze.fr` |
+| `saint-remeze-COMPLET-v7.2` | App "Votre Avis Compte" (signalements citoyens) | `avis.saint-remeze.fr` |
+| `saint-remeze-salles` | App "Salles Communales" (réservations) — **ce dépôt** | `salles.saint-remeze.fr` |
+
+### Principe d'architecture
+
+- Le **portail** (`saint-remeze-WEB Services`) est une **SPA React pure**, sans backend ni appels API. Il présente deux cartes cliquables qui ouvrent chacune le service correspondant dans un nouvel onglet.
+- Chaque **application** (remarques, salles) est totalement indépendante : backend propre, base de données propre, authentification propre.
+- Il n'y a **aucun partage de base de données ou d'API** entre les deux applications.
+
+### Variables d'environnement du portail
+
+Le portail `saint-remeze-WEB Services` utilise deux variables Vite injectées au build :
+
+| Variable | Description | Exemple |
+|---|---|---|
+| `VITE_AVIS_URL` | URL de l'app "Votre Avis Compte" | `https://saint-remeze-avis.vercel.app` |
+| `VITE_SALLES_URL` | URL de l'app "Salles Communales" | `https://salles.saint-remeze.fr` |
+
+Ces variables doivent être renseignées dans les **Environment Variables** du service Render Static Site correspondant.
+
+### Déploiement du portail (Render Static Site)
+
+Le `render.yaml` du dépôt `saint-remeze-WEB Services` déclare un service de type `static` :
+
+```yaml
+- type: web
+  name: saint-remeze-frontend
+  runtime: static
+  rootDir: frontend
+  buildCommand: "npm ci && npm run build"
+  staticPublishPath: dist
+  envVars:
+    - key: VITE_AVIS_URL
+      value: https://saint-remeze-avis.vercel.app   # à adapter
+    - key: VITE_SALLES_URL
+      value: https://salles.saint-remeze.fr
+```
+
+> Le portail est un site 100 % statique : il ne nécessite ni backend, ni base de données, ni Redis, ni Celery.
+
+---
+
+*Document mis à jour le 14 avril 2026 — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

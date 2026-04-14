@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.5.0";
+export const APP_VERSION = "1.6.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.6.0",
+    date: "2026-04-14",
+    label: "Architecture portail",
+    changes: [
+      "Portail Web Services : page d'accueil unifiée pour les deux services municipaux",
+      "Séparation nette entre 'Votre Avis Compte' (remarques citoyennes) et 'Salles Communales' (réservations)",
+      "Manuel admin mis à jour — section architecture globale portail + applications",
+    ],
+  },
   {
     version: "1.5.0",
     date: "2026-03-09",
