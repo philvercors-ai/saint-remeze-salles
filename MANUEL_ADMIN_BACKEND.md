@@ -29,46 +29,229 @@
 
 ## 1. Architecture technique
 
-### Vue d'ensemble
+### Vue d'ensemble — déploiement Docker local
+
+En développement local ou sur un VPS avec Docker, tous les services tournent ensemble derrière Nginx :
 
 ```
-                    ┌─────────────┐
-                    │   Nginx     │  :80 / :443
-                    │  (reverse   │  SSL + Let's Encrypt
-                    │   proxy)    │
-                    └──────┬──────┘
-               ┌───────────┴───────────┐
-               ▼                       ▼
-        ┌─────────────┐         ┌─────────────┐
-        │   Frontend  │         │   Backend   │
-        │  React/Vite │         │  Django/DRF │
-        │    (PWA)    │         │  Gunicorn   │
-        └─────────────┘         └──────┬──────┘
-                                       │
-                          ┌────────────┼────────────┐
-                          ▼            ▼             ▼
-                   ┌───────────┐ ┌─────────┐ ┌───────────┐
-                   │  MongoDB  │ │  Redis  │ │  Celery   │
-                   │ (données) │ │(broker) │ │  worker   │
-                   └───────────┘ └─────────┘ └───────────┘
+  Navigateur / Application mobile
+            │
+            ▼
+   ┌─────────────────┐
+   │     Nginx       │  :80 (HTTP) / :443 (HTTPS + SSL Let's Encrypt)
+   │  (reverse proxy)│  Aiguille les requêtes selon l'URL
+   └────────┬────────┘
+            │
+      /api/* │                   /* (tout le reste)
+            │                         │
+            ▼                         ▼
+   ┌─────────────────┐       ┌─────────────────┐
+   │    Backend      │       │    Frontend      │
+   │  Django / DRF   │       │  React / Vite    │
+   │  Gunicorn :8000 │       │  (PWA statique)  │
+   └────────┬────────┘       └─────────────────┘
+            │
+     ┌──────┼──────────────┐
+     ▼      ▼              ▼
+┌────────┐ ┌────────┐ ┌──────────────┐
+│MongoDB │ │ Redis  │ │    Celery    │
+│        │ │        │ │  worker+beat │
+│Stockage│ │Boîte   │ │Tâches RGPD  │
+│données │ │lettres │ │planifiées   │
+└────────┘ └────────┘ └──────────────┘
 ```
 
-### Stack technique
+### Vue d'ensemble — déploiement Render (cloud, production)
 
-| Composant | Technologie | Version |
-|---|---|---|
-| Framework web | Django | 5.1 |
-| API REST | Django REST Framework | 3.15 |
-| Authentification | djangorestframework-simplejwt | JWT |
-| Base de données | MongoDB | 7 |
-| Driver MongoDB | django-mongodb-backend | — |
-| File de tâches | Celery | 5.4 |
-| Broker | Redis | 7 |
-| Emails | Resend API | — |
-| Serveur WSGI | Gunicorn | 22 |
-| Serveur web | Nginx | Alpine |
-| Certificat SSL | Let's Encrypt / Certbot | — |
-| Documentation API | drf-spectacular (OpenAPI) | — |
+Sur Render, il n'y a **pas de Nginx** : c'est Render qui assure le routage et le SSL. Le frontend est un site statique indépendant du backend.
+
+```
+  Navigateur / Application mobile
+            │
+   ┌────────┴──────────────────────────┐
+   │          Render (infrastructure)  │
+   │  SSL automatique + routing HTTPS  │
+   └──────┬──────────────┬─────────────┘
+          │              │
+          ▼              ▼
+  salles.saint-remeze.fr/api/*    salles.saint-remeze.fr/*
+          │              │
+          ▼              ▼
+  ┌──────────────┐  ┌───────────────┐
+  │  Web Service  │  │  Static Site  │
+  │  Django/DRF   │  │  React/Vite   │
+  │  Gunicorn     │  │  (PWA)        │
+  │  WhiteNoise   │  └───────────────┘
+  └──────┬────────┘
+         │
+  ┌──────┼────────────────┐
+  ▼      ▼                ▼
+┌──────────────┐  ┌──────┐  ┌───────────────┐
+│ MongoDB Atlas│  │Redis │  │ Celery worker │
+│  (cloud M0)  │  │Upst. │  │ (optionnel,   │
+│              │  │(free)│  │  plan payant) │
+└──────────────┘  └──────┘  └───────────────┘
+```
+
+---
+
+### Rôle de chaque outil — explications en français
+
+#### Django + Django REST Framework (DRF)
+**Ce que c'est :** Django est le **framework web** principal écrit en Python. Il gère toute la logique de l'application : les routes URL, les règles métier, la sécurité, l'accès à la base de données.
+
+**Ce qu'il fait concrètement ici :**
+- Reçoit les requêtes HTTP (ex : "affiche les réservations de la semaine")
+- Vérifie que l'utilisateur est authentifié et a le bon rôle
+- Interroge MongoDB pour récupérer ou enregistrer les données
+- Renvoie la réponse JSON au frontend
+
+Django REST Framework (DRF) est une extension de Django qui facilite la création d'une **API REST** : c'est lui qui transforme les données en JSON, gère la pagination, les filtres, et génère la documentation Swagger automatiquement.
+
+> Sans Django, il n'y a pas d'application — c'est le cœur du système.
+
+---
+
+#### MongoDB
+**Ce que c'est :** MongoDB est la **base de données** de l'application. C'est là que toutes les données sont stockées de façon permanente.
+
+**Ce qu'il stocke concrètement ici :**
+- Les comptes utilisateurs (email, mot de passe hashé, rôle, téléphone…)
+- Les salles communales (nom, capacité, équipements, tarif…)
+- Les réservations (qui réserve quoi, quand, statut, commentaires…)
+- Les manifestations, les notifications, le journal d'audit
+
+MongoDB est une base de données dite **NoSQL** : contrairement à PostgreSQL ou MySQL, elle stocke les données sous forme de **documents JSON** (appelés BSON) plutôt que dans des tableaux avec des lignes et colonnes. Cela offre plus de flexibilité pour des structures de données variables.
+
+**Pourquoi MongoDB et pas PostgreSQL ?** Ce projet utilise le driver `django-mongodb-backend` qui permet à Django — habituellement conçu pour des bases relationnelles — de fonctionner avec MongoDB. En local, MongoDB tourne dans Docker. En production sur Render, c'est **MongoDB Atlas** (service cloud géré) qui est utilisé.
+
+> Sans MongoDB, aucune donnée n'est persistée — tout se perd au redémarrage.
+
+> ⚠️ La migration de MongoDB impose deux contraintes : `token_blacklist` (blackliste JWT) et `django_celery_beat` (planificateur Celery en base) sont **désactivés** car ils utilisent des types de champs incompatibles avec MongoDB. Voir les commentaires dans `base.py`.
+
+---
+
+#### Redis
+**Ce que c'est :** Redis est une **base de données en mémoire** ultra-rapide, utilisée ici comme **intermédiaire de communication** entre Django et Celery.
+
+**Comment ça fonctionne concrètement :**
+Quand Django veut lancer une tâche en arrière-plan (ex : "anonymise cet utilisateur dans 30 jours"), il ne l'exécute pas lui-même. Il **dépose un message** dans Redis, comme une lettre dans une boîte aux lettres. Celery lit cette boîte, prend la lettre et exécute la tâche.
+
+```
+Django               Redis               Celery
+  │                    │                    │
+  │── "fais tâche X" ─►│                    │
+  │                    │── "voilà tâche X" ─►│
+  │                    │                    │── exécute X
+```
+
+Redis stocke également les **résultats** des tâches Celery.
+
+> Sans Redis, Celery ne peut pas recevoir de tâches et ne fonctionne pas.
+> En local : Redis tourne dans Docker. En production : **Upstash Redis** (service cloud gratuit).
+
+---
+
+#### Celery (worker + beat)
+**Ce que c'est :** Celery est le **gestionnaire de tâches asynchrones**. Il exécute des opérations en arrière-plan, sans bloquer Django, et peut les planifier à des horaires précis.
+
+**Ce qu'il fait concrètement ici :**
+- Exécute les tâches RGPD automatiquement (anonymisation des comptes inactifs ou supprimés)
+- Peut envoyer des emails en différé sans ralentir la réponse API
+
+Celery se compose de deux parties qui tournent dans le même processus (commande `-B`) :
+- **Celery Worker** : exécute les tâches dès qu'elles arrivent dans Redis
+- **Celery Beat** : le planificateur — il déclenche les tâches récurrentes aux heures programmées (ex : "tous les jours à 2h, lance l'anonymisation")
+
+> Sans Celery, les tâches RGPD planifiées ne s'exécutent jamais automatiquement.
+> En local : Celery tourne dans un conteneur Docker séparé. Sur Render Free, il **n'est pas disponible** — les tâches doivent être déclenchées manuellement.
+
+---
+
+#### Gunicorn
+**Ce que c'est :** Gunicorn (Green Unicorn) est le **serveur WSGI** qui fait tourner Django en production.
+
+Django tout seul (`runserver`) ne peut gérer qu'une seule requête à la fois — c'est suffisant en développement mais pas en production. Gunicorn lance **plusieurs processus workers** en parallèle, chacun capable de traiter une requête indépendamment.
+
+```
+                    Gunicorn
+               ┌───────────────┐
+  Requête 1 ──►│  Worker 1     │  (Django)
+  Requête 2 ──►│  Worker 2     │  (Django)
+  Requête 3 ──►│  Worker 3     │  (Django)
+               └───────────────┘
+```
+
+> Sans Gunicorn, Django ne peut pas tourner en production de façon fiable.
+
+---
+
+#### Nginx (déploiement Docker uniquement)
+**Ce que c'est :** Nginx est le **serveur web / reverse proxy** qui se trouve devant tous les autres services.
+
+**Ce qu'il fait concrètement ici :**
+- Reçoit toutes les requêtes entrantes (port 80/443)
+- Redirige `/api/*` vers Gunicorn (backend Django)
+- Sert directement les fichiers du frontend React (HTML, CSS, JS)
+- Gère le **SSL/HTTPS** avec les certificats Let's Encrypt
+- Sert les fichiers statiques Django (`/static/`) et médias (`/media/`)
+
+> Nginx est présent **uniquement en déploiement Docker**. Sur Render, c'est l'infrastructure Render qui joue ce rôle.
+
+---
+
+#### WhiteNoise (déploiement Render uniquement)
+**Ce que c'est :** WhiteNoise est un **middleware Django** qui permet à Django de servir lui-même ses fichiers statiques (CSS, JS, images) sans avoir besoin de Nginx.
+
+Sur Render, il n'y a pas de Nginx pour servir les fichiers statiques du backend (`/static/`). WhiteNoise comble ce manque : il intercepte les requêtes vers les fichiers statiques directement dans Django, avec compression automatique.
+
+> Sans WhiteNoise sur Render, l'interface Django Admin serait sans CSS/JS.
+
+---
+
+#### Resend (service email externe)
+**Ce que c'est :** Resend est le **service d'envoi d'emails** utilisé par l'application. C'est un service cloud externe (SaaS).
+
+Django délègue tous les envois d'emails à l'API Resend (via `services/email_service.py`). Resend se charge de la délivrabilité, du suivi des envois, et de la gestion du domaine SPF/DKIM.
+
+**Emails envoyés via Resend :** vérification d'email à l'inscription, confirmation/refus de réservation, réinitialisation de mot de passe, avertissements RGPD.
+
+> Sans Resend configuré, les emails ne sont pas envoyés (ou uniquement à l'adresse du compte Resend en mode test). Voir section 10-bis.
+
+---
+
+#### Let's Encrypt / Certbot (déploiement Docker uniquement)
+**Ce que c'est :** Let's Encrypt est une **autorité de certification gratuite** qui émet des certificats SSL. Certbot est l'outil automatique qui renouvelle ces certificats.
+
+En déploiement Docker, un conteneur `certbot` tourne en permanence et renouvelle automatiquement le certificat SSL toutes les 12 heures (si nécessaire). Le certificat est partagé avec Nginx via un volume Docker.
+
+> Sur Render, le SSL est géré automatiquement par la plateforme — Let's Encrypt n'est pas nécessaire.
+
+---
+
+### Stack technique complète
+
+| Composant | Technologie | Version | Environnement |
+|---|---|---|---|
+| Framework web | Django | ≥ 5.2 | Tous |
+| API REST | Django REST Framework | ≥ 3.15 | Tous |
+| Authentification JWT | djangorestframework-simplejwt | ≥ 5.3 | Tous |
+| Base de données | MongoDB (via django-mongodb-backend) | 7 | Tous |
+| Driver MongoDB | django-mongodb-backend | ≥ 5.2 | Tous |
+| File de tâches | Celery | ≥ 5.4 | Tous |
+| Broker de messages | Redis | 7 | Tous |
+| Fichiers statiques (cloud) | WhiteNoise | ≥ 6.7 | Render |
+| Emails | Resend API | ≥ 2.0 | Tous |
+| Serveur WSGI | Gunicorn | ≥ 22 | Tous |
+| Reverse proxy | Nginx Alpine | — | Docker uniquement |
+| Certificat SSL | Let's Encrypt / Certbot | — | Docker uniquement |
+| Documentation API | drf-spectacular (OpenAPI) | ≥ 0.27 | Tous |
+
+> ⚠️ **Note MongoDB :** deux modules Django standards sont **désactivés** pour cause d'incompatibilité avec MongoDB :
+> - `rest_framework.authtoken` / `token_blacklist` → la sécurité JWT repose sur la courte durée de vie des access tokens (15 min) et la rotation des refresh tokens
+> - `django_celery_beat` → Celery Beat utilise le planificateur en mémoire (`PersistentScheduler`) avec un fichier `celerybeat-schedule`
+
+---
 
 ### Applications Django
 
@@ -76,19 +259,20 @@
 backend/
 ├── config/
 │   ├── settings/
-│   │   ├── base.py          # Paramètres communs
-│   │   ├── development.py   # Dev local
-│   │   └── production.py    # Production
+│   │   ├── base.py          # Paramètres communs (MongoDB, JWT, Celery, RGPD)
+│   │   ├── development.py   # Dev local (DEBUG=True, CORS open)
+│   │   └── production.py    # Production (HTTPS forcé, logs JSON, CORS restrictif)
 │   ├── urls.py              # Routage principal
-│   └── celery.py            # Config Celery
+│   ├── celery.py            # Config Celery + planification Beat
+│   └── wsgi.py              # Point d'entrée Gunicorn
 └── apps/
-    ├── accounts/            # Utilisateurs, auth, RGPD
-    ├── rooms/               # Salles communales
-    ├── reservations/        # Réservations
-    ├── manifestations/      # Manifestations
-    ├── notifications/       # Notifications inter-services
-    ├── audit/               # Journal d'audit
-    └── compat/              # Adaptateurs MongoDB
+    ├── accounts/            # Utilisateurs, auth JWT, RGPD, réinitialisation MDP
+    ├── rooms/               # Salles communales (CRUD, disponibilité, fixtures)
+    ├── reservations/        # Réservations (workflow, récurrence, anti-chevauchement)
+    ├── manifestations/      # Dossiers de manifestation (GPS, budget, équipements)
+    ├── notifications/       # Services municipaux + historique des envois
+    ├── audit/               # Journal d'audit (toutes les actions API)
+    └── compat/              # Adaptateurs MongoDB (auto_field, renderer JSON, auth)
 ```
 
 ---

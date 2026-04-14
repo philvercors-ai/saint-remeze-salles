@@ -4,7 +4,7 @@ Application fullstack de gestion des réservations de salles communales.
 
 ## Stack
 
-- **Backend** : Python 3.12 + Django 5.1 + DRF + PostgreSQL 16
+- **Backend** : Python 3.12 + Django 5.2 + DRF + MongoDB 7 (django-mongodb-backend)
 - **Frontend** : React 18 + Vite 5 + PWA (installable)
 - **Emails** : Resend API
 - **Async** : Celery + Redis
