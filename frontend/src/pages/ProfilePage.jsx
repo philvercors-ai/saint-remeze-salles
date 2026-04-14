@@ -92,7 +92,7 @@ export default function ProfilePage() {
           <InfoRow label="Rôle" value={{ citoyen: "Citoyen", agent: "Agent municipal", admin: "Administrateur" }[user.role]} />
           <InfoRow label="Membre depuis" value={new Date(user.date_joined).toLocaleDateString("fr-FR")} />
           <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>
-            Pour modifier vos informations, contactez : mairie@saint-remeze.fr
+            Pour modifier vos informations, contactez : mairie@saintremeze.fr
           </p>
         </div>
       )}
@@ -146,7 +146,7 @@ export default function ProfilePage() {
           </div>
 
           <p style={{ fontSize: 12, color: "#9ca3af" }}>
-            Contact DPO : <a href="mailto:dpo@saint-remeze.fr" style={{ color: "#1a3a5a" }}>dpo@saint-remeze.fr</a>
+            Contact DPO : <a href="mailto:dpo@saintremeze.fr" style={{ color: "#1a3a5a" }}>dpo@saintremeze.fr</a>
             {" · "}
             <a href="/confidentialite" style={{ color: "#1a3a5a" }}>Politique de confidentialité</a>
           </p>

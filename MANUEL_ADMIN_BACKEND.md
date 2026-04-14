@@ -347,7 +347,7 @@ curl http://localhost/api/health/
 | `MONGODB_URI` | URI de connexion MongoDB | `mongodb+srv://user:pass@cluster/db` |
 | `MONGODB_DB` | Nom de la base de données | `saint_remeze` |
 | `RESEND_API_KEY` | Clé API Resend pour les emails | `re_xxxx` |
-| `FROM_EMAIL` | Adresse d'expédition des emails | `mairie@saint-remeze.fr` |
+| `FROM_EMAIL` | Adresse d'expédition des emails | `mairie@saintremeze.fr` |
 | `FRONTEND_URL` | URL du frontend (pour les liens dans les emails) | `https://salles.saint-remeze.fr` |
 | `REDIS_URL` | URI Redis (broker Celery) | `redis://redis:6379/0` |
 
@@ -1051,7 +1051,7 @@ En mode test, toute tentative d'envoyer à un autre email retourne :
 }
 ```
 
-La solution : **vérifier le domaine `saint-remeze.fr`** auprès de Resend.
+La solution : **vérifier le domaine `saintremeze.fr`** auprès de Resend.
 
 ---
 
@@ -1063,14 +1063,14 @@ La solution : **vérifier le domaine `saint-remeze.fr`** auprès de Resend.
 
 ---
 
-### Étape 2 — Vérifier le domaine `saint-remeze.fr`
+### Étape 2 — Vérifier le domaine `saintremeze.fr`
 
 C'est l'étape clé. Resend doit prouver que vous contrôlez le domaine.
 
 #### 2.1 — Ajouter le domaine dans Resend
 
 1. Dans le dashboard Resend → **Domains** → **Add Domain**
-2. Saisir : `saint-remeze.fr`
+2. Saisir : `saintremeze.fr`
 3. Cliquer **Add**
 
 Resend affiche alors **3 enregistrements DNS** à créer.
@@ -1083,7 +1083,7 @@ et créez les 3 enregistrements suivants (les valeurs exactes viennent du dashbo
 **Enregistrement 1 — SPF (TXT)**
 ```
 Type  : TXT
-Nom   : saint-remeze.fr   (ou @)
+Nom   : saintremeze.fr   (ou @)
 Valeur: v=spf1 include:amazonses.com ~all
 TTL   : 3600 (ou défaut)
 ```
@@ -1091,7 +1091,7 @@ TTL   : 3600 (ou défaut)
 **Enregistrement 2 — DKIM (CNAME)**
 ```
 Type  : CNAME
-Nom   : resend._domainkey.saint-remeze.fr
+Nom   : resend._domainkey.saintremeze.fr
 Valeur: (fournie par Resend — ressemble à resend._domainkey.xxxxxxx.dkim.amazonses.com)
 TTL   : 3600 (ou défaut)
 ```
@@ -1099,14 +1099,14 @@ TTL   : 3600 (ou défaut)
 **Enregistrement 3 — DMARC (TXT)** *(optionnel mais recommandé)*
 ```
 Type  : TXT
-Nom   : _dmarc.saint-remeze.fr
+Nom   : _dmarc.saintremeze.fr
 Valeur: v=DMARC1; p=none;
 TTL   : 3600 (ou défaut)
 ```
 
 > ⚠️ **Attention chez OVH** : ne pas inclure le nom de domaine dans le champ "Sous-domaine".
-> Pour `resend._domainkey.saint-remeze.fr`, saisir uniquement `resend._domainkey` dans
-> le champ sous-domaine — OVH ajoute `.saint-remeze.fr` automatiquement.
+> Pour `resend._domainkey.saintremeze.fr`, saisir uniquement `resend._domainkey` dans
+> le champ sous-domaine — OVH ajoute `.saintremeze.fr` automatiquement.
 
 #### 2.3 — Attendre la propagation DNS
 
@@ -1117,10 +1117,10 @@ Le statut passe de `Pending` à `Verified` (✅) quand c'est bon.
 
 > Pour vérifier manuellement depuis un terminal :
 > ```bash
-> dig TXT saint-remeze.fr +short
+> dig TXT saintremeze.fr +short
 > # Doit contenir : "v=spf1 include:amazonses.com ~all"
 >
-> dig CNAME resend._domainkey.saint-remeze.fr +short
+> dig CNAME resend._domainkey.saintremeze.fr +short
 > # Doit retourner l'adresse DKIM fournie par Resend
 > ```
 
@@ -1131,7 +1131,7 @@ Le statut passe de `Pending` à `Verified` (✅) quand c'est bon.
 1. Dashboard Resend → **API Keys** → **Create API Key**
 2. Nom : `saint-remeze-production`
 3. Permission : **Sending access** (pas besoin de Full access)
-4. Domain : sélectionner `saint-remeze.fr` *(restreint la clé à ce domaine)*
+4. Domain : sélectionner `saintremeze.fr` *(restreint la clé à ce domaine)*
 5. Cliquer **Add** → **copier la clé immédiatement** (elle ne sera plus affichée)
 
 La clé ressemble à : `re_AbCdEfGh_123456789`
@@ -1147,7 +1147,7 @@ Dans le dashboard Render → service `saint-remeze-backend` → **Environment** 
 | Variable | Valeur à saisir |
 |---|---|
 | `RESEND_API_KEY` | `re_AbCdEfGh_123456789` (votre clé) |
-| `FROM_EMAIL` | `Mairie de Saint Remèze <noreply@saint-remeze.fr>` |
+| `FROM_EMAIL` | `Mairie de Saint Remèze <noreply@saintremeze.fr>` |
 
 > Le format `"Nom affiché <email@domaine.fr>"` est recommandé pour un affichage
 > professionnel dans les boîtes mail des destinataires.
@@ -1158,7 +1158,7 @@ Cliquer **Save Changes** → Render redémarre le service automatiquement.
 
 ```bash
 RESEND_API_KEY=re_AbCdEfGh_123456789
-FROM_EMAIL=Mairie de Saint Remèze <noreply@saint-remeze.fr>
+FROM_EMAIL=Mairie de Saint Remèze <noreply@saintremeze.fr>
 ```
 
 ---
@@ -1370,7 +1370,7 @@ Pour l'initialisation (première fois) :
 docker compose run --rm certbot certonly \
   --webroot -w /var/www/certbot \
   -d salles.saint-remeze.fr \
-  --email admin@saint-remeze.fr \
+  --email admin@saintremeze.fr \
   --agree-tos --no-eff-email
 ```
 
@@ -1397,7 +1397,7 @@ MONGODB_URI              # MongoDB Atlas (ex: mongodb+srv://...)
 MONGODB_DB               # saint_remeze
 REDIS_URL                # Upstash Redis (ex: redis://...)
 RESEND_API_KEY
-FROM_EMAIL               # Ex: "Mairie de Saint Remèze <mairie@saint-remeze.fr>"
+FROM_EMAIL               # Ex: "Mairie de Saint Remèze <mairie@saintremeze.fr>"
 FRONTEND_URL             # https://saint-remeze-frontend-ic8p.onrender.com
 ALLOWED_HOSTS            # .onrender.com,localhost
 CORS_ALLOWED_ORIGINS     # https://saint-remeze-frontend-ic8p.onrender.com
@@ -1782,7 +1782,7 @@ Accord explicite donné par l'utilisateur pour le traitement de ses données. En
 Droit de l'utilisateur de demander la suppression de ses données. Dans cette application, la demande est enregistrée (`deletion_requested_at`) et l'anonymisation effective intervient 30 jours plus tard (délai de rétractation), exécutée automatiquement par Celery.
 
 **DPO — Data Protection Officer** *(délégué à la protection des données)*
-Personne responsable de la conformité RGPD au sein de l'organisation. Contact : `dpo@saint-remeze.fr`.
+Personne responsable de la conformité RGPD au sein de l'organisation. Contact : `dpo@saintremeze.fr`.
 
 ---
 

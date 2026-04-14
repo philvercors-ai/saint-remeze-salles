@@ -137,7 +137,7 @@ SIMPLE_JWT = {
 # ── Resend (emails) ─────────────────────────────────────────────────────────────
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 # Sans domaine vérifié dans Resend, utiliser onboarding@resend.dev
-# Avec domaine vérifié : "Mairie de Saint Remèze <noreply@saint-remeze.fr>"
+# Avec domaine vérifié : "Mairie de Saint Remèze <mairie@saintremeze.fr>"
 DEFAULT_FROM_EMAIL = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 

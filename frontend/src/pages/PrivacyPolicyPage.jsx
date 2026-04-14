@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
         <p style={{ color: "#374151", lineHeight: 1.7 }}>
           <strong>{policy?.responsable_traitement}</strong><br />
           07700 Saint Remèze<br />
-          Email : <a href="mailto:mairie@saint-remeze.fr" style={{ color: "#1a3a5a" }}>mairie@saint-remeze.fr</a><br />
+          Email : <a href="mailto:mairie@saintremeze.fr" style={{ color: "#1a3a5a" }}>mairie@saintremeze.fr</a><br />
           DPO : <a href={`mailto:${policy?.contact_dpo}`} style={{ color: "#1a3a5a" }}>{policy?.contact_dpo}</a>
         </p>
       </section>

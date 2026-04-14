@@ -199,7 +199,7 @@ class PrivacyPolicyView(APIView):
             "version": settings.RGPD_POLICY_VERSION,
             "derniere_mise_a_jour": "2026-01-01",
             "responsable_traitement": "Mairie de Saint Remèze",
-            "contact_dpo": "dpo@saint-remeze.fr",
+            "contact_dpo": "dpo@saintremeze.fr",
             "traitements": [
                 {
                     "nom": "Gestion des réservations",
@@ -228,7 +228,7 @@ class PrivacyPolicyView(APIView):
                 "Droit de rectification (Art. 16) : modification du profil en ligne",
                 "Droit à l'effacement (Art. 17) : demande de suppression depuis votre profil",
                 "Droit à la portabilité (Art. 20) : export CSV disponible dans votre profil",
-                "Droit d'opposition (Art. 21) : contact dpo@saint-remeze.fr",
+                "Droit d'opposition (Art. 21) : contact dpo@saintremeze.fr",
                 "Réclamation CNIL : www.cnil.fr",
             ],
         })

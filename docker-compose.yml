@@ -45,7 +45,7 @@ services:
       MONGODB_URI:       mongodb://mongodb:27017/saint_remeze
       MONGODB_DB:        ${MONGODB_DB:-saint_remeze}
       RESEND_API_KEY:    ${RESEND_API_KEY}
-      FROM_EMAIL:        ${FROM_EMAIL:-mairie@saint-remeze.fr}
+      FROM_EMAIL:        ${FROM_EMAIL:-mairie@saintremeze.fr}
       FRONTEND_URL:      ${FRONTEND_URL:-https://salles.saint-remeze.fr}
       REDIS_URL:         redis://redis:6379/0
     volumes:
@@ -72,7 +72,7 @@ services:
       MONGODB_URI:       mongodb://mongodb:27017/saint_remeze
       MONGODB_DB:        ${MONGODB_DB:-saint_remeze}
       RESEND_API_KEY:    ${RESEND_API_KEY}
-      FROM_EMAIL:        ${FROM_EMAIL:-mairie@saint-remeze.fr}
+      FROM_EMAIL:        ${FROM_EMAIL:-mairie@saintremeze.fr}
       FRONTEND_URL:      ${FRONTEND_URL:-https://salles.saint-remeze.fr}
       REDIS_URL:         redis://redis:6379/0
     command: celery -A config worker -B --loglevel=info

@@ -67,7 +67,7 @@ docker-compose up nginx certbot -d
 docker-compose exec certbot certbot certonly --webroot \
   -w /var/www/certbot \
   -d salles.saint-remeze.fr \
-  --email admin@saint-remeze.fr \
+  --email admin@saintremeze.fr \
   --agree-tos --non-interactive
 ```
 
@@ -100,7 +100,7 @@ Swagger UI disponible sur : `https://salles.saint-remeze.fr/api/docs/`
 - Export des données (JSON/CSV) depuis le profil
 - Droit à l'oubli (anonymisation différée 30 jours)
 - Auto-anonymisation après 36 mois d'inactivité (tâche Celery)
-- Contact DPO : dpo@saint-remeze.fr
+- Contact DPO : dpo@saintremeze.fr
 
 ## Générer les icônes PWA
 

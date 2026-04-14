@@ -80,7 +80,7 @@ class EmailService:
                 <p>Bonjour {user.first_name or user.email},</p>
                 <p>Votre mot de passe a été modifié avec succès.</p>
                 <p style="color:#666;font-size:13px;">Si vous n'êtes pas à l'origine de cette modification,
-                contactez immédiatement la mairie : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
+                contactez immédiatement la mairie : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
         )
         return cls._send(user.email, "Mot de passe modifié — Saint Remèze", html)
@@ -109,7 +109,7 @@ class EmailService:
                 <p>Bonne nouvelle ! Votre réservation a été <strong style="color:#065f46">approuvée</strong> :</p>
                 {cls._reservation_summary(reservation)}
                 {"<p><strong>Commentaire de la mairie :</strong> " + reservation.admin_comment + "</p>" if reservation.admin_comment else ""}
-                <p>En cas de question, contactez-nous : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
+                <p>En cas de question, contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
         )
         return cls._send(reservation.contact_email, "Réservation approuvée — Saint Remèze", html)
@@ -123,7 +123,7 @@ class EmailService:
                 <p>Nous ne pouvons malheureusement pas donner suite à votre demande de réservation :</p>
                 {cls._reservation_summary(reservation)}
                 {"<p><strong>Motif :</strong> " + reservation.admin_comment + "</p>" if reservation.admin_comment else ""}
-                <p>Pour plus d'informations : <a href="mailto:mairie@saint-remeze.fr">mairie@saint-remeze.fr</a></p>
+                <p>Pour plus d'informations : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
         )
         return cls._send(reservation.contact_email, "Réservation non accordée — Saint Remèze", html)
@@ -139,7 +139,7 @@ class EmailService:
                 <p>Votre demande de suppression de compte a bien été enregistrée.</p>
                 <p>Conformément au RGPD, votre compte sera anonymisé dans <strong>30 jours</strong>.</p>
                 <p>Pendant ce délai, vous pouvez annuler cette demande en vous connectant à votre profil.</p>
-                <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saint-remeze.fr">dpo@saint-remeze.fr</a></p>
+                <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saintremeze.fr">dpo@saintremeze.fr</a></p>
             """,
         )
         return cls._send(user.email, "Demande de suppression — Saint Remèze", html)
@@ -153,7 +153,7 @@ class EmailService:
                 <p>Votre compte Saint Remèze est inactif depuis longtemps.</p>
                 <p>Conformément à notre politique de confidentialité, il sera <strong>anonymisé dans 30 jours</strong>.</p>
                 <p>Pour conserver votre compte, connectez-vous avant cette date.</p>
-                <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saint-remeze.fr">dpo@saint-remeze.fr</a></p>
+                <p style="color:#666;font-size:13px;">Contact DPO : <a href="mailto:dpo@saintremeze.fr">dpo@saintremeze.fr</a></p>
             """,
         )
         return cls._send(user.email, "Votre compte sera anonymisé — Saint Remèze", html)
@@ -228,7 +228,7 @@ class EmailService:
                   <td style="padding:16px 32px;background:#f7f4ef;border-top:1px solid #e5e7eb;">
                     <p style="margin:0;color:#9ca3af;font-size:12px;">
                       Mairie de Saint Remèze — 07700 Saint Remèze<br>
-                      <a href="mailto:mairie@saint-remeze.fr" style="color:#1a3a5a;">mairie@saint-remeze.fr</a>
+                      <a href="mailto:mairie@saintremeze.fr" style="color:#1a3a5a;">mairie@saintremeze.fr</a>
                     </p>
                   </td>
                 </tr>
