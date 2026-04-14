@@ -24,6 +24,7 @@
 14. [Déploiement Render (cloud)](#14-déploiement-render-cloud)
 15. [Opérations de maintenance](#15-opérations-de-maintenance)
 16. [Architecture globale — portail et applications](#16-architecture-globale--portail-et-applications)
+17. [Lexique technique — traduction en français](#17-lexique-technique--traduction-et-explication-en-français)
 
 ---
 
@@ -1565,6 +1566,223 @@ Le `render.yaml` du dépôt `saint-remeze-WEB Services` déclare un service de t
 ```
 
 > Le portail est un site 100 % statique : il ne nécessite ni backend, ni base de données, ni Redis, ni Celery.
+
+---
+
+---
+
+## 17. Lexique technique — traduction et explication en français
+
+Glossaire des termes techniques utilisés dans ce manuel et dans le code source. Les termes sont regroupés par thème.
+
+---
+
+### Authentification et sécurité
+
+**Token** *(jeton)*
+Un token est une **chaîne de caractères chiffrée** qui prouve l'identité d'un utilisateur sans avoir à retransmettre son mot de passe à chaque requête. Dans cette application, on utilise des tokens JWT (voir ci-dessous).
+
+**JWT — JSON Web Token** *(jeton web JSON)*
+Format standard de token composé de trois parties encodées en Base64 séparées par des points : `en-tête.charge_utile.signature`. La charge utile contient l'ID utilisateur, son rôle et la date d'expiration. La signature garantit que personne n'a modifié le contenu. Aucune donnée n'est stockée côté serveur — tout est dans le token lui-même.
+
+**Access Token** *(jeton d'accès)*
+Token JWT à courte durée de vie (ici **15 minutes**) envoyé dans chaque requête API dans le header `Authorization: Bearer <token>`. Sa courte durée de vie limite les risques en cas de vol.
+
+**Refresh Token** *(jeton de renouvellement)*
+Token JWT à longue durée de vie (ici **7 jours**), stocké côté client. Il sert uniquement à obtenir un nouvel access token quand le précédent a expiré. À chaque renouvellement, un nouveau refresh token est émis et l'ancien est invalidé (rotation).
+
+**Token Rotation** *(rotation de jeton)*
+Mécanisme de sécurité : à chaque fois qu'un refresh token est utilisé pour renouveler l'access token, le refresh token lui-même est remplacé par un nouveau. Ainsi, un refresh token volé ne peut être utilisé qu'une seule fois avant d'être invalidé.
+
+**Token Blacklist** *(liste noire de jetons)*
+Mécanisme qui consiste à stocker en base les tokens invalidés (déconnexion, changement de mot de passe). **Non utilisé ici** car incompatible avec MongoDB — la sécurité repose sur la courte durée des access tokens et la rotation des refresh tokens.
+
+**Hash / Hachage**
+Transformation irréversible d'un mot de passe en une chaîne de caractères illisible. Django utilise PBKDF2-SHA256 : même l'administrateur ne peut pas lire les mots de passe — il ne peut que les réinitialiser.
+
+**CORS — Cross-Origin Resource Sharing** *(partage de ressources entre origines)*
+Mécanisme de sécurité des navigateurs qui interdit par défaut à une page web d'interroger une API sur un autre domaine. En production, seul `https://salles.saint-remeze.fr` est autorisé à appeler l'API. En développement, toutes les origines sont acceptées.
+
+**CSRF — Cross-Site Request Forgery** *(falsification de requête inter-sites)*
+Attaque où un site malveillant déclenche des actions à l'insu de l'utilisateur sur un autre site. Django intègre une protection automatique via un cookie `csrftoken`. Activé en production avec `CSRF_COOKIE_SECURE = True`.
+
+**SSL / HTTPS** *(Secure Sockets Layer / HyperText Transfer Protocol Secure)*
+Protocole de chiffrement des communications entre le navigateur et le serveur. Le cadenas dans la barre d'adresse du navigateur. En Docker, géré par Nginx + Let's Encrypt. Sur Render, automatique.
+
+**HSTS — HTTP Strict Transport Security**
+En-tête HTTP qui indique au navigateur de **toujours** utiliser HTTPS pour ce domaine, même si l'utilisateur tape `http://`. Configuré avec `SECURE_HSTS_SECONDS = 31536000` (1 an).
+
+---
+
+### Celery et tâches asynchrones
+
+**Worker** *(ouvrier / processus de travail)*
+Processus Celery en attente permanente de tâches à exécuter. Quand une tâche arrive dans Redis, le worker la prend en charge et l'exécute. Dans Docker, c'est le service `celery`. Sur Render, c'est un Background Worker séparé. Sans worker, aucune tâche ne s'exécute jamais.
+
+**Beat** *(batteur / planificateur)*
+Composant Celery qui joue le rôle d'**horloge**. Il consulte la planification configurée dans `celery.py` et déclenche les tâches récurrentes aux horaires définis (ex : tous les jours à 2h). Lancé avec le flag `-B` dans la commande de démarrage, il s'exécute dans le même processus que le worker.
+
+**Broker** *(courtier / intermédiaire)*
+Le broker est l'intermédiaire entre Django (qui produit des tâches) et Celery (qui les consomme). Dans cette application, c'est **Redis** qui joue ce rôle. Django dépose les tâches dans Redis, Celery les lit.
+
+**Queue / File de messages** *(file d'attente)*
+Liste ordonnée de tâches en attente d'exécution, stockée dans Redis. Les tâches sont traitées dans l'ordre d'arrivée (FIFO — First In, First Out).
+
+**Task / Tâche**
+Fonction Python décorée avec `@shared_task` qui peut être exécutée de façon asynchrone par Celery. Dans ce projet : `anonymize_pending_deletions`, `warn_users_before_anonymization`, `anonymize_inactive_users`.
+
+**Crontab / Cron**
+Format de planification issu du monde Unix. Une expression crontab définit quand une tâche se répète : `crontab(hour=2, minute=0)` signifie "tous les jours à 2h00". Utilisé par Celery Beat pour déclencher les tâches RGPD.
+
+**Persistent Scheduler** *(planificateur persistant)*
+Planificateur de Celery Beat qui sauvegarde son état dans un fichier local (`celerybeat-schedule`). Utilisé ici à la place de `django_celery_beat` (incompatible MongoDB) — il redémarre donc au bon endroit même après un arrêt du service.
+
+---
+
+### API et web
+
+**API REST — Application Programming Interface Representational State Transfer**
+Interface standardisée permettant à deux logiciels de communiquer via HTTP. L'API de cette application répond en JSON à des requêtes du type `GET /api/rooms/`, `POST /api/reservations/`, etc. Le frontend React l'utilise pour toutes ses opérations.
+
+**Endpoint** *(point d'accès / route API)*
+Une URL précise de l'API qui répond à un type d'action. Exemple : `POST /api/auth/login/` est l'endpoint de connexion. Chaque endpoint accepte une ou plusieurs méthodes HTTP (GET, POST, PATCH, DELETE).
+
+**Payload** *(charge utile / données envoyées)*
+Les données JSON envoyées dans le corps d'une requête HTTP. Exemple : pour créer une réservation, le payload contient le nom de la salle, la date, l'horaire, le nombre de participants, etc.
+
+**HTTP Methods / Méthodes HTTP**
+
+| Méthode | Sens | Utilisation typique |
+|---|---|---|
+| `GET` | Lire | Récupérer une liste ou un détail |
+| `POST` | Créer | Créer une nouvelle ressource |
+| `PATCH` | Modifier partiellement | Mettre à jour quelques champs |
+| `PUT` | Remplacer entièrement | Rarement utilisé ici |
+| `DELETE` | Supprimer | Supprimer ou désactiver |
+
+**Serializer** *(sérialiseur)*
+Composant DRF qui traduit les données dans les deux sens : objet Python → JSON (pour la réponse), et JSON → objet Python (pour la validation des données reçues). Il vérifie aussi que les données sont valides avant de les enregistrer en base.
+
+**ViewSet**
+Classe DRF qui regroupe toutes les opérations CRUD d'une ressource (liste, détail, création, modification, suppression) en un seul endroit. Equivalent d'un contrôleur dans d'autres frameworks.
+
+**Middleware** *(couche intermédiaire)*
+Code qui s'exécute automatiquement **pour chaque requête HTTP**, avant et après la vue Django. Dans ce projet : `CorsMiddleware` (gère CORS), `WhiteNoiseMiddleware` (sert les statics), `AuditLogMiddleware` (enregistre chaque action dans le journal d'audit).
+
+**Reverse Proxy** *(mandataire inverse)*
+Serveur placé devant les applications web qui reçoit toutes les requêtes et les redistribue vers le bon service. Dans ce projet : Nginx (Docker) ou Render (cloud). Le client ne communique jamais directement avec Gunicorn ou le conteneur frontend.
+
+**Health Check** *(vérification de santé)*
+Endpoint léger (`GET /api/health/`) qui répond `{"status": "ok"}` pour indiquer que le service fonctionne. Render l'appelle automatiquement toutes les 30 secondes — si le service ne répond pas, Render le redémarre.
+
+**Pagination**
+Mécanisme qui découpe les résultats d'une liste en pages de 20 éléments. Évite de renvoyer des milliers de résultats en une seule fois. La page suivante s'obtient avec `?page=2`.
+
+**OpenAPI / Swagger**
+Standard de documentation automatique pour les API REST. `drf-spectacular` génère le schéma OpenAPI depuis le code Django. La documentation interactive est consultable à `/api/schema/swagger-ui/`.
+
+---
+
+### Base de données et données
+
+**ORM — Object-Relational Mapper** *(ici : Object-Document Mapper)*
+Couche d'abstraction entre le code Python et la base de données. Permet d'écrire `Reservation.objects.filter(status="pending")` au lieu de requêtes MongoDB brutes. `django-mongodb-backend` adapte l'ORM Django, conçu pour les bases relationnelles, à MongoDB.
+
+**Migration**
+Fichier Python généré automatiquement par Django (`python manage.py makemigrations`) qui décrit une modification de la structure de la base de données (ajout d'un champ, création d'une collection…). Les migrations s'appliquent avec `python manage.py migrate`.
+
+**Fixture** *(données initiales)*
+Fichier JSON contenant des données à charger dans la base au démarrage (`loaddata`). Dans ce projet : `apps/rooms/fixtures.json` contient les salles communales par défaut, `apps/notifications/fixtures.json` contient les services municipaux.
+
+**Soft Delete** *(suppression douce)*
+Suppression "virtuelle" : au lieu d'effacer définitivement un enregistrement, on passe son champ `is_active` à `False`. La salle disparaît de l'application mais ses données et l'historique des réservations associées sont conservés. Permet de retrouver les données en cas d'erreur.
+
+**UUID — Universally Unique Identifier** *(identifiant universel unique)*
+Chaîne de 36 caractères (`550e8400-e29b-41d4-a716-446655440000`) générée aléatoirement, garantie unique dans le monde entier. Utilisé ici pour identifier les groupes de réservations récurrentes (`recurrence_group`).
+
+**ObjectId**
+Identifiant unique généré automatiquement par MongoDB pour chaque document (équivalent de l'auto-increment en SQL). Format hexadécimal de 24 caractères : `507f1f77bcf86cd799439011`.
+
+**CRUD**
+Acronyme des quatre opérations de base sur les données : **C**reate (créer), **R**ead (lire), **U**pdate (modifier), **D**elete (supprimer).
+
+**Index**
+Structure de données accélérant les recherches en base. Sans index, MongoDB lit tous les documents de la collection pour trouver celui qui correspond. Avec index, il va directement au bon endroit.
+
+---
+
+### Serveurs et déploiement
+
+**WSGI — Web Server Gateway Interface**
+Standard Python qui définit comment un serveur web (Nginx, Gunicorn) communique avec une application web Python (Django). Gunicorn implémente ce standard pour faire tourner Django en production.
+
+**Static Files / Fichiers statiques**
+Fichiers servis tels quels sans traitement dynamique : CSS, JavaScript, images, polices de caractères. Pour Django Admin : icônes et feuilles de style. Collectés avec `python manage.py collectstatic` dans le dossier `staticfiles/`. Servis par WhiteNoise sur Render, par Nginx en Docker.
+
+**Media Files / Fichiers médias**
+Fichiers uploadés par les utilisateurs (photos, documents). Stockés dans `media/`. Non utilisés dans la version actuelle de cette application.
+
+**Build** *(construction)*
+Processus de compilation et préparation d'une application avant déploiement. Pour le frontend React : `npm run build` transforme le code source JSX/Vite en fichiers HTML/CSS/JS optimisés dans `dist/`. Pour le backend : installation des dépendances via `pip install`.
+
+**Deploy / Déploiement**
+Mise en ligne d'une nouvelle version de l'application sur le serveur de production. Sur Render avec `autoDeploy: true`, chaque push sur la branche `main` du dépôt Git déclenche automatiquement un nouveau déploiement.
+
+**Cold Start** *(démarrage à froid)*
+Sur Render Free, le service backend s'endort après 15 minutes d'inactivité pour économiser des ressources. La prochaine requête doit "réveiller" le serveur, ce qui prend environ 30 secondes. Les utilisateurs voient l'application répondre lentement à la première connexion de la journée.
+
+**Environment Variables / Variables d'environnement**
+Variables de configuration stockées en dehors du code source (dans un fichier `.env` ou dans le dashboard Render). Permettent d'avoir des valeurs différentes entre développement et production (ex : URL de base de données, clés API) sans modifier le code.
+
+**Container / Conteneur** *(Docker)*
+Environnement isolé et reproductible qui contient tout ce qu'il faut pour faire tourner un service : code, dépendances, configuration système. Les conteneurs Docker sont définis dans `docker-compose.yml` et garantissent que l'application tourne de façon identique sur tous les environnements.
+
+**Image Docker**
+Modèle en lecture seule à partir duquel sont créés les conteneurs. Le `Dockerfile` du backend décrit comment construire l'image : partir de Python 3.12, copier le code, installer les dépendances, exposer le port 8000.
+
+**Volume Docker**
+Stockage persistant partagé entre un conteneur et la machine hôte. Dans ce projet : `mongo_data` (données MongoDB), `redis_data` (données Redis), `static_files` (fichiers statiques collectés). Sans volumes, toutes les données sont perdues à chaque redémarrage de conteneur.
+
+**Network / Réseau Docker**
+Réseau virtuel privé entre conteneurs. Le réseau `internal` permet à Nginx, Django, MongoDB, Redis et Celery de communiquer entre eux par leurs noms de service (`mongodb`, `redis`, `backend`…) sans exposer ces services à l'extérieur.
+
+---
+
+### Frontend et interface
+
+**PWA — Progressive Web App** *(application web progressive)*
+Application web qui peut être installée sur l'écran d'accueil d'un téléphone comme une app native, fonctionner hors-ligne et recevoir des notifications. Rendue possible par le `service worker` et le fichier `manifest.json`. Dans ce projet, générée par `vite-plugin-pwa`.
+
+**Service Worker** *(travailleur de service)*
+Script JavaScript qui s'exécute en arrière-plan dans le navigateur, indépendamment de la page web. Il intercepte les requêtes réseau pour les mettre en cache (fonctionnement hors-ligne), reçoit les notifications push et gère la mise à jour de l'application.
+
+**SPA — Single Page Application** *(application à page unique)*
+Application web dont toute l'interface est chargée une seule fois au démarrage. La navigation entre pages ne recharge pas le navigateur — React met à jour uniquement les parties de la page qui changent. Cela donne une expérience fluide proche d'une application native.
+
+**Bundle** *(paquet)*
+Fichier JavaScript unique généré par Vite qui contient tout le code de l'application React, ses dépendances et ses styles. `dist/assets/index-xxxx.js` est le bundle principal livré au navigateur.
+
+**Vite**
+Outil de build et serveur de développement ultra-rapide pour les applications JavaScript modernes. Remplace Create React App. Transforme les fichiers JSX, TypeScript, CSS en assets optimisés pour la production.
+
+**Cache**
+Mécanisme de mémorisation temporaire de données pour éviter de les recalculer ou de les retélécharger. Dans ce projet, le service worker met en cache les fichiers statiques (PWA hors-ligne) et les réponses API fréquentes (planning, liste des salles).
+
+---
+
+### RGPD et données personnelles
+
+**Anonymisation**
+Processus irréversible qui remplace les données personnelles d'un utilisateur par des données neutres (`Anonyme`, `deleted_xxx@anonymized.invalid`). Différent de la suppression : les réservations et manifestations associées sont conservées (obligation légale 5 ans) mais déliées de l'identité.
+
+**Consentement / Consent**
+Accord explicite donné par l'utilisateur pour le traitement de ses données. Enregistré dans la table `RGPDConsent` avec la date et la version de la politique de confidentialité acceptée. Requis à l'inscription.
+
+**Droit à l'oubli** *(Art. 17 RGPD)*
+Droit de l'utilisateur de demander la suppression de ses données. Dans cette application, la demande est enregistrée (`deletion_requested_at`) et l'anonymisation effective intervient 30 jours plus tard (délai de rétractation), exécutée automatiquement par Celery.
+
+**DPO — Data Protection Officer** *(délégué à la protection des données)*
+Personne responsable de la conformité RGPD au sein de l'organisation. Contact : `dpo@saint-remeze.fr`.
 
 ---
 
