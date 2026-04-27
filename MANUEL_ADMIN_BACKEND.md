@@ -690,9 +690,15 @@ Modèle géré via le Django Admin (`/django-admin/manifestations/equipmentstock
 | Vidéoprojecteur | 2 | Oui |
 | Éclairage | 1 | Oui |
 
-Pour modifier les stocks disponibles (ex : achat de nouvelles tables), aller dans `/django-admin/manifestations/equipmentstock/` et changer la valeur `Quantité totale`.
+**La liste est chargée dynamiquement depuis le backend** : le formulaire citoyen appelle `GET /api/manifestations/equipment_availability/` au chargement de la page, puis à chaque changement de date. La liste affichée est donc toujours exactement ce qui est défini dans `EquipmentStock` — aucun redéploiement n'est nécessaire pour ajouter, supprimer ou renommer un équipement.
 
-La disponibilité affichée dans le formulaire citoyen est calculée dynamiquement : `disponible = total − somme des quantités demandées dans les manifestations pending/approved sur les dates sélectionnées`.
+**Pour modifier les stocks :** aller dans `/django-admin/manifestations/equipmentstock/` et ajuster la valeur `Quantité totale`. L'effet est immédiat pour tous les nouveaux visiteurs du formulaire.
+
+**Pour ajouter un équipement :** cliquer sur « Ajouter Stock logistique », saisir le nom et la quantité. Il apparaît aussitôt dans le formulaire citoyen.
+
+**Pour retirer un équipement :** le supprimer dans le Django Admin. Il disparaît du formulaire sans toucher au code.
+
+**Calcul de la disponibilité :** `disponible = total − somme des quantités demandées dans les manifestations pending/approved sur les dates sélectionnées`.
 
 ---
 
