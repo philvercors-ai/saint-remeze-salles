@@ -4,7 +4,6 @@ import { roomsApi } from "../api/rooms";
 import { useAuthStore } from "../store/authStore";
 import { useUiStore } from "../store/uiStore";
 import { fmtDate } from "../utils/dates";
-import { EQUIPMENT_OPTIONS } from "../utils/constants";
 import Button from "../components/ui/Button";
 
 /* Centre de Saint Remèze */
@@ -124,14 +123,22 @@ export default function ManifestationPage() {
 
   useEffect(() => {
     roomsApi.list().then(({ data }) => setRooms(data.results || data));
+    manifestationsApi.equipmentAvailability()
+      .then(({ data }) => setAvailability(data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!form.date_start || !form.date_end) { setAvailability([]); return; }
+    if (!form.date_start || !form.date_end) {
+      manifestationsApi.equipmentAvailability()
+        .then(({ data }) => setAvailability(data))
+        .catch(() => {});
+      return;
+    }
     setLoadingAvailability(true);
     manifestationsApi.equipmentAvailability(form.date_start, form.date_end)
       .then(({ data }) => setAvailability(data))
-      .catch(() => setAvailability([]))
+      .catch(() => {})
       .finally(() => setLoadingAvailability(false));
   }, [form.date_start, form.date_end]);
 
@@ -140,7 +147,7 @@ export default function ManifestationPage() {
   const setEquipmentQty = (item, delta) => setForm((f) => {
     const current = f.equipment_quantities[item] || 0;
     const avail = availability.find((a) => a.name === item);
-    const max = avail ? avail.available + current : 999;
+    const max = avail ? avail.available + current : current + 1;
     const next = Math.max(0, Math.min(current + delta, max));
     return { ...f, equipment_quantities: { ...f.equipment_quantities, [item]: next } };
   });
@@ -400,16 +407,16 @@ function EquipmentSection({ availability, loading, datesSelected, quantities, on
         </p>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
-        {EQUIPMENT_OPTIONS.map((item) => {
-          const avail = availability.find((a) => a.name === item);
+        {availability.map((avail) => {
+          const item = avail.name;
           const qty = quantities[item] || 0;
-          const isUnavailable = datesSelected && avail && avail.available === 0 && qty === 0;
-          const isLow = avail && avail.available > 0 && avail.available < avail.total * 0.3;
-          const canIncrease = !datesSelected || !avail || (avail.available + qty) > qty;
+          const isUnavailable = datesSelected && avail.available === 0 && qty === 0;
+          const isLow = avail.available > 0 && avail.available < avail.total * 0.3;
+          const canIncrease = avail.available > 0;
 
           let indicatorColor = "#6b7280";
           let indicatorBg = "#f3f4f6";
-          if (datesSelected && avail) {
+          if (datesSelected) {
             if (avail.available === 0 && qty === 0) { indicatorColor = "#991b1b"; indicatorBg = "#fee2e2"; }
             else if (isLow) { indicatorColor = "#92400e"; indicatorBg = "#fef3c7"; }
             else { indicatorColor = "#166534"; indicatorBg = "#dcfce7"; }
@@ -428,13 +435,11 @@ function EquipmentSection({ availability, loading, datesSelected, quantities, on
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontWeight: 600, fontSize: 14, color: "#1a3a5a", minWidth: 120 }}>{item}</span>
                 {datesSelected && (
-                  loading ? (
-                    <span style={{ fontSize: 11, color: "#9ca3af" }}>…</span>
-                  ) : avail ? (
-                    <span style={{ fontSize: 11, fontWeight: 600, color: indicatorColor, background: indicatorBg, borderRadius: 12, padding: "2px 8px" }}>
-                      {avail.available === 0 ? "Indisponible" : `${avail.available} / ${avail.total} dispo`}
-                    </span>
-                  ) : null
+                  loading
+                    ? <span style={{ fontSize: 11, color: "#9ca3af" }}>…</span>
+                    : <span style={{ fontSize: 11, fontWeight: 600, color: indicatorColor, background: indicatorBg, borderRadius: 12, padding: "2px 8px" }}>
+                        {avail.available === 0 ? "Indisponible" : `${avail.available} / ${avail.total} dispo`}
+                      </span>
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
