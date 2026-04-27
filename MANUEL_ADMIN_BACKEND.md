@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.6 — Avril 2026
+> Version 1.7 — Avril 2026
 
 ---
 
@@ -612,6 +612,7 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
 | `POST` | `/` | Non | — | Créer une manifestation |
 | `GET` | `/my/` | Oui | Utilisateur | Mes manifestations |
 | `GET` | `/export_csv/` | Oui | Agent | Export CSV |
+| `GET` | `/equipment_availability/` | Non | — | Disponibilité logistique par date |
 | `GET` | `/{id}/` | Non | — | Détail |
 | `PATCH` | `/{id}/` | Oui | Owner/Agent | Modifier |
 | `DELETE` | `/{id}/` | Oui | Owner/Agent | Supprimer |
@@ -620,6 +621,21 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
 
 **Paramètres GET `/` :**
 - `?status=pending|approved|rejected`
+
+**Disponibilité logistique** `GET /equipment_availability/?date_start=X&date_end=Y` :
+
+Retourne pour chaque équipement le nombre d'unités disponibles en tenant compte de toutes les demandes en attente ou approuvées sur la période. Accessible sans authentification (affiché en temps réel dans le formulaire citoyen).
+
+```json
+[
+  { "name": "Tables",        "total": 30,  "reserved": 10, "available": 20 },
+  { "name": "Chaises",       "total": 100, "reserved": 40, "available": 60 },
+  { "name": "Estrade",       "total": 1,   "reserved": 1,  "available": 0  },
+  { "name": "Sono",          "total": 2,   "reserved": 0,  "available": 2  },
+  { "name": "Vidéoprojecteur","total": 2,  "reserved": 1,  "available": 1  },
+  { "name": "Éclairage",     "total": 1,   "reserved": 0,  "available": 1  }
+]
+```
 
 **Payload création :**
 ```json
@@ -638,10 +654,12 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
   "expected_attendees": 500,
   "description": "Fête annuelle avec animations...",
   "budget": 2500.00,
-  "equipment_needs": ["Sono", "Barnums", "Tables"],
+  "equipment_quantities": { "Tables": 20, "Chaises": 80, "Sono": 1 },
   "is_public": true
 }
 ```
+
+> `equipment_quantities` : dictionnaire `{nom: quantité}`. Le champ `equipment_needs` (liste simple) est dérivé automatiquement par le backend.
 
 **Pour une salle communale** (`location_type = "room"`) :
 ```json
@@ -656,6 +674,25 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
 
 **Colonnes CSV export :**
 ID, Titre, Association, Contact, Email, Téléphone, Date début, Date fin, Lieu, GPS Lat, GPS Lng, Participants, Budget, Équipements, Statut, Créé le
+
+---
+
+### Stocks logistiques (`EquipmentStock`)
+
+Modèle géré via le Django Admin (`/django-admin/manifestations/equipmentstock/`).
+
+| Équipement | Quantité par défaut | Ajustable |
+|---|---|---|
+| Tables | 30 | Oui |
+| Chaises | 100 | Oui |
+| Estrade | 1 | Oui |
+| Sono | 2 | Oui |
+| Vidéoprojecteur | 2 | Oui |
+| Éclairage | 1 | Oui |
+
+Pour modifier les stocks disponibles (ex : achat de nouvelles tables), aller dans `/django-admin/manifestations/equipmentstock/` et changer la valeur `Quantité totale`.
+
+La disponibilité affichée dans le formulaire citoyen est calculée dynamiquement : `disponible = total − somme des quantités demandées dans les manifestations pending/approved sur les dates sélectionnées`.
 
 ---
 

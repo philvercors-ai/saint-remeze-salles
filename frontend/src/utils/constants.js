@@ -19,8 +19,7 @@ export const PRIORITY_LABELS = {
 };
 
 export const EQUIPMENT_OPTIONS = [
-  "Scène", "Sono", "Éclairage", "Buvette", "Tables",
-  "Chaises", "Vidéoprojecteur", "WiFi", "Vestiaires", "Cuisine",
+  "Tables", "Chaises", "Estrade", "Sono", "Vidéoprojecteur", "Éclairage",
 ];
 
 export const ROLES = {

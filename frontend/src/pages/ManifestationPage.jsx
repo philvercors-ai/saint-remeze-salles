@@ -93,10 +93,12 @@ function MapPicker({ lat, lng, onChange }) {
 export default function ManifestationPage() {
   const { user }      = useAuthStore();
   const { showToast } = useUiStore();
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted,  setSubmitted]  = useState(false);
-  const [errors,     setErrors]     = useState({});
-  const [rooms,      setRooms]      = useState([]);
+  const [submitting,           setSubmitting]          = useState(false);
+  const [submitted,            setSubmitted]           = useState(false);
+  const [errors,               setErrors]              = useState({});
+  const [rooms,                setRooms]               = useState([]);
+  const [availability,         setAvailability]        = useState([]);
+  const [loadingAvailability,  setLoadingAvailability] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -116,7 +118,7 @@ export default function ManifestationPage() {
     expected_attendees: "",
     description: "",
     budget: "",
-    equipment_needs: [],
+    equipment_quantities: {},
     is_public: true,
   });
 
@@ -124,14 +126,24 @@ export default function ManifestationPage() {
     roomsApi.list().then(({ data }) => setRooms(data.results || data));
   }, []);
 
+  useEffect(() => {
+    if (!form.date_start || !form.date_end) { setAvailability([]); return; }
+    setLoadingAvailability(true);
+    manifestationsApi.equipmentAvailability(form.date_start, form.date_end)
+      .then(({ data }) => setAvailability(data))
+      .catch(() => setAvailability([]))
+      .finally(() => setLoadingAvailability(false));
+  }, [form.date_start, form.date_end]);
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const toggleEquipment = (item) => setForm((f) => ({
-    ...f,
-    equipment_needs: f.equipment_needs.includes(item)
-      ? f.equipment_needs.filter((x) => x !== item)
-      : [...f.equipment_needs, item],
-  }));
+  const setEquipmentQty = (item, delta) => setForm((f) => {
+    const current = f.equipment_quantities[item] || 0;
+    const avail = availability.find((a) => a.name === item);
+    const max = avail ? avail.available + current : 999;
+    const next = Math.max(0, Math.min(current + delta, max));
+    return { ...f, equipment_quantities: { ...f.equipment_quantities, [item]: next } };
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -146,6 +158,9 @@ export default function ManifestationPage() {
         location: form.location_type === "room" ? "" : form.location,
         gps_lat: form.location_type === "exterior" ? form.gps_lat : null,
         gps_lng: form.location_type === "exterior" ? form.gps_lng : null,
+        equipment_quantities: Object.fromEntries(
+          Object.entries(form.equipment_quantities).filter(([, v]) => v > 0)
+        ),
       };
       await manifestationsApi.create(payload);
       setSubmitted(true);
@@ -331,27 +346,13 @@ export default function ManifestationPage() {
         </div>
 
         {/* Besoins logistiques */}
-        <div>
-          <label style={labelStyle}>Besoins logistiques</label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-            {EQUIPMENT_OPTIONS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => toggleEquipment(item)}
-                style={{
-                  padding: "6px 14px", borderRadius: 20, fontSize: 12, border: "1.5px solid",
-                  borderColor: form.equipment_needs.includes(item) ? "#1a3a5a" : "#d4cfc7",
-                  background:  form.equipment_needs.includes(item) ? "#1a3a5a" : "#fff",
-                  color:       form.equipment_needs.includes(item) ? "#fff" : "#6b7280",
-                  cursor: "pointer",
-                }}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
+        <EquipmentSection
+          availability={availability}
+          loading={loadingAvailability}
+          datesSelected={!!(form.date_start && form.date_end)}
+          quantities={form.equipment_quantities}
+          onChangeQty={setEquipmentQty}
+        />
 
         {/* Visibilité */}
         <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}>
@@ -388,6 +389,85 @@ export default function ManifestationPage() {
     </div>
   );
 }
+
+function EquipmentSection({ availability, loading, datesSelected, quantities, onChangeQty }) {
+  return (
+    <div>
+      <label style={labelStyle}>Besoins logistiques</label>
+      {!datesSelected && (
+        <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+          Sélectionnez les dates pour voir la disponibilité en temps réel.
+        </p>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+        {EQUIPMENT_OPTIONS.map((item) => {
+          const avail = availability.find((a) => a.name === item);
+          const qty = quantities[item] || 0;
+          const isUnavailable = datesSelected && avail && avail.available === 0 && qty === 0;
+          const isLow = avail && avail.available > 0 && avail.available < avail.total * 0.3;
+          const canIncrease = !datesSelected || !avail || (avail.available + qty) > qty;
+
+          let indicatorColor = "#6b7280";
+          let indicatorBg = "#f3f4f6";
+          if (datesSelected && avail) {
+            if (avail.available === 0 && qty === 0) { indicatorColor = "#991b1b"; indicatorBg = "#fee2e2"; }
+            else if (isLow) { indicatorColor = "#92400e"; indicatorBg = "#fef3c7"; }
+            else { indicatorColor = "#166534"; indicatorBg = "#dcfce7"; }
+          }
+
+          return (
+            <div
+              key={item}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb",
+                background: qty > 0 ? "#f0f4ff" : "#fff",
+                opacity: isUnavailable ? 0.6 : 1,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontWeight: 600, fontSize: 14, color: "#1a3a5a", minWidth: 120 }}>{item}</span>
+                {datesSelected && (
+                  loading ? (
+                    <span style={{ fontSize: 11, color: "#9ca3af" }}>…</span>
+                  ) : avail ? (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: indicatorColor, background: indicatorBg, borderRadius: 12, padding: "2px 8px" }}>
+                      {avail.available === 0 ? "Indisponible" : `${avail.available} / ${avail.total} dispo`}
+                    </span>
+                  ) : null
+                )}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => onChangeQty(item, -1)}
+                  disabled={qty === 0}
+                  style={stepperBtn(qty === 0)}
+                >−</button>
+                <span style={{ minWidth: 24, textAlign: "center", fontWeight: 700, fontSize: 15, color: qty > 0 ? "#1a3a5a" : "#9ca3af" }}>
+                  {qty}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onChangeQty(item, 1)}
+                  disabled={isUnavailable || !canIncrease}
+                  style={stepperBtn(isUnavailable || !canIncrease)}
+                >+</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const stepperBtn = (disabled) => ({
+  width: 30, height: 30, borderRadius: 8, border: "1.5px solid #d1d5db",
+  background: disabled ? "#f9fafb" : "#fff", color: disabled ? "#d1d5db" : "#374151",
+  cursor: disabled ? "not-allowed" : "pointer", fontSize: 18, fontWeight: 700,
+  display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
+});
 
 const labelStyle = { display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#374151" };
 const errStyle   = { color: "#991b1b", fontSize: 12, marginTop: 4 };

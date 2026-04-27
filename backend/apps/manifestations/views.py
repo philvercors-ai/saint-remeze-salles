@@ -1,5 +1,6 @@
 import csv
 
+from django.db.models import Q
 from django.http import HttpResponse
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
@@ -7,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAgent, IsOwnerOrAgent
-from .models import Manifestation
+from .models import Manifestation, EquipmentStock
 from .serializers import ManifestationSerializer, ManifestationAdminSerializer, ManifestationApproveSerializer
 
 
@@ -69,6 +70,35 @@ class ManifestationViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Seules les demandes en attente peuvent être refusées."}, status=status.HTTP_400_BAD_REQUEST)
         obj.reject(request.user, s.validated_data.get("comment", ""))
         return Response(ManifestationAdminSerializer(obj).data)
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def equipment_availability(self, request):
+        date_start = request.query_params.get("date_start")
+        date_end = request.query_params.get("date_end")
+
+        stocks = {s.name: s.total_quantity for s in EquipmentStock.objects.all()}
+        reserved = {name: 0 for name in stocks}
+
+        if date_start and date_end:
+            overlapping = Manifestation.objects.filter(
+                Q(date_start__lte=date_end) & Q(date_end__gte=date_start),
+                status__in=["pending", "approved"],
+            )
+            for m in overlapping:
+                for item, qty in (m.equipment_quantities or {}).items():
+                    if item in reserved:
+                        reserved[item] += qty
+
+        result = [
+            {
+                "name": name,
+                "total": total,
+                "reserved": reserved.get(name, 0),
+                "available": max(0, total - reserved.get(name, 0)),
+            }
+            for name, total in stocks.items()
+        ]
+        return Response(result)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAgent])
     def export_csv(self, request):

@@ -4,6 +4,19 @@ from django.utils import timezone
 from django_mongodb_backend.fields import ArrayField
 
 
+class EquipmentStock(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Équipement")
+    total_quantity = models.PositiveIntegerField(default=1, verbose_name="Quantité totale")
+
+    class Meta:
+        verbose_name = "Stock logistique"
+        verbose_name_plural = "Stocks logistiques"
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.total_quantity})"
+
+
 class Manifestation(models.Model):
     STATUS_CHOICES = [
         ("pending", "En attente"),
@@ -43,6 +56,9 @@ class Manifestation(models.Model):
     budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Budget estimé (€)")
     equipment_needs = ArrayField(
         models.CharField(max_length=100), blank=True, default=list, verbose_name="Besoins logistiques"
+    )
+    equipment_quantities = models.JSONField(
+        default=dict, blank=True, verbose_name="Quantités logistiques"
     )
 
     is_public = models.BooleanField(default=True, verbose_name="Manifestation publique")

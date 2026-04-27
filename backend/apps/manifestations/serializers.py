@@ -5,6 +5,7 @@ from .models import Manifestation
 class ManifestationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
     equipment_needs = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    equipment_quantities = serializers.DictField(child=serializers.IntegerField(min_value=0), required=False, default=dict)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     room_name = serializers.CharField(source="room.name", read_only=True)
 
@@ -14,7 +15,8 @@ class ManifestationSerializer(serializers.ModelSerializer):
             "id", "title", "association", "contact_name", "contact_email", "contact_phone",
             "date_start", "date_end",
             "location_type", "room", "room_name", "location", "gps_lat", "gps_lng",
-            "expected_attendees", "description", "budget", "equipment_needs",
+            "expected_attendees", "description", "budget",
+            "equipment_needs", "equipment_quantities",
             "status", "status_display", "admin_comment", "reviewed_at", "created_at",
             "is_public",
         ]
@@ -43,7 +45,8 @@ class ManifestationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Auto-remplir location depuis le nom de la salle si type = room
+        quantities = validated_data.get("equipment_quantities", {})
+        validated_data["equipment_needs"] = [k for k, v in quantities.items() if v > 0]
         if validated_data.get("location_type") == "room" and validated_data.get("room"):
             validated_data["location"] = validated_data["room"].name
         instance = Manifestation(**validated_data)

@@ -1,6 +1,17 @@
-export const APP_VERSION = "1.6.0";
+export const APP_VERSION = "1.7.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.7.0",
+    date: "2026-04-27",
+    label: "Gestion des stocks logistiques",
+    changes: [
+      "Équipements disponibles : Tables, Chaises, Estrade, Sono, Vidéoprojecteur, Éclairage",
+      "Disponibilité en temps réel selon les dates saisies",
+      "Indicateurs visuels : vert / orange / rouge par équipement",
+      "Sélection par quantité avec maximum limité au stock disponible",
+    ],
+  },
   {
     version: "1.6.0",
     date: "2026-04-14",
