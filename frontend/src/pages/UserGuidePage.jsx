@@ -12,6 +12,16 @@ export default function UserGuidePage() {
       </p>
 
       <section style={sectionStyle}>
+        <h2 style={h2Style}>Créer un compte et se connecter</h2>
+        <p style={pStyle}>
+          Après inscription, un email de vérification vous est envoyé (valable 24h) : cliquez sur son lien pour
+          activer votre compte. Si la connexion affiche <em>« Veuillez vérifier votre adresse email »</em>, un
+          bouton <strong>Renvoyer l'email de vérification</strong> apparaît sous ce message pour recevoir un
+          nouveau lien — pensez à vérifier vos spams si rien n'arrive.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
         <h2 style={h2Style}>Réserver une salle</h2>
         <p style={pStyle}>
           Depuis l'accueil ou le menu, cliquez sur <strong>Réserver</strong>. La demande se fait en trois étapes :

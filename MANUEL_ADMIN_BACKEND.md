@@ -2,6 +2,7 @@
 
 > Documentation technique à l'usage des administrateurs système et développeurs
 > Version 1.7.1 — Septembre 2026
+> Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
 
@@ -1067,6 +1068,10 @@ Tous les emails sont envoyés via l'API Resend (`services/email_service.py`).
 | Changement de mot de passe | Utilisateur | Notification de sécurité |
 | Avertissement anonymisation | Utilisateur inactif | Alerte 30j avant suppression |
 
+### Renvoyer un email de vérification
+
+L'utilisateur dispose d'un bouton **« Renvoyer l'email de vérification »** sur l'écran de connexion, affiché automatiquement quand la tentative échoue avec « Veuillez vérifier votre adresse email ». Il appelle `POST /api/auth/resend-verification/` (`{email}`), qui génère un nouveau token et renvoie l'email — sans jamais révéler si le compte existe (protection contre l'énumération d'adresses).
+
 ---
 
 ## 10-bis. Mise en place des emails en production (Resend)
@@ -1463,6 +1468,27 @@ Au démarrage, la commande `ensure_superuser` est exécutée automatiquement. El
 
 L'endpoint `/api/health/` est utilisé par Render pour vérifier la disponibilité du service. Si le service ne répond pas, Render redémarre automatiquement l'instance.
 
+### Dépannage — pannes fréquentes
+
+#### `pymongo.errors.OperationFailure: bad auth : authentication failed`
+
+Le backend crash au démarrage (`ensure_superuser` ou toute requête) avec ce message. C'est un problème d'identifiants **MongoDB Atlas**, pas un bug de code — le mot de passe de l'utilisateur DB référencé par `MONGODB_URI` ne correspond plus à ce qu'attend Atlas (rotation manuelle, caractère spécial non encodé...).
+
+**Correction :**
+1. Atlas → **Database Access** → éditer l'utilisateur DB → **Edit Password** → **Autogenerate Secure Password** → copier le nouveau mot de passe.
+2. Atlas → **Database** → **Connect** → **Drivers** → copier l'URI, remplacer `<password>`, ajouter `/saint_remeze` avant les paramètres (`?retryWrites=...`).
+   ⚠️ Si le mot de passe contient `@ : / ? # % &`, il doit être encodé en URL (ex. `@` → `%40`) — sinon régénérer un mot de passe sans caractère spécial.
+3. Render → service backend → **Environment** → mettre à jour `MONGODB_URI` avec la nouvelle URI → **Save Changes** (redéploiement automatique).
+4. Vérifier aussi **Atlas → Network Access** : `0.0.0.0/0` doit être autorisé (Render free n'a pas d'IP fixe).
+
+#### `TypeError: cannot use '__fake__.ContentType' as a set element` au démarrage
+
+Apparaît à chaque (re)démarrage pendant `python manage.py migrate --noinput` (signal `post_migrate` → `create_permissions`, incompatible avec `django-mongodb-backend`). **Sans gravité** : le `startCommand` du `render.yaml` chaîne `fix_migration_history` et `migrate` avec `;` (pas `&&`), donc l'échec de cette étape n'empêche pas `ensure_superuser` et `gunicorn` de démarrer normalement juste après.
+
+#### Un compte reste bloqué sur « Veuillez vérifier votre adresse email »
+
+L'utilisateur peut cliquer sur **Renvoyer l'email de vérification** depuis l'écran de connexion (voir [section 10](#10-service-email-resend)). Si l'email n'arrive toujours pas, vérifier en base que `email_verified = false` puis suivre la piste email ci-dessous ; en dernier recours, cocher `email_verified` manuellement dans le Django Admin (`/django-admin/` → Comptes → section "Saint Remèze") pour débloquer l'accès immédiatement, sans attendre l'email.
+
 ---
 
 ## 15. Opérations de maintenance
@@ -1514,12 +1540,16 @@ db.reservations_reservation.updateOne(
 # Erreurs backend uniquement
 docker compose logs backend 2>&1 | grep '"level": "ERROR"'
 
-# Emails non envoyés
-docker compose logs backend 2>&1 | grep -i "email"
+# Envois d'emails (succès ET échecs — logger "services" au niveau INFO)
+docker compose logs backend 2>&1 | grep "\[EMAIL\]"
 
 # Tâches Celery
 docker compose logs celery 2>&1 | tail -100
 ```
+
+Sur Render, faire de même via le dashboard (onglet **Logs**) ou en filtrant sur `[EMAIL]`. Une ligne `[EMAIL] Envoyé à [...] | id=...` confirme que Resend a accepté l'envoi ; `[EMAIL] Échec Resend...` ou `[EMAIL] RESEND_API_KEY non configurée` signale un problème de configuration.
+
+> Le logger `services` (dans `config/settings/production.py`) est au niveau `INFO` depuis la v1.7.1 — avant cette version, seuls les échecs d'envoi remontaient dans les logs, rendant impossible de confirmer qu'un email avait bien été envoyé.
 
 ### Regénérer les fichiers statiques
 
