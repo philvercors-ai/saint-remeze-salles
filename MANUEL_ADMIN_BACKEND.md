@@ -15,7 +15,7 @@
 6. [Gestion des salles](#6-gestion-des-salles)
 7. [Gestion des utilisateurs et rôles](#7-gestion-des-utilisateurs-et-rôles)
 8. [Workflow de validation des demandes](#8-workflow-de-validation-des-demandes)
-9. [Tâches planifiées Celery (RGPD)](#9-tâches-planifiées-celery-rgpd)
+9. [Tâches planifiées Celery (RGPD)](#9-tâches-planifiées-rgpd--redis-celery-et-automatisation)
 10. [Service email (Resend)](#10-service-email-resend)
 10-bis. [Mise en place des emails en production](#10-bis-mise-en-place-des-emails-en-production-resend)
 11. [Journal d'audit](#11-journal-daudit)

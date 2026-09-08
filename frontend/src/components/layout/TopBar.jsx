@@ -90,16 +90,14 @@ export default function TopBar({ pendingCount = 0 }) {
         </Link>
 
         {isAdmin && (
-          <a
-            href="/manuel-admin.md"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/manuel-admin"
             title="Manuel administrateur"
             aria-label="Manuel administrateur"
             style={{ color: "#fff", padding: 8, display: "flex", alignItems: "center" }}
           >
             <FileText size={20} />
-          </a>
+          </Link>
         )}
 
         {isAgent && pendingCount > 0 && (

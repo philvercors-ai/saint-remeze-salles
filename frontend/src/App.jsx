@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { useUiStore } from "./store/uiStore";
@@ -19,6 +19,9 @@ import VerifyEmailPage    from "./pages/VerifyEmailPage";
 import ProfilePage        from "./pages/ProfilePage";
 import PrivacyPolicyPage  from "./pages/PrivacyPolicyPage";
 import UserGuidePage      from "./pages/UserGuidePage";
+
+// Chargée à la demande : react-markdown n'alourdit le bundle que pour les admins
+const AdminManualPage = lazy(() => import("./pages/AdminManualPage"));
 
 // Lazy pages (migrated from monolith)
 import PlanningPage       from "./pages/PlanningPage";
@@ -111,6 +114,13 @@ export default function App() {
           {/* Protected */}
           <Route path="/profil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
           <Route path="/admin"  element={<PrivateRoute roles={["agent", "admin"]}><AdminPage /></PrivateRoute>} />
+          <Route path="/manuel-admin" element={
+            <PrivateRoute roles={["admin"]}>
+              <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>Chargement…</div>}>
+                <AdminManualPage />
+              </Suspense>
+            </PrivateRoute>
+          } />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
