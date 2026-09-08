@@ -1,5 +1,9 @@
-from django.contrib import admin
+import os
+
+from django.contrib import admin, messages
+from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin
+from django.http import HttpResponseRedirect
 from .models import CustomUser, RGPDConsent, PasswordResetToken
 
 
@@ -20,6 +24,22 @@ class CustomUserAdmin(UserAdmin):
             user.anonymize()
         self.message_user(request, f"{queryset.count()} utilisateur(s) anonymisé(s).")
     anonymize_users.short_description = "Anonymiser les utilisateurs sélectionnés (RGPD)"
+
+    def user_change_password(self, request, id, form_url=""):
+        # Le mot de passe du compte DJANGO_SUPERUSER_EMAIL est réécrit à chaque
+        # redémarrage par `ensure_superuser` — le changer ici serait sans effet
+        # durable et donnerait une fausse impression de changement réussi.
+        user = self.get_object(request, unquote(id))
+        if user and user.email == os.environ.get("DJANGO_SUPERUSER_EMAIL"):
+            self.message_user(
+                request,
+                "Le mot de passe de ce compte est géré par la variable d'environnement "
+                "DJANGO_SUPERUSER_PASSWORD sur Render — un changement ici serait écrasé au "
+                "prochain redémarrage du serveur. Modifiez cette variable dans le dashboard Render.",
+                level=messages.WARNING,
+            )
+            return HttpResponseRedirect("..")
+        return super().user_change_password(request, id, form_url)
 
 
 @admin.register(RGPDConsent)
