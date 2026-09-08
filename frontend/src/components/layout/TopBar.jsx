@@ -1,11 +1,11 @@
-import { Menu, Bell, LogOut, User } from "lucide-react";
+import { Menu, Bell, LogOut, User, HelpCircle, FileText } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { authApi } from "../../api/auth";
 
 export default function TopBar({ pendingCount = 0 }) {
-  const { user, isAgent, logout } = useAuthStore();
+  const { user, isAgent, isAdmin, logout } = useAuthStore();
   const { toggleSidebar, showToast } = useUiStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,6 +78,28 @@ export default function TopBar({ pendingCount = 0 }) {
               Admin
             </button>
           </div>
+        )}
+
+        <Link
+          to="/manuel"
+          title="Manuel d'utilisation"
+          aria-label="Manuel d'utilisation"
+          style={{ color: "#fff", padding: 8, display: "flex", alignItems: "center" }}
+        >
+          <HelpCircle size={20} />
+        </Link>
+
+        {isAdmin && (
+          <a
+            href="/manuel-admin.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Manuel administrateur"
+            aria-label="Manuel administrateur"
+            style={{ color: "#fff", padding: 8, display: "flex", alignItems: "center" }}
+          >
+            <FileText size={20} />
+          </a>
         )}
 
         {isAgent && pendingCount > 0 && (

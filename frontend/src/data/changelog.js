@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.7.0";
+export const APP_VERSION = "1.7.1";
 
 export const CHANGELOG = [
+  {
+    version: "1.7.1",
+    date: "2026-09-08",
+    label: "Accès aux manuels depuis l'application",
+    changes: [
+      "Icône « Manuel d'utilisation » dans le bandeau d'en-tête, accessible à tous",
+      "Icône « Manuel administrateur » dans le bandeau, visible uniquement pour le rôle admin",
+      "Nouvelle page /manuel : guide de prise en main (réservation, manifestation, agenda, statuts)",
+    ],
+  },
   {
     version: "1.7.0",
     date: "2026-04-27",

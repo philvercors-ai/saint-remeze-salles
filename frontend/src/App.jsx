@@ -18,6 +18,7 @@ import ResetPasswordPage  from "./pages/ResetPasswordPage";
 import VerifyEmailPage    from "./pages/VerifyEmailPage";
 import ProfilePage        from "./pages/ProfilePage";
 import PrivacyPolicyPage  from "./pages/PrivacyPolicyPage";
+import UserGuidePage      from "./pages/UserGuidePage";
 
 // Lazy pages (migrated from monolith)
 import PlanningPage       from "./pages/PlanningPage";
@@ -98,6 +99,7 @@ export default function App() {
           <Route path="/reservation"       element={<ReservationPage />} />
           <Route path="/manifestation"     element={<ManifestationPage />} />
           <Route path="/confidentialite"   element={<PrivacyPolicyPage />} />
+          <Route path="/manuel"            element={<UserGuidePage />} />
 
           {/* Auth */}
           <Route path="/login"                element={<LoginPage />} />

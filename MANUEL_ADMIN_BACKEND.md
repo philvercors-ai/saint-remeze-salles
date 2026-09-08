@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.7 — Avril 2026
+> Version 1.7.1 — Septembre 2026
 
 ---
 
@@ -1829,5 +1829,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 14 avril 2026 — Mairie de Saint Remèze*
+*Document mis à jour le 8 septembre 2026 — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
