@@ -44,9 +44,16 @@ export default function ResetPasswordPage() {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f7f4ef", padding: 16 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 400, boxShadow: "0 4px 24px rgba(26,58,90,.1)" }}>
         <h2 style={{ color: "#1a3a5a", marginBottom: 8 }}>Nouveau mot de passe</h2>
-        <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24 }}>
+        <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 16 }}>
           Choisissez un mot de passe sécurisé (8 caractères minimum).
         </p>
+
+        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e", padding: "10px 14px", borderRadius: 8, fontSize: 12.5, lineHeight: 1.5, marginBottom: 16 }}>
+          ⚠️ Si vous réinitialisez le mot de passe du <strong>compte administrateur principal</strong> (configuré
+          via variable d'environnement sur Render), ce mot de passe sera <strong>écrasé au prochain redémarrage
+          du serveur</strong>. Pour un changement durable de ce compte, modifiez plutôt
+          <code> DJANGO_SUPERUSER_PASSWORD</code> dans le dashboard Render.
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {errors.detail && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13 }}>{errors.detail}</div>}

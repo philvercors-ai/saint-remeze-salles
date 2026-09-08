@@ -1455,7 +1455,9 @@ DJANGO_SUPERUSER_PASSWORD # mot de passe du compte admin
 
 ### Compte administrateur — création et réinitialisation du mot de passe
 
-Au démarrage, la commande `ensure_superuser` est exécutée automatiquement. Elle crée le compte si inexistant, et **force la mise à jour du mot de passe** à chaque déploiement depuis les variables d'environnement.
+Au démarrage, la commande `ensure_superuser` est exécutée automatiquement. Elle crée le compte si inexistant, et **force la mise à jour du mot de passe** depuis les variables d'environnement.
+
+> ⚠️ **Ce comportement est volontaire (filet de sécurité pour ne jamais perdre l'accès admin), mais il a une conséquence importante :** `ensure_superuser` s'exécute à **chaque démarrage du processus**, pas seulement lors d'un déploiement Git — un simple réveil après mise en veille (plan Free, 15 min d'inactivité) suffit à le redéclencher. Si le mot de passe du compte `DJANGO_SUPERUSER_EMAIL` est changé **via l'application** (page de connexion → « Mot de passe oublié », ou profil → « Changer le mot de passe »), ce changement sera **écrasé silencieusement** au prochain redémarrage et remplacé par la valeur de `DJANGO_SUPERUSER_PASSWORD` sur Render. Pour changer durablement ce mot de passe, il faut modifier la variable d'environnement elle-même (voir ci-dessous), pas passer par l'application. Un avertissement à ce sujet s'affiche dans l'app pour ce compte (voir `ResetPasswordPage.jsx` et `ProfilePage.jsx`).
 
 **Pour réinitialiser le mot de passe en production (plan Free — sans accès Shell) :**
 

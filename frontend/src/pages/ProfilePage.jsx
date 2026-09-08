@@ -99,7 +99,7 @@ export default function ProfilePage() {
 
       {/* Sécurité */}
       {tab === "security" && (
-        <ChangePasswordForm showToast={showToast} />
+        <ChangePasswordForm showToast={showToast} isAdmin={user.role === "admin"} />
       )}
 
       {/* RGPD */}
@@ -188,7 +188,7 @@ function InfoRow({ label, value }) {
   );
 }
 
-function ChangePasswordForm({ showToast }) {
+function ChangePasswordForm({ showToast, isAdmin }) {
   const [form, setForm] = useState({ current_password: "", new_password: "", new_password_confirm: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -215,6 +215,13 @@ function ChangePasswordForm({ showToast }) {
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <h3 style={{ fontSize: 16, marginBottom: 4 }}>Changer le mot de passe</h3>
+      {isAdmin && (
+        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e", padding: "10px 14px", borderRadius: 8, fontSize: 12.5, lineHeight: 1.5 }}>
+          ⚠️ Si ce compte est le compte administrateur principal (configuré via variable d'environnement sur
+          Render), ce changement sera <strong>écrasé au prochain redémarrage du serveur</strong>. Pour un
+          changement durable, modifiez plutôt <code>DJANGO_SUPERUSER_PASSWORD</code> dans le dashboard Render.
+        </div>
+      )}
       {[
         { name: "current_password",    label: "Mot de passe actuel" },
         { name: "new_password",        label: "Nouveau mot de passe" },
