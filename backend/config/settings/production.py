@@ -41,6 +41,6 @@ LOGGING = {
         "django": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "apps": {"handlers": ["console"], "level": "WARNING", "propagate": False},
         "apps.accounts": {"handlers": ["console"], "level": "ERROR", "propagate": False},
-        "services": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "services": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }

@@ -9,6 +9,9 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
   const { setAuth } = useAuthStore();
   const { showToast } = useUiStore();
   const navigate = useNavigate();
@@ -19,6 +22,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setNeedsVerification(false);
+    setResent(false);
     try {
       const { data } = await authApi.login(form.email, form.password);
       setAuth(data.user, data.access, data.refresh);
@@ -28,10 +33,24 @@ export default function LoginPage() {
       const dest = (from && from !== "/") ? from : (isStaff ? "/admin" : "/");
       navigate(dest, { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.detail || err.response?.data?.email?.[0] || "Email ou mot de passe incorrect.";
+      const emailError = err.response?.data?.email?.[0];
+      const msg = err.response?.data?.detail || emailError || "Email ou mot de passe incorrect.";
       setError(msg);
+      setNeedsVerification(Boolean(emailError));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await authApi.resendVerification(form.email);
+      setResent(true);
+    } catch (_) {
+      showToast("Impossible d'envoyer l'email pour le moment, réessayez plus tard.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -49,6 +68,26 @@ export default function LoginPage() {
           {error && (
             <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13 }}>
               {error}
+              {needsVerification && (
+                resent ? (
+                  <p style={{ marginTop: 8, color: "#065f46" }}>
+                    Email envoyé ! Vérifiez votre boîte de réception (et vos spams).
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resending}
+                    style={{
+                      display: "block", marginTop: 10, background: "none", border: "none",
+                      color: "#991b1b", textDecoration: "underline", fontSize: 13, fontWeight: 600,
+                      cursor: resending ? "default" : "pointer", padding: 0,
+                    }}
+                  >
+                    {resending ? "Envoi en cours…" : "Renvoyer l'email de vérification"}
+                  </button>
+                )
+              )}
             </div>
           )}
 
