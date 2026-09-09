@@ -1,6 +1,17 @@
-export const APP_VERSION = "1.7.2";
+export const APP_VERSION = "1.8.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.8.0",
+    date: "2026-09-09",
+    label: "Groupes d'utilisateurs et réservations restreintes",
+    changes: [
+      "Nouveaux groupes d'utilisateurs (ex : « Conseil Municipal »), gérés depuis le Django Admin",
+      "Une salle peut être réservée aux seuls membres d'un ou plusieurs groupes (le compte admin garde toujours accès à tout)",
+      "S'applique aux réservations classiques, récurrentes et aux manifestations en salle communale",
+      "Le formulaire de réservation ne propose plus les salles non accessibles à l'utilisateur connecté",
+    ],
+  },
   {
     version: "1.7.2",
     date: "2026-09-09",

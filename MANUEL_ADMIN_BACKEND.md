@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.7.2 — Septembre 2026
+> Version 1.8.0 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -11,7 +11,7 @@
 1. [Architecture technique](#1-architecture-technique)
 2. [Installation et démarrage](#2-installation-et-démarrage)
 3. [Variables d'environnement](#3-variables-denvironnement)
-4. [Django Admin (/django-admin/)](#4-django-admin-django-admin)
+4. [Django Admin (/admin/)](#4-django-admin-admin)
 5. [API REST — Référence complète](#5-api-rest--référence-complète)
 6. [Gestion des salles](#6-gestion-des-salles)
 7. [Gestion des utilisateurs et rôles](#7-gestion-des-utilisateurs-et-rôles)
@@ -252,6 +252,8 @@ En déploiement Docker, un conteneur `certbot` tourne en permanence et renouvell
 > ⚠️ **Note MongoDB :** deux modules Django standards sont **désactivés** pour cause d'incompatibilité avec MongoDB :
 > - `rest_framework.authtoken` / `token_blacklist` → la sécurité JWT repose sur la courte durée de vie des access tokens (15 min) et la rotation des refresh tokens
 > - `django_celery_beat` → Celery Beat utilise le planificateur en mémoire (`PersistentScheduler`) avec un fichier `celerybeat-schedule`
+>
+> **`QuerySet.prefetch_related()` n'est pas supporté** par `django-mongodb-backend` (`NotSupportedError` à l'exécution) — contrairement à `select_related()`, qui fonctionne normalement. Sur une relation ManyToMany ou une FK inverse consultée en boucle (ex : `room.allowed_groups.exists()` par salle dans une liste), chaque accès reste donc une requête séparée ; pas de solution d'optimisation équivalente à ce jour sur ce backend.
 
 ---
 
@@ -307,7 +309,7 @@ docker compose exec backend python manage.py loaddata \
 ```
 
 L'application est disponible sur `http://localhost`.
-L'API Django admin sur `http://localhost/django-admin/`.
+L'API Django admin sur `http://localhost/admin/`.
 
 ### Sans Docker (backend seul)
 
@@ -380,9 +382,9 @@ curl http://localhost/api/health/
 
 ---
 
-## 4. Django Admin (`/django-admin/`)
+## 4. Django Admin (`/admin/`)
 
-L'interface d'administration native Django est accessible à `/django-admin/` avec les identifiants d'un superutilisateur.
+L'interface d'administration native Django est accessible à `/admin/` avec les identifiants d'un superutilisateur.
 
 > ⚠️ Cet accès est réservé à l'administration technique. Les agents municipaux utilisent l'interface `/admin` de l'application.
 
@@ -682,7 +684,7 @@ ID, Titre, Association, Contact, Email, Téléphone, Date début, Date fin, Lieu
 
 ### Stocks logistiques (`EquipmentStock`)
 
-Modèle géré via le Django Admin (`/django-admin/manifestations/equipmentstock/`).
+Modèle géré via le Django Admin (`/admin/manifestations/equipmentstock/`).
 
 | Équipement | Quantité par défaut | Ajustable |
 |---|---|---|
@@ -695,7 +697,7 @@ Modèle géré via le Django Admin (`/django-admin/manifestations/equipmentstock
 
 **La liste est chargée dynamiquement depuis le backend** : le formulaire citoyen appelle `GET /api/manifestations/equipment_availability/` au chargement de la page, puis à chaque changement de date. La liste affichée est donc toujours exactement ce qui est défini dans `EquipmentStock` — aucun redéploiement n'est nécessaire pour ajouter, supprimer ou renommer un équipement.
 
-**Pour modifier les stocks :** aller dans `/django-admin/manifestations/equipmentstock/` et ajuster la valeur `Quantité totale`. L'effet est immédiat pour tous les nouveaux visiteurs du formulaire.
+**Pour modifier les stocks :** aller dans `/admin/manifestations/equipmentstock/` et ajuster la valeur `Quantité totale`. L'effet est immédiat pour tous les nouveaux visiteurs du formulaire.
 
 **Pour ajouter un équipement :** cliquer sur « Ajouter Stock logistique », saisir le nom et la quantité. Il apparaît aussitôt dans le formulaire citoyen.
 
@@ -752,7 +754,7 @@ Utilisé par Render pour les health checks automatiques.
 
 ### Créer une salle
 
-Via Django Admin (`/django-admin/rooms/room/add/`) ou via API :
+Via Django Admin (`/admin/rooms/room/add/`) ou via API :
 
 ```bash
 curl -X POST /api/rooms/ \
@@ -780,6 +782,36 @@ La suppression est un **soft delete** : `is_active` passe à `false`. La salle d
 curl -X DELETE /api/rooms/<id>/ \
   -H "Authorization: Bearer <admin_token>"
 ```
+
+### Restreindre une salle à certains groupes d'utilisateurs
+
+Une salle peut être réservée par tout le monde par défaut. Pour la réserver aux membres
+d'un ou plusieurs groupes (ex : seul le groupe « Conseil Municipal » peut réserver la
+salle du conseil) :
+
+1. Créer le(s) groupe(s) si besoin : Django Admin → **Groupes d'utilisateurs** → Ajouter.
+2. Ouvrir la fiche de la salle (Django Admin → Salles) → champ **Groupes autorisés à
+   réserver** → sélectionner le ou les groupes.
+3. Ajouter les utilisateurs concernés à ce groupe : fiche utilisateur → section
+   « Saint Remèze » → champ **Groupes de réservation**.
+
+**Règles (voir `Room.user_can_reserve()` dans `apps/rooms/models.py`) :**
+- Un compte **admin** peut toujours tout réserver, quels que soient les groupes.
+- Une salle **sans aucun groupe défini** (le cas par défaut) reste ouverte à tous,
+  y compris aux visiteurs non connectés.
+- Une salle avec des groupes définis n'est réservable que par un utilisateur connecté
+  membre d'au moins un de ces groupes.
+- Le champ historique **« Réservation admin uniquement »** reste prioritaire sur les
+  groupes : s'il est coché, seul un admin peut réserver, même un membre d'un groupe autorisé.
+- La restriction est vérifiée à la fois à l'affichage (champ `can_reserve` renvoyé par
+  `GET /api/rooms/`, utilisé par le formulaire de réservation pour ne proposer que les
+  salles accessibles) et à la création de la réservation (`POST /api/reservations/` et
+  `/api/reservations/recurring/`, qui refusent la demande avec un message explicite
+  si la règle n'est pas respectée — la vérification serveur est celle qui compte,
+  le filtrage côté formulaire n'est qu'un confort d'usage).
+- Cette restriction ne s'applique pas automatiquement aux **agents** : un agent qui
+  n'est pas membre du groupe requis ne peut pas non plus réserver la salle (seul admin
+  passe toujours). Ajoutez l'agent au groupe concerné si nécessaire.
 
 ### Fixtures initiales
 
@@ -811,6 +843,11 @@ Hérite de `AbstractUser`. Champs additionnels :
 | `rgpd_consent_date` | Date du consentement RGPD |
 | `deletion_requested_at` | Date de demande de suppression |
 | `anonymized_at` | Date d'anonymisation effective |
+| `reservation_groups` | Groupes d'utilisateurs (M2M vers `UserGroup`) — voir [Restreindre une salle à certains groupes](#restreindre-une-salle-à-certains-groupes-dutilisateurs) |
+
+> `UserGroup` (modèle séparé, `apps/accounts/models.py`) n'a **aucun rapport** avec
+> `django.contrib.auth.models.Group` (le système de groupes/permissions Django standard),
+> volontairement inutilisé sur ce projet.
 
 ### Changer le rôle d'un utilisateur
 
@@ -1491,7 +1528,7 @@ Apparaît à chaque (re)démarrage pendant `python manage.py migrate --noinput` 
 
 #### Un compte reste bloqué sur « Veuillez vérifier votre adresse email »
 
-L'utilisateur peut cliquer sur **Renvoyer l'email de vérification** depuis l'écran de connexion (voir [section 10](#10-service-email-resend)). Si l'email n'arrive toujours pas, vérifier en base que `email_verified = false` puis suivre la piste email ci-dessous ; en dernier recours, cocher `email_verified` manuellement dans le Django Admin (`/django-admin/` → Comptes → section "Saint Remèze") pour débloquer l'accès immédiatement, sans attendre l'email.
+L'utilisateur peut cliquer sur **Renvoyer l'email de vérification** depuis l'écran de connexion (voir [section 10](#10-service-email-resend)). Si l'email n'arrive toujours pas, vérifier en base que `email_verified = false` puis suivre la piste email ci-dessous ; en dernier recours, cocher `email_verified` manuellement dans le Django Admin (`/admin/` → Comptes → section "Saint Remèze") pour débloquer l'accès immédiatement, sans attendre l'email.
 
 ---
 

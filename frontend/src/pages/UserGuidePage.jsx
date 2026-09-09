@@ -26,6 +26,11 @@ export default function UserGuidePage() {
         <p style={pStyle}>
           Depuis l'accueil ou le menu, cliquez sur <strong>Réserver</strong>. La demande se fait en trois étapes :
         </p>
+        <p style={pStyle}>
+          Certaines salles sont réservées à des groupes spécifiques (ex : la salle du conseil pour les élus) et
+          n'apparaissent dans la liste que si votre compte en fait partie. Contactez la mairie si une salle dont
+          vous avez besoin n'apparaît pas.
+        </p>
         <div style={stepStyle}>
           <strong>1. Salle &amp; date</strong> — choisissez la salle, la date et le créneau horaire. Les créneaux déjà
           occupés sont affichés pour éviter les conflits. Une réservation peut être rendue récurrente
