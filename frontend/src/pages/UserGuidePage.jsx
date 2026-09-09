@@ -54,8 +54,10 @@ export default function UserGuidePage() {
         <h2 style={h2Style}>Suivre ses demandes</h2>
         <p style={pStyle}>
           <strong>Planning</strong> affiche l'occupation des salles semaine par semaine. <strong>Agenda</strong>{" "}
-          regroupe dans une même liste vos réservations et manifestations à venir et passées. Les événements privés
-          d'autres usagers apparaissent comme simplement « Réservé », sans détail, pour préserver leur confidentialité.
+          regroupe dans une même liste vos réservations et manifestations à venir et passées, avec des filtres
+          pour naviguer par semaine ou par mois (semaine/mois en cours ou suivant(e), flèches précédent/suivant),
+          ou tout afficher sans limite de période. Les événements privés d'autres usagers apparaissent comme
+          simplement « Réservé », sans détail, pour préserver leur confidentialité.
         </p>
         <p style={pStyle}>
           Chaque demande affiche un statut : <em>En attente</em> (en cours d'examen), <em>Approuvée</em>,{" "}

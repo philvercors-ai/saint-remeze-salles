@@ -1,6 +1,19 @@
-export const APP_VERSION = "1.7.1";
+export const APP_VERSION = "1.7.2";
 
 export const CHANGELOG = [
+  {
+    version: "1.7.2",
+    date: "2026-09-09",
+    label: "Agenda, emails et sécurité du compte admin",
+    changes: [
+      "Manuel administrateur : rendu HTML lisible avec sommaire cliquable, au lieu du fichier brut",
+      "Bouton « Renvoyer l'email de vérification » sur l'écran de connexion",
+      "Logs d'envoi d'emails visibles en production (succès et échecs)",
+      "Protection du mot de passe du compte administrateur principal contre un changement accidentel (Django Admin et application)",
+      "Correction : réservations hors semaine courante invisibles dans l'Agenda",
+      "Agenda : filtres de période (semaine/mois en cours ou prochain(e), navigation ← →, vue « Tous les événements » par défaut)",
+    ],
+  },
   {
     version: "1.7.1",
     date: "2026-09-08",

@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.7.1 — Septembre 2026
+> Version 1.7.2 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -535,7 +535,9 @@ Idem réservations.
 
 **Paramètres GET `/planning/` :**
 - `?week=2026-W10` (format ISO, lundi au dimanche)
+- `?start=2026-09-01&end=2026-09-30` (plage explicite, prioritaire sur `week` — utilisé par l'Agenda pour afficher au-delà d'une seule semaine)
 - `?room=<room_id>`
+- Sans aucun paramètre : **semaine courante uniquement** (piège classique — un appel sans `start`/`end` ni `week` ne renverra jamais un événement hors de la semaine en cours).
 
 **Payload création réservation :**
 ```json
@@ -1861,5 +1863,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 8 septembre 2026 — Mairie de Saint Remèze*
+*Document mis à jour le 9 septembre 2026 — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
