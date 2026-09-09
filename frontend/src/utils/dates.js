@@ -1,8 +1,10 @@
-import { format, addDays, startOfWeek, parseISO } from "date-fns";
+import { format, addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const fmtDate = (d) => format(typeof d === "string" ? parseISO(d) : d, "yyyy-MM-dd");
 export const fmtDateFr = (d) => format(typeof d === "string" ? parseISO(d) : d, "d MMMM yyyy", { locale: fr });
+export const fmtDateShortFr = (d) => format(typeof d === "string" ? parseISO(d) : d, "d MMMM", { locale: fr });
+export const fmtMonthFr = (d) => format(typeof d === "string" ? parseISO(d) : d, "MMMM yyyy", { locale: fr });
 export const fmtTime = (t) => t?.substring(0, 5) ?? "";
 
 export const getWeekDays = (date = new Date()) => {
@@ -14,4 +16,4 @@ export const isSameDay = (a, b) => fmtDate(a) === fmtDate(b);
 
 export const HOURS = Array.from({ length: 15 }, (_, i) => `${(i + 7).toString().padStart(2, "0")}:00`); // 07:00 → 21:00
 
-export { addDays };
+export { addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth };
