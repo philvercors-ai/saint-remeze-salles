@@ -82,11 +82,21 @@ class ReservationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def planning(self, request):
         week_param = request.query_params.get("week")
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
         room_id = request.query_params.get("room")
         today = date.today()
         start = today - timedelta(days=today.weekday())
         end = start + timedelta(days=6)
-        if week_param:
+        if start_param and end_param:
+            # Plage explicite (ex : Agenda, qui a besoin de tout le passé/futur
+            # et non d'une seule semaine comme la vue Planning).
+            try:
+                start = date.fromisoformat(start_param)
+                end = date.fromisoformat(end_param)
+            except ValueError:
+                pass
+        elif week_param:
             try:
                 import datetime
                 start = datetime.datetime.strptime(f"{week_param}-1", "%G-W%V-%u").date()

@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { reservationsApi } from "../api/reservations";
 import { manifestationsApi } from "../api/manifestations";
-import { fmtDateFr, fmtTime } from "../utils/dates";
+import { fmtDate, fmtDateFr, fmtTime, addDays } from "../utils/dates";
 import StatusBadge from "../components/ui/Badge";
+
+// reservationsApi.planning() sans plage explicite ne renvoie que la semaine
+// courante (comportement voulu pour la vue Planning) — l'Agenda a besoin de
+// tout le passé récent et de tout le futur, d'où cette plage large explicite.
+const AGENDA_RANGE = {
+  start: fmtDate(addDays(new Date(), -90)),
+  end: fmtDate(addDays(new Date(), 365)),
+};
 
 export default function AgendaPage() {
   const [events, setEvents] = useState([]);
@@ -10,7 +18,7 @@ export default function AgendaPage() {
 
   useEffect(() => {
     Promise.all([
-      reservationsApi.planning(),
+      reservationsApi.planning(AGENDA_RANGE),
       manifestationsApi.list(),
     ]).then(([rRes, mRes]) => {
       const reservations = (rRes.data.reservations || []).map((r) => ({ ...r, _type: "reservation" }));
