@@ -4,6 +4,23 @@ from django.db import models
 from django.utils import timezone
 
 
+class UserGroup(models.Model):
+    """Groupe métier (ex : « Conseil Municipal ») utilisé pour restreindre
+    la réservation de certaines salles à leurs membres. Sans rapport avec
+    le système de groupes/permissions Django (django.contrib.auth.Group),
+    volontairement non utilisé sur ce projet — voir Room.allowed_groups."""
+    name = models.CharField(max_length=100, unique=True, verbose_name="Nom")
+    description = models.TextField(blank=True, verbose_name="Description")
+
+    class Meta:
+        verbose_name = "Groupe d'utilisateurs"
+        verbose_name_plural = "Groupes d'utilisateurs"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ("citoyen", "Citoyen"),
@@ -15,6 +32,9 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     association = models.CharField(max_length=200, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="citoyen")
+    reservation_groups = models.ManyToManyField(
+        UserGroup, blank=True, related_name="members", verbose_name="Groupes de réservation",
+    )
 
     # Email verification
     email_verified = models.BooleanField(default=False)

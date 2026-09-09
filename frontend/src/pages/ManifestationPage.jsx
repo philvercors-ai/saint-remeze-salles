@@ -122,7 +122,12 @@ export default function ManifestationPage() {
   });
 
   useEffect(() => {
-    roomsApi.list().then(({ data }) => setRooms(data.results || data));
+    // can_reserve : voir ReservationPage — une salle/lieu réservé à un groupe
+    // n'apparaît pas ici si l'utilisateur courant n'en fait pas partie.
+    roomsApi.list().then(({ data }) => {
+      const all = data.results || data;
+      setRooms(all.filter((r) => r.can_reserve !== false));
+    });
     manifestationsApi.equipmentAvailability()
       .then(({ data }) => setAvailability(data))
       .catch(() => {});

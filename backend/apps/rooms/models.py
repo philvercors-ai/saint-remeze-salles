@@ -1,6 +1,8 @@
 from django.db import models
 from django_mongodb_backend.fields import ArrayField
 
+from apps.accounts.models import UserGroup
+
 
 class Room(models.Model):
     name = models.CharField(max_length=100, verbose_name="Nom")
@@ -25,6 +27,10 @@ class Room(models.Model):
     )
     is_active = models.BooleanField(default=True, verbose_name="Active")
     requires_admin_only = models.BooleanField(default=False, verbose_name="Réservation admin uniquement")
+    allowed_groups = models.ManyToManyField(
+        UserGroup, blank=True, related_name="allowed_rooms", verbose_name="Groupes autorisés à réserver",
+        help_text="Laisser vide pour autoriser tout le monde. Sans effet si « Réservation admin uniquement » est coché.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -38,3 +44,22 @@ class Room(models.Model):
 
     def reservation_count(self, status="approved"):
         return self.reservation_set.filter(status=status).count()
+
+    def user_can_reserve(self, user):
+        """Un admin peut toujours tout réserver. Sinon, une salle en accès
+        libre (aucun groupe défini, pas admin-only) est ouverte à tous —
+        y compris aux visiteurs non connectés. Une salle restreinte
+        (admin-only, ou groupes définis) exige d'être connecté et, le cas
+        échéant, membre d'au moins un des groupes autorisés."""
+        is_authenticated = bool(user and getattr(user, "is_authenticated", False))
+        if is_authenticated and user.role == "admin":
+            return True
+        if self.requires_admin_only:
+            return False
+        if not self.allowed_groups.exists():
+            return True
+        if not is_authenticated:
+            return False
+        return user.reservation_groups.filter(
+            pk__in=self.allowed_groups.values_list("pk", flat=True)
+        ).exists()

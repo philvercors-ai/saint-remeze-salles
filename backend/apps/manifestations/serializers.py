@@ -22,6 +22,21 @@ class ManifestationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at", "room_name"]
 
+    def validate(self, data):
+        # Uniquement à la création — voir ReservationSerializer.validate() pour le
+        # raisonnement identique (une manifestation en salle communale est soumise
+        # à la même restriction de groupes qu'une réservation classique).
+        room = data.get("room")
+        if room and not self.instance:
+            request = self.context.get("request")
+            user = getattr(request, "user", None)
+            if not room.user_can_reserve(user):
+                raise serializers.ValidationError(
+                    {"room": "Cette salle est réservée à certains groupes d'utilisateurs. "
+                             "Connectez-vous avec un compte autorisé ou contactez la mairie."}
+                )
+        return data
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not data.get("is_public", True):

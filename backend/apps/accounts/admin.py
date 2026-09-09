@@ -4,17 +4,32 @@ from django.contrib import admin, messages
 from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin
 from django.http import HttpResponseRedirect
-from .models import CustomUser, RGPDConsent, PasswordResetToken
+from .models import CustomUser, RGPDConsent, PasswordResetToken, UserGroup
+
+
+@admin.register(UserGroup)
+class UserGroupAdmin(admin.ModelAdmin):
+    list_display = ["name", "member_count", "allowed_room_count"]
+    search_fields = ["name"]
+
+    def member_count(self, obj):
+        return obj.members.count()
+    member_count.short_description = "Membres"
+
+    def allowed_room_count(self, obj):
+        return obj.allowed_rooms.count()
+    allowed_room_count.short_description = "Salles autorisées"
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = ["email", "get_full_name", "role", "email_verified", "is_active", "date_joined"]
-    list_filter = ["role", "email_verified", "is_active"]
+    list_filter = ["role", "email_verified", "is_active", "reservation_groups"]
     search_fields = ["email", "first_name", "last_name"]
     ordering = ["-date_joined"]
+    filter_horizontal = UserAdmin.filter_horizontal + ("reservation_groups",)
     fieldsets = UserAdmin.fieldsets + (
-        ("Saint Remèze", {"fields": ("phone", "association", "role", "email_verified")}),
+        ("Saint Remèze", {"fields": ("phone", "association", "role", "email_verified", "reservation_groups")}),
         ("RGPD", {"fields": ("rgpd_consent_date", "deletion_requested_at", "anonymized_at")}),
     )
     actions = ["anonymize_users"]

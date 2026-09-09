@@ -171,6 +171,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not room.user_can_reserve(request.user if request.user.is_authenticated else None):
+            return Response(
+                {"room": "Cette salle est réservée à certains groupes d'utilisateurs. "
+                         "Connectez-vous avec un compte autorisé ou contactez la mairie."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Génère toutes les dates de la série
         dates, current = [], data["date"]
         while current <= data["recurrence_end_date"] and len(dates) < MAX_OCCURRENCES:

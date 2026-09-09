@@ -52,7 +52,14 @@ export default function ReservationPage() {
   });
 
   useEffect(() => {
-    roomsApi.list({ category: "salle" }).then(({ data }) => setRooms(data.results || data));
+    // can_reserve : calculé côté serveur selon le viewer courant (rôle admin,
+    // groupes de réservation) — une salle réservée à un groupe n'apparaît pas
+    // ici si l'utilisateur n'en fait pas partie. La vérification qui compte
+    // reste côté serveur à la soumission ; ce filtre n'est qu'un confort.
+    roomsApi.list({ category: "salle" }).then(({ data }) => {
+      const all = data.results || data;
+      setRooms(all.filter((r) => r.can_reserve !== false));
+    });
   }, []);
 
   /* Recharge les créneaux occupés dès que la salle ou la date change */

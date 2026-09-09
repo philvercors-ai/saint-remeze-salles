@@ -28,6 +28,16 @@ class ReservationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"attendees": f"Le nombre de participants dépasse la capacité de la salle ({room.capacity})."}
             )
+        # Uniquement à la création : un agent peut modifier une réservation existante
+        # sans que ça implique qu'il ait lui-même le droit de réserver cette salle.
+        if room and not self.instance:
+            request = self.context.get("request")
+            user = getattr(request, "user", None)
+            if not room.user_can_reserve(user):
+                raise serializers.ValidationError(
+                    {"room": "Cette salle est réservée à certains groupes d'utilisateurs. "
+                             "Connectez-vous avec un compte autorisé ou contactez la mairie."}
+                )
         return data
 
     def create(self, validated_data):

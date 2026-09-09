@@ -12,6 +12,8 @@ class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
 
     def get_queryset(self):
+        # prefetch_related() n'est pas supporté par django-mongodb-backend — chaque
+        # room.allowed_groups.exists() (via can_reserve) reste une requête séparée.
         qs = Room.objects.filter(is_active=True).order_by("name")
         category = self.request.query_params.get("category")
         if category:
