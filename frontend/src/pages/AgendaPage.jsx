@@ -4,27 +4,30 @@ import { reservationsApi } from "../api/reservations";
 import { manifestationsApi } from "../api/manifestations";
 import {
   fmtDate, fmtDateFr, fmtDateShortFr, fmtMonthFr, fmtTime,
-  addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
 } from "../utils/dates";
 import StatusBadge from "../components/ui/Badge";
 
+const ALL = "all";
 const WEEK = "week";
 const MONTH = "month";
 
+// Vue par défaut : tout le passé récent affiché et tout le futur — pas de
+// fenêtre de date, pour ne jamais faire disparaître un événement éloigné.
 function getRange(mode, anchor) {
-  return mode === MONTH
-    ? { start: startOfMonth(anchor), end: endOfMonth(anchor) }
-    : { start: startOfWeek(anchor, { weekStartsOn: 1 }), end: endOfWeek(anchor, { weekStartsOn: 1 }) };
+  if (mode === MONTH) return { start: startOfMonth(anchor), end: endOfMonth(anchor) };
+  if (mode === WEEK) return { start: startOfWeek(anchor, { weekStartsOn: 1 }), end: endOfWeek(anchor, { weekStartsOn: 1 }) };
+  return { start: addDays(new Date(), -90), end: addDays(new Date(), 365) };
 }
 
 function rangeLabel(mode, start, end) {
-  return mode === MONTH
-    ? fmtMonthFr(start)
-    : `Semaine du ${fmtDateShortFr(start)} au ${fmtDateFr(end)}`;
+  if (mode === MONTH) return fmtMonthFr(start);
+  if (mode === WEEK) return `Semaine du ${fmtDateShortFr(start)} au ${fmtDateFr(end)}`;
+  return "Tous les événements";
 }
 
 export default function AgendaPage() {
-  const [mode, setMode] = useState(WEEK);
+  const [mode, setMode] = useState(ALL);
   const [anchor, setAnchor] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,7 @@ export default function AgendaPage() {
     }).finally(() => setLoading(false));
   }, [startStr, endStr]);
 
+  const goAll = () => { setMode(ALL); setAnchor(new Date()); };
   const goToday = () => { setMode(WEEK); setAnchor(new Date()); };
   const goNextWeek = () => { setMode(WEEK); setAnchor(addWeeks(new Date(), 1)); };
   const goThisMonth = () => { setMode(MONTH); setAnchor(new Date()); };
@@ -124,32 +128,35 @@ export default function AgendaPage() {
 
       {/* Filtres rapides */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
+        <button style={filterBtnStyle(mode === ALL)} onClick={goAll}>Tous les événements</button>
         <button style={filterBtnStyle(isCurrentWeek)} onClick={goToday}>Semaine en cours</button>
         <button style={filterBtnStyle(isNextWeek)} onClick={goNextWeek}>Semaine prochaine</button>
         <button style={filterBtnStyle(isCurrentMonth)} onClick={goThisMonth}>Mois en cours</button>
         <button style={filterBtnStyle(isNextMonth)} onClick={goNextMonth}>Mois prochain</button>
       </div>
 
-      {/* Navigation période */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, background: "#f7f4ef", borderRadius: 10, padding: "8px 10px" }}>
-        <button
-          onClick={() => step(-1)}
-          aria-label={mode === MONTH ? "Mois précédent" : "Semaine précédente"}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#1a3a5a", padding: 6, display: "flex" }}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <span style={{ fontWeight: 600, fontSize: 14, color: "#1a3a5a", textTransform: "capitalize", textAlign: "center" }}>
-          {rangeLabel(mode, start, end)}
-        </span>
-        <button
-          onClick={() => step(1)}
-          aria-label={mode === MONTH ? "Mois suivant" : "Semaine suivante"}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#1a3a5a", padding: 6, display: "flex" }}
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
+      {/* Navigation période — pas de notion de "précédent/suivant" en vue "Tous" */}
+      {mode !== ALL && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, background: "#f7f4ef", borderRadius: 10, padding: "8px 10px" }}>
+          <button
+            onClick={() => step(-1)}
+            aria-label={mode === MONTH ? "Mois précédent" : "Semaine précédente"}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#1a3a5a", padding: 6, display: "flex" }}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span style={{ fontWeight: 600, fontSize: 14, color: "#1a3a5a", textTransform: "capitalize", textAlign: "center" }}>
+            {rangeLabel(mode, start, end)}
+          </span>
+          <button
+            onClick={() => step(1)}
+            aria-label={mode === MONTH ? "Mois suivant" : "Semaine suivante"}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#1a3a5a", padding: 6, display: "flex" }}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>Chargement…</div>
