@@ -1,7 +1,7 @@
 [
   {
     "model": "rooms.room",
-    "pk": 1,
+    "pk": "6aa1288c7963417db2f006f1",
     "fields": {
       "name": "Salle des Fêtes",
       "category": "salle",
@@ -13,12 +13,14 @@
       "image_emoji": "🎪",
       "color": "#1a3a5a",
       "is_active": true,
-      "requires_admin_only": false
+      "requires_admin_only": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
     }
   },
   {
     "model": "rooms.room",
-    "pk": 2,
+    "pk": "6aa1288c7963417db2f006f2",
     "fields": {
       "name": "Salle du Conseil",
       "category": "salle",
@@ -30,12 +32,14 @@
       "image_emoji": "🏛️",
       "color": "#c9a84c",
       "is_active": true,
-      "requires_admin_only": true
+      "requires_admin_only": true,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
     }
   },
   {
     "model": "rooms.room",
-    "pk": 3,
+    "pk": "6aa1288c7963417db2f006f3",
     "fields": {
       "name": "Salle Polyvalente",
       "category": "salle",
@@ -47,12 +51,14 @@
       "image_emoji": "🏫",
       "color": "#2d6a4f",
       "is_active": true,
-      "requires_admin_only": false
+      "requires_admin_only": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
     }
   },
   {
     "model": "rooms.room",
-    "pk": 4,
+    "pk": "6aa1288c7963417db2f006f4",
     "fields": {
       "name": "Terrain de Sport",
       "category": "lieu",
@@ -64,7 +70,9 @@
       "image_emoji": "⚽",
       "color": "#1d4ed8",
       "is_active": true,
-      "requires_admin_only": false
+      "requires_admin_only": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
     }
   }
 ]

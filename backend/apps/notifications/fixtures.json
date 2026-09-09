@@ -1,6 +1,6 @@
 [
-  {"model": "notifications.municipalservice", "pk": 1, "fields": {"name": "Technique / Voirie", "email": "technique@saintremeze.fr", "icon": "🔧", "is_active": true}},
-  {"model": "notifications.municipalservice", "pk": 2, "fields": {"name": "Sécurité / Pompiers", "email": "securite@saintremeze.fr", "icon": "🚒", "is_active": true}},
-  {"model": "notifications.municipalservice", "pk": 3, "fields": {"name": "Propreté / Environnement", "email": "proprete@saintremeze.fr", "icon": "🌿", "is_active": true}},
-  {"model": "notifications.municipalservice", "pk": 4, "fields": {"name": "Secrétariat", "email": "secretariat@saintremeze.fr", "icon": "📋", "is_active": true}}
+  {"model": "notifications.municipalservice", "pk": "6aa1288c7963417db2f006f5", "fields": {"name": "Technique / Voirie", "email": "technique@saintremeze.fr", "icon": "🔧", "is_active": true}},
+  {"model": "notifications.municipalservice", "pk": "6aa1288c7963417db2f006f6", "fields": {"name": "Sécurité / Pompiers", "email": "securite@saintremeze.fr", "icon": "🚒", "is_active": true}},
+  {"model": "notifications.municipalservice", "pk": "6aa1288c7963417db2f006f7", "fields": {"name": "Propreté / Environnement", "email": "proprete@saintremeze.fr", "icon": "🌿", "is_active": true}},
+  {"model": "notifications.municipalservice", "pk": "6aa1288c7963417db2f006f8", "fields": {"name": "Secrétariat", "email": "secretariat@saintremeze.fr", "icon": "📋", "is_active": true}}
 ]
