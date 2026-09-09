@@ -847,7 +847,11 @@ Hérite de `AbstractUser`. Champs additionnels :
 
 > `UserGroup` (modèle séparé, `apps/accounts/models.py`) n'a **aucun rapport** avec
 > `django.contrib.auth.models.Group` (le système de groupes/permissions Django standard),
-> volontairement inutilisé sur ce projet.
+> volontairement inutilisé sur ce projet. Le menu natif Django « Authentification et
+> autorisation → Groups » est **masqué** (`admin.site.unregister(Group)` dans
+> `apps/accounts/admin.py`) précisément pour éviter de créer un groupe au mauvais
+> endroit — ça s'est déjà produit une fois (le groupe créé dans `auth_group` restait
+> invisible partout dans l'app, qui ne lit que la collection `accounts_usergroup`).
 
 ### Changer le rôle d'un utilisateur
 

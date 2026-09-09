@@ -3,8 +3,18 @@ import os
 from django.contrib import admin, messages
 from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
 from django.http import HttpResponseRedirect
 from .models import CustomUser, RGPDConsent, PasswordResetToken, UserGroup
+
+# django.contrib.auth.Group (menu « Authentification et autorisation → Groups »)
+# n'est pas utilisé sur ce projet — voir UserGroup ci-dessous, le vrai modèle de
+# groupes de réservation. Sans ce retrait, les deux se ressemblent dans le menu
+# admin et il est facile de créer un groupe au mauvais endroit par erreur.
+try:
+    admin.site.unregister(Group)
+except admin.sites.NotRegistered:
+    pass
 
 
 @admin.register(UserGroup)
