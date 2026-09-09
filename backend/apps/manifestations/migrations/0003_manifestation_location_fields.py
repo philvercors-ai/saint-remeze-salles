@@ -3,7 +3,14 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-    dependencies = [("manifestations", "0002_manifestation_is_public")]
+    dependencies = [
+        ("manifestations", "0002_manifestation_is_public"),
+        # Manquant à l'origine : ce fichier ajoute une FK vers rooms.Room (ci-dessous)
+        # sans le déclarer, ce qui laissait Django libre d'appliquer cette migration
+        # avant celles de l'app rooms sur une base neuve — cassait tout déploiement
+        # partant d'une base vide (docker compose up sur un clone fraîchement fait).
+        ("rooms", "0001_initial"),
+    ]
 
     operations = [
         migrations.AddField(
