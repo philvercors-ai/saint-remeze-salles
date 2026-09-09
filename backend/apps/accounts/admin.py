@@ -62,3 +62,27 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     list_display = ["user", "created_at", "expires_at", "used"]
     list_filter = ["used"]
     readonly_fields = ["user", "token", "created_at", "expires_at", "used"]
+
+
+# Le lien « Change password » du bandeau d'en-tête du Django Admin (en haut de
+# TOUTES les pages) permet à l'utilisateur connecté de changer SON PROPRE mot
+# de passe — indépendamment du garde-fou sur la fiche utilisateur ci-dessus.
+# Si l'admin connecté est le compte DJANGO_SUPERUSER_EMAIL, ce changement
+# serait lui aussi écrasé au prochain redémarrage. On intercepte donc la vue
+# elle-même plutôt que de surcharger le template admin/base.html.
+_original_admin_password_change = admin.site.password_change
+
+
+def _guarded_admin_password_change(request, extra_context=None):
+    if request.user.is_authenticated and request.user.email == os.environ.get("DJANGO_SUPERUSER_EMAIL"):
+        messages.warning(
+            request,
+            "Le mot de passe de ce compte est géré par la variable d'environnement "
+            "DJANGO_SUPERUSER_PASSWORD sur Render — un changement ici serait écrasé au "
+            "prochain redémarrage du serveur. Modifiez cette variable dans le dashboard Render.",
+        )
+        return HttpResponseRedirect("../")
+    return _original_admin_password_change(request, extra_context)
+
+
+admin.site.password_change = _guarded_admin_password_change
