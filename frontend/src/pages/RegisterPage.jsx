@@ -25,9 +25,11 @@ function Field({ label, type = "text", required, placeholder, value, onChange, e
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
-    first_name: "", last_name: "", email: "", phone: "", association: "",
+    first_name: "", last_name: "", email: "", phone: "",
+    account_type: "particulier", association: "", rna_number: "",
     password: "", password_confirm: "", rgpd_consent: false,
   });
+  const isAssociation = form.account_type === "association";
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
@@ -88,7 +90,52 @@ export default function RegisterPage() {
           </div>
           <Field label="Email"     type="email" required value={form.email}       onChange={set("email")}       error={errors.email}       placeholder="vous@exemple.fr"  autoComplete="email" />
           <Field label="Téléphone" type="tel"            value={form.phone}       onChange={set("phone")}       error={errors.phone}       placeholder="06 00 00 00 00"   autoComplete="tel" />
-          <Field label="Association / Organisme"         value={form.association} onChange={set("association")} error={errors.association} placeholder="Facultatif"        autoComplete="organization" />
+
+          <div>
+            <label style={labelStyle}>Vous vous inscrivez en tant que *</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { value: "particulier", label: "Particulier" },
+                { value: "association", label: "Association" },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, account_type: value }))}
+                  style={{
+                    flex: 1, padding: "9px 12px", borderRadius: 8, cursor: "pointer",
+                    border: `1.5px solid ${form.account_type === value ? "#1a3a5a" : "#e5e7eb"}`,
+                    background: form.account_type === value ? "#1a3a5a" : "#fff",
+                    color: form.account_type === value ? "#fff" : "#374151",
+                    fontWeight: 600, fontSize: 13,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isAssociation && (
+            <>
+              <Field
+                label="Nom de l'association" required
+                value={form.association} onChange={set("association")} error={errors.association}
+                placeholder="Les Amis du Village" autoComplete="organization"
+              />
+              <Field
+                label="Numéro RNA" required
+                value={form.rna_number} onChange={set("rna_number")} error={errors.rna_number}
+                placeholder="W123456789"
+              />
+              <p style={{ fontSize: 12, color: "#9ca3af", marginTop: -8 }}>
+                Format : la lettre W suivie de 9 chiffres. Disponible sur votre récépissé de déclaration
+                en préfecture ou sur{" "}
+                <a href="https://www.data-asso.fr" target="_blank" rel="noopener noreferrer" style={{ color: "#1a3a5a" }}>data-asso.fr</a>.
+              </p>
+            </>
+          )}
+
           <Field label="Mot de passe"         type="password" required value={form.password}         onChange={set("password")}         error={errors.password}         placeholder="8 caractères minimum" autoComplete="new-password" />
           <Field label="Confirmer le mot de passe" type="password" required value={form.password_confirm} onChange={set("password_confirm")} error={errors.password_confirm} placeholder="Répétez le mot de passe" autoComplete="new-password" />
 

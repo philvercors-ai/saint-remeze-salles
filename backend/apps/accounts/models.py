@@ -1,7 +1,13 @@
 import secrets
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
+
+rna_validator = RegexValidator(
+    r"^W\d{9}$",
+    "Le numéro RNA doit être au format W suivi de 9 chiffres (ex. W123456789).",
+)
 
 
 class UserGroup(models.Model):
@@ -28,9 +34,20 @@ class CustomUser(AbstractUser):
         ("admin", "Administrateur"),
     ]
 
+    ACCOUNT_TYPE_CHOICES = [
+        ("particulier", "Particulier"),
+        ("association", "Association"),
+    ]
+
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
-    association = models.CharField(max_length=200, blank=True)
+    account_type = models.CharField(
+        max_length=20, choices=ACCOUNT_TYPE_CHOICES, default="particulier", verbose_name="Type de compte",
+    )
+    association = models.CharField(max_length=200, blank=True, verbose_name="Nom de l'association")
+    rna_number = models.CharField(
+        max_length=10, blank=True, verbose_name="Numéro RNA", validators=[rna_validator],
+    )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="citoyen")
     reservation_groups = models.ManyToManyField(
         UserGroup, blank=True, related_name="members", verbose_name="Groupes de réservation",
@@ -76,6 +93,7 @@ class CustomUser(AbstractUser):
         self.username = f"deleted_{self.pk}"
         self.phone = ""
         self.association = ""
+        self.rna_number = ""
         self.is_active = False
         self.anonymized_at = timezone.now()
         self.save()

@@ -204,7 +204,7 @@ export default function ReservationPage() {
           {selectedRoom && (
             <div style={{ background: "#f7f4ef", borderRadius: 10, padding: 14, fontSize: 13, color: "#6b7280" }}>
               Capacité : {selectedRoom.capacity} pers. · {selectedRoom.area_sqm} m²
-              {selectedRoom.hourly_rate > 0 && ` · ${selectedRoom.hourly_rate} €/h`}
+              {selectedRoom.applicable_daily_rate > 0 && ` · ${selectedRoom.applicable_daily_rate} €/jour`}
             </div>
           )}
           <div>

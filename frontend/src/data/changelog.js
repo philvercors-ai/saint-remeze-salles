@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.9.4";
+export const APP_VERSION = "1.10.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.10.0",
+    date: "2026-09-10",
+    label: "Particuliers / associations et tarifs journaliers",
+    changes: [
+      "L'inscription distingue maintenant particuliers et associations, avec numéro RNA obligatoire pour ces dernières",
+      "Le tarif horaire des salles est remplacé par deux tarifs journaliers — un pour les particuliers, un pour les associations",
+      "Le tarif affiché s'adapte automatiquement au type de compte connecté",
+    ],
+  },
   {
     version: "1.9.4",
     date: "2026-09-10",

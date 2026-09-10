@@ -307,7 +307,7 @@ export default function ManifestationPage() {
                   return r ? (
                     <div style={{ background: "#f7f4ef", borderRadius: 8, padding: 12, fontSize: 13, color: "#6b7280" }}>
                       Capacité : {r.capacity} pers. · {r.area_sqm} m²
-                      {r.hourly_rate > 0 && ` · ${r.hourly_rate} €/h`}
+                      {r.applicable_daily_rate > 0 && ` · ${r.applicable_daily_rate} €/jour`}
                     </div>
                   ) : null;
                 })()}

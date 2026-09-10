@@ -8,7 +8,12 @@ class Room(models.Model):
     name = models.CharField(max_length=100, verbose_name="Nom")
     capacity = models.PositiveIntegerField(verbose_name="Capacité (personnes)")
     area_sqm = models.PositiveIntegerField(verbose_name="Surface (m²)")
-    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name="Tarif horaire (€)")
+    daily_rate_individual = models.DecimalField(
+        max_digits=8, decimal_places=2, default=0, verbose_name="Tarif journalier — Particuliers (€)",
+    )
+    daily_rate_association = models.DecimalField(
+        max_digits=8, decimal_places=2, default=0, verbose_name="Tarif journalier — Associations (€)",
+    )
     equipment = ArrayField(models.CharField(max_length=100), blank=True, default=list, verbose_name="Équipements")
     description = models.TextField(blank=True, verbose_name="Description")
     image_emoji = models.CharField(max_length=10, default="🏛️", verbose_name="Emoji")
@@ -44,6 +49,14 @@ class Room(models.Model):
 
     def reservation_count(self, status="approved"):
         return self.reservation_set.filter(status=status).count()
+
+    def daily_rate_for(self, user):
+        """Tarif journalier applicable à cet utilisateur (association si le
+        compte est enregistré comme tel, particulier sinon — y compris pour
+        un visiteur non connecté)."""
+        if user and getattr(user, "is_authenticated", False) and user.account_type == "association":
+            return self.daily_rate_association
+        return self.daily_rate_individual
 
     def user_can_reserve(self, user):
         """Un admin peut toujours tout réserver. Sinon, une salle en accès

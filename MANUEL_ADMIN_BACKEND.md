@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.9.4 — Septembre 2026
+> Version 1.10.0 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -405,9 +405,9 @@ L'interface d'administration native Django est accessible à `/admin/` avec les 
 #### Salles (`rooms`)
 
 **Room** — Gestion complète des salles.
-- Édition inline de `is_active` et `hourly_rate` depuis la liste
+- Édition inline de `is_active`, `daily_rate_individual` et `daily_rate_association` depuis la liste
 - Filtres : active, admin uniquement
-- Champs : nom, capacité, surface, tarif/h, équipements (liste), description, emoji, couleur, active, réservation admin uniquement
+- Champs : nom, capacité, surface, tarif journalier particuliers, tarif journalier associations, équipements (liste), description, emoji, couleur, active, réservation admin uniquement
 
 > **Soft delete** : supprimer une salle via l'API passe `is_active = False`. Elle n'apparaît plus dans l'application mais ses données historiques sont conservées.
 
@@ -502,7 +502,11 @@ Idem réservations.
 | `name` | string | Nom de la salle |
 | `capacity` | int | Capacité en personnes |
 | `area_sqm` | int | Surface en m² |
-| `hourly_rate` | decimal | Tarif horaire en € (0 = gratuit) |
+| `daily_rate_individual` | decimal | Tarif journalier particuliers en € (0 = gratuit) |
+| `daily_rate_association` | decimal | Tarif journalier associations en € (0 = gratuit) |
+| `applicable_daily_rate` | decimal (lecture seule) | Tarif journalier applicable au viewer courant (association si le compte connecté l'est, particulier sinon — y compris anonyme) |
+| `can_reserve` | bool (lecture seule) | Le viewer courant peut-il réserver cette salle (groupes/admin-only) |
+| `restricted_groups` | array (lecture seule) | Noms des groupes de réservation autorisés — `[]` si ouverte à tous |
 | `equipment` | array | Liste des équipements disponibles |
 | `description` | string | Description |
 | `image_emoji` | string | Emoji représentatif |
@@ -764,7 +768,8 @@ curl -X POST /api/rooms/ \
     "name": "Salle du conseil",
     "capacity": 30,
     "area_sqm": 60,
-    "hourly_rate": 15.00,
+    "daily_rate_individual": 15.00,
+    "daily_rate_association": 8.00,
     "equipment": ["Vidéoprojecteur", "Tableau blanc", "Climatisation"],
     "description": "Salle de réunion municipale",
     "image_emoji": "🏛️",
@@ -840,7 +845,9 @@ Hérite de `AbstractUser`. Champs additionnels :
 |---|---|
 | `email` | Identifiant unique (USERNAME_FIELD) |
 | `phone` | Téléphone (optionnel) |
-| `association` | Association ou organisme |
+| `account_type` | `particulier` / `association` (choisi à l'inscription) |
+| `association` | Nom de l'association — requis si `account_type = association` |
+| `rna_number` | Numéro RNA (format `W` + 9 chiffres) — requis si `account_type = association` |
 | `role` | `citoyen` / `agent` / `admin` |
 | `email_verified` | Email confirmé ? |
 | `email_verify_token` | Token de vérification (durée 24h) |
@@ -1991,5 +1998,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.9.4) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.10.0) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

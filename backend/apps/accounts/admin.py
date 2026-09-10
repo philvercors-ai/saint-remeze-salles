@@ -33,13 +33,13 @@ class UserGroupAdmin(admin.ModelAdmin):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ["email", "get_full_name", "role", "email_verified", "is_active", "date_joined"]
-    list_filter = ["role", "email_verified", "is_active", "reservation_groups"]
+    list_display = ["email", "get_full_name", "account_type", "role", "email_verified", "is_active", "date_joined"]
+    list_filter = ["account_type", "role", "email_verified", "is_active", "reservation_groups"]
     search_fields = ["email", "first_name", "last_name"]
     ordering = ["-date_joined"]
     filter_horizontal = UserAdmin.filter_horizontal + ("reservation_groups",)
     fieldsets = UserAdmin.fieldsets + (
-        ("Saint Remèze", {"fields": ("phone", "association", "role", "email_verified", "reservation_groups")}),
+        ("Saint Remèze", {"fields": ("phone", "account_type", "association", "rna_number", "role", "email_verified", "reservation_groups")}),
         ("RGPD", {"fields": ("rgpd_consent_date", "deletion_requested_at", "anonymized_at")}),
     )
     actions = ["anonymize_users"]

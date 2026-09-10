@@ -88,7 +88,13 @@ export default function ProfilePage() {
           <InfoRow label="Nom" value={user.last_name} />
           <InfoRow label="Email" value={user.email} />
           <InfoRow label="Téléphone" value={user.phone || "—"} />
-          <InfoRow label="Association" value={user.association || "—"} />
+          <InfoRow label="Type de compte" value={user.account_type === "association" ? "Association" : "Particulier"} />
+          {user.account_type === "association" && (
+            <>
+              <InfoRow label="Association" value={user.association || "—"} />
+              <InfoRow label="Numéro RNA" value={user.rna_number || "—"} />
+            </>
+          )}
           <InfoRow label="Rôle" value={{ citoyen: "Citoyen", agent: "Agent municipal", admin: "Administrateur" }[user.role]} />
           <InfoRow label="Membre depuis" value={new Date(user.date_joined).toLocaleDateString("fr-FR")} />
           <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>

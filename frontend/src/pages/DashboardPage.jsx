@@ -28,8 +28,8 @@ function RoomSection({ title, rooms, showPlanningLink = false }) {
               <span><Users size={12} style={{ verticalAlign: "middle" }} /> {room.capacity} pers.</span>
               <span><Building2 size={12} style={{ verticalAlign: "middle" }} /> {room.area_sqm} m²</span>
             </div>
-            {room.hourly_rate > 0 && (
-              <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room.hourly_rate} €/h</p>
+            {room.applicable_daily_rate > 0 && (
+              <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room.applicable_daily_rate} €/jour</p>
             )}
           </div>
         ))}

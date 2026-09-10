@@ -26,7 +26,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            "email", "first_name", "last_name", "phone", "association",
+            "email", "first_name", "last_name", "phone",
+            "account_type", "association", "rna_number",
             "password", "password_confirm", "rgpd_consent",
         ]
 
@@ -35,6 +36,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password_confirm": "Les mots de passe ne correspondent pas."})
         if not data.get("rgpd_consent"):
             raise serializers.ValidationError({"rgpd_consent": "Vous devez accepter la politique de confidentialité."})
+        if data.get("account_type") == "association":
+            if not data.get("association"):
+                raise serializers.ValidationError({"association": "Le nom de l'association est requis."})
+            if not data.get("rna_number"):
+                raise serializers.ValidationError({"rna_number": "Le numéro RNA est requis pour une association."})
         return data
 
     def create(self, validated_data):
@@ -48,7 +54,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
             phone=validated_data.get("phone", ""),
+            account_type=validated_data.get("account_type", "particulier"),
             association=validated_data.get("association", ""),
+            rna_number=validated_data.get("rna_number", ""),
             password=validated_data["password"],
             email_verified=False,
             rgpd_consent_date=timezone.now(),
@@ -63,7 +71,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             "id", "email", "first_name", "last_name", "full_name",
-            "phone", "association", "role", "email_verified",
+            "phone", "account_type", "association", "rna_number", "role", "email_verified",
             "rgpd_consent_date", "date_joined",
         ]
         read_only_fields = ["id", "email", "role", "email_verified", "date_joined", "rgpd_consent_date"]
@@ -75,7 +83,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ["first_name", "last_name", "phone", "association"]
+        fields = ["first_name", "last_name", "phone", "account_type", "association", "rna_number"]
 
 
 class ChangePasswordSerializer(serializers.Serializer):
