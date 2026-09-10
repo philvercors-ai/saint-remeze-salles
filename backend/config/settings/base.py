@@ -122,6 +122,22 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Limite le brute-force (login), le spam (inscription) et l'email bombing
+    # (mot de passe oublié / renvoi de vérification, qui déclenchent un envoi
+    # Resend à chaque appel — sans ça, la quota gratuite Resend est aussi une
+    # cible de déni de service facile). Par IP pour un utilisateur anonyme.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",
+        "user": "1000/hour",
+        "login": "10/minute",
+        "register": "5/hour",
+        "password_reset": "5/hour",
+        "email_verification": "5/hour",
+    },
 }
 
 # ── JWT ─────────────────────────────────────────────────────────────────────────

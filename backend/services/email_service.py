@@ -4,6 +4,7 @@ Wrapper Resend pour tous les emails de l'application.
 import logging
 import resend
 from django.conf import settings
+from django.utils.html import escape
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class EmailService:
         html = cls._base_template(
             title="Vérifiez votre adresse email",
             body=f"""
-                <p>Bonjour {user.first_name or user.email},</p>
+                <p>Bonjour {escape(user.first_name or user.email)},</p>
                 <p>Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
                 <a href="{verify_url}" style="{cls.BTN_STYLE}">Vérifier mon email</a>
                 <p style="color:#666;font-size:13px;">Ce lien est valable 24 heures.</p>
@@ -63,7 +64,7 @@ class EmailService:
         html = cls._base_template(
             title="Réinitialisation de votre mot de passe",
             body=f"""
-                <p>Bonjour {user.first_name or user.email},</p>
+                <p>Bonjour {escape(user.first_name or user.email)},</p>
                 <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
                 <a href="{reset_url}" style="{cls.BTN_STYLE}">Réinitialiser mon mot de passe</a>
                 <p style="color:#666;font-size:13px;">Ce lien expire dans <strong>15 minutes</strong>.</p>
@@ -77,7 +78,7 @@ class EmailService:
         html = cls._base_template(
             title="Mot de passe modifié",
             body=f"""
-                <p>Bonjour {user.first_name or user.email},</p>
+                <p>Bonjour {escape(user.first_name or user.email)},</p>
                 <p>Votre mot de passe a été modifié avec succès.</p>
                 <p style="color:#666;font-size:13px;">Si vous n'êtes pas à l'origine de cette modification,
                 contactez immédiatement la mairie : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
@@ -92,7 +93,7 @@ class EmailService:
         html = cls._base_template(
             title="Demande de réservation reçue",
             body=f"""
-                <p>Bonjour {reservation.contact_name},</p>
+                <p>Bonjour {escape(reservation.contact_name)},</p>
                 <p>Votre demande de réservation a bien été reçue :</p>
                 {cls._reservation_summary(reservation)}
                 <p>La mairie traitera votre demande sous 48 heures ouvrées.</p>
@@ -105,10 +106,10 @@ class EmailService:
         html = cls._base_template(
             title="Réservation approuvée ✓",
             body=f"""
-                <p>Bonjour {reservation.contact_name},</p>
+                <p>Bonjour {escape(reservation.contact_name)},</p>
                 <p>Bonne nouvelle ! Votre réservation a été <strong style="color:#065f46">approuvée</strong> :</p>
                 {cls._reservation_summary(reservation)}
-                {"<p><strong>Commentaire de la mairie :</strong> " + reservation.admin_comment + "</p>" if reservation.admin_comment else ""}
+                {"<p><strong>Commentaire de la mairie :</strong> " + escape(reservation.admin_comment) + "</p>" if reservation.admin_comment else ""}
                 <p>En cas de question, contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
         )
@@ -119,10 +120,10 @@ class EmailService:
         html = cls._base_template(
             title="Réservation non accordée",
             body=f"""
-                <p>Bonjour {reservation.contact_name},</p>
+                <p>Bonjour {escape(reservation.contact_name)},</p>
                 <p>Nous ne pouvons malheureusement pas donner suite à votre demande de réservation :</p>
                 {cls._reservation_summary(reservation)}
-                {"<p><strong>Motif :</strong> " + reservation.admin_comment + "</p>" if reservation.admin_comment else ""}
+                {"<p><strong>Motif :</strong> " + escape(reservation.admin_comment) + "</p>" if reservation.admin_comment else ""}
                 <p>Pour plus d'informations : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
         )
@@ -135,7 +136,7 @@ class EmailService:
         html = cls._base_template(
             title="Demande de suppression enregistrée",
             body=f"""
-                <p>Bonjour {user.first_name or user.email},</p>
+                <p>Bonjour {escape(user.first_name or user.email)},</p>
                 <p>Votre demande de suppression de compte a bien été enregistrée.</p>
                 <p>Conformément au RGPD, votre compte sera anonymisé dans <strong>30 jours</strong>.</p>
                 <p>Pendant ce délai, vous pouvez annuler cette demande en vous connectant à votre profil.</p>
@@ -167,9 +168,9 @@ class EmailService:
         html = cls._base_template(
             title=f"[{priority_label}] Notification — Mairie de Saint Remèze",
             body=f"""
-                <p>Service {service_name},</p>
+                <p>Service {escape(service_name)},</p>
                 <p style="padding:12px;border-left:4px solid {priority_color};background:#f8f8f8;">
-                    {message}
+                    {escape(message)}
                 </p>
                 <p style="color:#666;font-size:13px;">Priorité : <strong style="color:{priority_color}">{priority_label}</strong></p>
             """,
@@ -188,9 +189,9 @@ class EmailService:
         return f"""
             <table style="border-collapse:collapse;width:100%;margin:12px 0;">
                 <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Salle</td>
-                    <td style="padding:8px;">{reservation.room.name}</td></tr>
+                    <td style="padding:8px;">{escape(reservation.room.name)}</td></tr>
                 <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Événement</td>
-                    <td style="padding:8px;">{reservation.title}</td></tr>
+                    <td style="padding:8px;">{escape(reservation.title)}</td></tr>
                 <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Date</td>
                     <td style="padding:8px;">{reservation.date.strftime('%d/%m/%Y')}</td></tr>
                 <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Horaires</td>
