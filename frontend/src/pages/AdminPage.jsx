@@ -529,9 +529,18 @@ function NotificationsPanel({ showToast }) {
   const [services, setServices] = useState([]);
   const [form, setForm]         = useState({ service_ids: [], message: "", priority: "normal" });
   const [loading, setLoading]   = useState(false);
+  const [history, setHistory]   = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  const loadHistory = () => {
+    notificationsApi.history()
+      .then(({ data }) => setHistory((data.results || data).slice(0, 10)))
+      .finally(() => setHistoryLoading(false));
+  };
 
   useEffect(() => {
     notificationsApi.services().then(({ data }) => setServices(data.results || data));
+    loadHistory();
   }, []);
 
   const toggleService = (id) => setForm((f) => ({
@@ -546,6 +555,7 @@ function NotificationsPanel({ showToast }) {
       const { data } = await notificationsApi.send(form);
       showToast(data.detail);
       setForm({ service_ids: [], message: "", priority: "normal" });
+      loadHistory();
     } catch (_) {
       showToast("Erreur d'envoi.", "error");
     } finally {
@@ -637,6 +647,54 @@ function NotificationsPanel({ showToast }) {
             <Send size={15} />
             {loading ? "Envoi en cours…" : `Envoyer${form.service_ids.length ? ` (${form.service_ids.length} service${form.service_ids.length > 1 ? "s" : ""})` : ""}`}
           </button>
+        </div>
+      </div>
+
+      {/* Historique */}
+      <div style={{ ...card, padding: 24, gridColumn: "1 / -1" }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: 15, color: C.navy }}>Historique — 10 dernières notifications</h3>
+        {historyLoading && <p style={{ color: C.light, fontSize: 13 }}>Chargement…</p>}
+        {!historyLoading && history.length === 0 && (
+          <p style={{ color: C.light, fontSize: 13 }}>Aucune notification envoyée pour le moment.</p>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {history.map((n) => {
+            const priority = PRIORITY.find((p) => p.value === n.priority) || PRIORITY[1];
+            return (
+              <div
+                key={n.id}
+                style={{
+                  display: "flex", alignItems: "flex-start", gap: 12,
+                  padding: "12px 14px", borderRadius: 10,
+                  background: C.bg, border: `1px solid ${C.border}`,
+                }}
+              >
+                <span style={{
+                  flexShrink: 0, marginTop: 2, width: 8, height: 8, borderRadius: "50%",
+                  background: priority.color,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13.5, color: "#374151" }}>{n.message}</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 12, color: C.muted }}>
+                    {(n.services_detail || []).map((s) => `${s.icon} ${s.name}`).join(", ") || "Aucun service"}
+                    {" · "}{fmtDateFr(n.sent_at)}
+                    {n.sent_by_name && ` · par ${n.sent_by_name}`}
+                  </p>
+                </div>
+                <span style={{
+                  flexShrink: 0, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 12,
+                  color: priority.color, background: `${priority.color}15`,
+                }}>
+                  {priority.label}
+                </span>
+                {n.email_sent ? (
+                  <CheckCircle size={16} color={C.green} style={{ flexShrink: 0, marginTop: 1 }} />
+                ) : (
+                  <XCircle size={16} color={C.red} style={{ flexShrink: 0, marginTop: 1 }} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

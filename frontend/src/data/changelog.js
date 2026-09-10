@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.9.1";
+export const APP_VERSION = "1.9.2";
 
 export const CHANGELOG = [
+  {
+    version: "1.9.2",
+    date: "2026-09-10",
+    label: "Historique des notifications dans l'administration",
+    changes: [
+      "Les 10 dernières notifications envoyées aux services municipaux s'affichent désormais dans l'onglet Notifications (message, priorité, services destinataires, date, envoyé par, statut d'envoi)",
+    ],
+  },
   {
     version: "1.9.1",
     date: "2026-09-10",
