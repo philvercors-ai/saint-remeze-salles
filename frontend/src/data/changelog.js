@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.10.0";
+export const APP_VERSION = "1.11.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.0",
+    date: "2026-09-10",
+    label: "Interrupteur pour la fonctionnalité Manifestation",
+    changes: [
+      "La déclaration de manifestations peut désormais être mise en pause depuis le Django Admin (Paramètres — Manifestations), sans déploiement",
+      "Le lien disparaît du menu et la page affiche un message d'indisponibilité tant que c'est désactivé",
+      "Les manifestations déjà approuvées restent visibles dans l'Agenda",
+    ],
+  },
   {
     version: "1.10.0",
     date: "2026-09-10",

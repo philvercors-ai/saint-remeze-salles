@@ -17,6 +17,46 @@ class EquipmentStock(models.Model):
         return f"{self.name} ({self.total_quantity})"
 
 
+class ManifestationSettings(models.Model):
+    """Réglage global (singleton) — une seule ligne existe toujours.
+    Permet de désactiver la fonctionnalité Manifestation (nouvelle demande) le
+    temps d'une mise en attente/déploiement, sans toucher au code ni aux
+    manifestations déjà approuvées, qui restent visibles dans l'Agenda.
+
+    Le classique "pk=1 forcé" pour un singleton ne fonctionne pas ici : la clé
+    primaire est un ObjectId MongoDB (ObjectIdAutoField), qui rejette un entier
+    comme "1" (même piège que les anciennes fixtures — voir MANUEL section
+    Dépannage). L'unicité repose donc sur `key`, pas sur le pk."""
+    SINGLETON_KEY = "manifestations"
+
+    key = models.CharField(max_length=50, unique=True, default=SINGLETON_KEY, editable=False)
+    is_enabled = models.BooleanField(
+        default=True, verbose_name="Manifestations activées",
+        help_text="Décoché : la page Manifestation est masquée et la création de nouvelles demandes est bloquée. "
+                   "Les manifestations déjà approuvées restent visibles.",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Paramètres — Manifestations"
+        verbose_name_plural = "Paramètres — Manifestations"
+
+    def __str__(self):
+        return "Paramètres Manifestations"
+
+    def save(self, *args, **kwargs):
+        self.key = self.SINGLETON_KEY
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass  # Singleton : jamais supprimable
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(key=cls.SINGLETON_KEY)
+        return obj
+
+
 class Manifestation(models.Model):
     STATUS_CHOICES = [
         ("pending", "En attente"),

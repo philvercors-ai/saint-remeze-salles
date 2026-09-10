@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAgent, IsOwnerOrAgent
-from .models import Manifestation, EquipmentStock
+from .models import Manifestation, EquipmentStock, ManifestationSettings
 from .serializers import ManifestationSerializer, ManifestationAdminSerializer, ManifestationApproveSerializer
 
 
@@ -45,6 +45,12 @@ class ManifestationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
         serializer.save(user=user)
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def config(self, request):
+        """Public — le frontend l'interroge pour savoir s'il doit afficher la
+        page/les liens de navigation Manifestation."""
+        return Response({"is_enabled": ManifestationSettings.load().is_enabled})
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def my(self, request):

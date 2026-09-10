@@ -1,13 +1,15 @@
 import { NavLink } from "react-router-dom";
 import { CalendarDays, Calendar, Plus, Sparkles, Shield, User } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import { useConfigStore } from "../../store/configStore";
 
 export default function BottomNav() {
   const { isAgent, user } = useAuthStore();
+  const manifestationsEnabled = useConfigStore((s) => s.manifestationsEnabled);
 
   const items = [
     { to: "/reservation",   icon: Plus,       label: "Réserver" },
-    { to: "/manifestation", icon: Sparkles,   label: "Manifestation" },
+    { to: "/manifestation", icon: Sparkles,   label: "Manifestation", hidden: !manifestationsEnabled },
     { to: "/planning",      icon: CalendarDays, label: "Planning" },
     { to: "/agenda",        icon: Calendar,   label: "Agenda" },
     isAgent

@@ -2,15 +2,8 @@ import { NavLink } from "react-router-dom";
 import { Home, CalendarDays, Calendar, Sparkles, Shield, Plus, User, FileText } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
+import { useConfigStore } from "../../store/configStore";
 import { APP_VERSION } from "../../data/changelog";
-
-const NAV_ITEMS = [
-  { to: "/",              icon: Home,         label: "Accueil" },
-  { to: "/reservation",   icon: Plus,         label: "Réserver" },
-  { to: "/manifestation", icon: Sparkles,     label: "Manifestation" },
-  { to: "/planning",      icon: CalendarDays, label: "Planning" },
-  { to: "/agenda",        icon: Calendar,     label: "Agenda" },
-];
 
 const ADMIN_ITEMS = [
   { to: "/admin",  icon: Shield, label: "Administration" },
@@ -19,9 +12,14 @@ const ADMIN_ITEMS = [
 export default function Sidebar() {
   const { isAgent, user } = useAuthStore();
   const { sidebarOpen, closeSidebar } = useUiStore();
+  const manifestationsEnabled = useConfigStore((s) => s.manifestationsEnabled);
 
   const items = [
-    ...NAV_ITEMS,
+    { to: "/",              icon: Home,         label: "Accueil" },
+    { to: "/reservation",   icon: Plus,         label: "Réserver" },
+    { to: "/manifestation", icon: Sparkles,     label: "Manifestation", hidden: !manifestationsEnabled },
+    { to: "/planning",      icon: CalendarDays, label: "Planning" },
+    { to: "/agenda",        icon: Calendar,     label: "Agenda" },
     ...(isAgent ? ADMIN_ITEMS : []),
     { to: "/profil", icon: User, label: "Mon profil", hidden: !user },
     { to: "/confidentialite", icon: FileText, label: "Confidentialité" },

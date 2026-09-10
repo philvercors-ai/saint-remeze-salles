@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.10.0 — Septembre 2026
+> Version 1.11.0 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -254,6 +254,8 @@ En déploiement Docker, un conteneur `certbot` tourne en permanence et renouvell
 > - `django_celery_beat` → Celery Beat utilise le planificateur en mémoire (`PersistentScheduler`) avec un fichier `celerybeat-schedule`
 >
 > **`QuerySet.prefetch_related()` n'est pas supporté** par `django-mongodb-backend` (`NotSupportedError` à l'exécution) — contrairement à `select_related()`, qui fonctionne normalement. Sur une relation ManyToMany ou une FK inverse consultée en boucle (ex : `room.allowed_groups.exists()` par salle dans une liste), chaque accès reste donc une requête séparée ; pas de solution d'optimisation équivalente à ce jour sur ce backend.
+>
+> **Un singleton Django classique (`self.pk = 1` forcé dans `save()`) casse aussi** sur ce backend : la clé primaire (`ObjectIdAutoField`) rejette un entier comme "1" (`ValidationError: "1" is not a valid Object Id`) — même famille de piège que les PK entiers dans les fixtures (section Dépannage). Pour un modèle singleton (ex. `ManifestationSettings`), utiliser un champ dédié `unique=True` (ex. `key`) comme clé de `get_or_create()`, jamais le pk.
 
 ---
 
@@ -618,7 +620,8 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
 | Méthode | Endpoint | Auth | Permission | Description |
 |---|---|---|---|---|
 | `GET` | `/` | Non/Oui | — | Liste (approuvées pour visiteurs, toutes pour agents) |
-| `POST` | `/` | Non | — | Créer une manifestation |
+| `POST` | `/` | Non | — | Créer une manifestation (bloqué si désactivé, voir ci-dessous) |
+| `GET` | `/config/` | Non | — | `{"is_enabled": bool}` — fonctionnalité active ou en pause |
 | `GET` | `/my/` | Oui | Utilisateur | Mes manifestations |
 | `GET` | `/export_csv/` | Oui | Agent | Export CSV |
 | `GET` | `/equipment_availability/` | Non | — | Disponibilité logistique par date |
@@ -683,6 +686,27 @@ Retourne pour chaque équipement le nombre d'unités disponibles en tenant compt
 
 **Colonnes CSV export :**
 ID, Titre, Association, Contact, Email, Téléphone, Date début, Date fin, Lieu, GPS Lat, GPS Lng, Participants, Budget, Équipements, Statut, Créé le
+
+### Activer/désactiver la fonctionnalité Manifestation (v1.11.0)
+
+Django Admin → **Paramètres — Manifestations** → case **Manifestations activées**.
+
+Décochée :
+- La page `/manifestation` de l'application affiche un message d'indisponibilité au
+  lieu du formulaire, et le lien disparaît du menu et du bandeau bas (mobile).
+- `POST /api/manifestations/` est bloqué (400) — y compris via un appel API direct,
+  pas seulement côté interface.
+- Les manifestations déjà **approuvées** restent visibles dans l'Agenda et sur le
+  planning : décocher ne les cache pas, ça empêche seulement d'en déposer de nouvelles.
+- Les agents peuvent toujours consulter/approuver/refuser les demandes déjà déposées.
+
+Réglage stocké dans `ManifestationSettings` (une seule ligne toujours présente,
+créée automatiquement au premier accès — `ManifestationSettings.load()`).
+
+> ⚠️ **Piège MongoDB évité ici** : un singleton Django classique force `pk=1` à la
+> sauvegarde. Ça casse sur ce backend car la clé primaire est un `ObjectIdAutoField`
+> qui rejette un entier comme "1" (même bug que les anciennes fixtures — voir
+> Dépannage). L'unicité repose donc sur un champ `key` dédié, jamais sur le pk.
 
 ---
 
@@ -1998,5 +2022,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.10.0) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.0) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

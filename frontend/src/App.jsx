@@ -2,6 +2,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { useUiStore } from "./store/uiStore";
+import { useConfigStore } from "./store/configStore";
 import { authApi } from "./api/auth";
 
 import TopBar from "./components/layout/TopBar";
@@ -87,11 +88,38 @@ function AuthBootstrap() {
   return null;
 }
 
+// ── Bootstrap: réglages activables/désactivables depuis Django Admin ──────────
+function ConfigBootstrap() {
+  const loadConfig = useConfigStore((s) => s.loadConfig);
+  useEffect(() => { loadConfig(); }, []);
+  return null;
+}
+
+/** Affiche la page Manifestation, ou un message d'indisponibilité si la
+ * fonctionnalité a été désactivée depuis Django Admin (mise en pause). */
+function ManifestationGate() {
+  const { manifestationsEnabled, loaded } = useConfigStore();
+  if (!loaded) return null;
+  if (!manifestationsEnabled) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center", maxWidth: 480, margin: "0 auto" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
+        <h2 style={{ color: "#1a3a5a", marginBottom: 8 }}>Fonctionnalité temporairement indisponible</h2>
+        <p style={{ color: "#6b7280", fontSize: 14 }}>
+          La déclaration de manifestations est en pause pour le moment. Revenez bientôt.
+        </p>
+      </div>
+    );
+  }
+  return <ManifestationPage />;
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <BrowserRouter>
       <AuthBootstrap />
+      <ConfigBootstrap />
       <AppLayout>
         <Routes>
           {/* Public */}
@@ -99,7 +127,7 @@ export default function App() {
           <Route path="/planning"          element={<PlanningPage />} />
           <Route path="/agenda"            element={<AgendaPage />} />
           <Route path="/reservation"       element={<ReservationPage />} />
-          <Route path="/manifestation"     element={<ManifestationPage />} />
+          <Route path="/manifestation"     element={<ManifestationGate />} />
           <Route path="/confidentialite"   element={<PrivacyPolicyPage />} />
           <Route path="/manuel"            element={<UserGuidePage />} />
 

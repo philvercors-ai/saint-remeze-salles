@@ -4,6 +4,7 @@ import { Building2, Calendar, Clock, Users, Plus, ChevronRight } from "lucide-re
 import { roomsApi } from "../api/rooms";
 import { reservationsApi } from "../api/reservations";
 import { useAuthStore } from "../store/authStore";
+import { useConfigStore } from "../store/configStore";
 import { fmtDateFr, fmtTime } from "../utils/dates";
 import StatusBadge from "../components/ui/Badge";
 
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   const [upcoming, setUpcoming] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuthStore();
+  const manifestationsEnabled = useConfigStore((s) => s.manifestationsEnabled);
 
   useEffect(() => {
     Promise.all([
@@ -74,10 +76,10 @@ export default function DashboardPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 32 }}>
         {[
           { to: "/reservation",   icon: Plus,      label: "Réserver",       color: "#1a3a5a" },
-          { to: "/manifestation", icon: Users,     label: "Manifestation",  color: "#1d4ed8" },
+          { to: "/manifestation", icon: Users,     label: "Manifestation",  color: "#1d4ed8", hidden: !manifestationsEnabled },
           { to: "/planning",      icon: Calendar,  label: "Planning",       color: "#2d6a4f" },
           { to: "/agenda",        icon: Clock,     label: "Agenda",         color: "#854d0e" },
-        ].map(({ to, icon: Icon, label, color }) => (
+        ].filter((item) => !item.hidden).map(({ to, icon: Icon, label, color }) => (
           <Link key={to} to={to} style={{
             background: "#fff", borderRadius: 12, padding: "18px 16px",
             textDecoration: "none", display: "flex", alignItems: "center", gap: 12,

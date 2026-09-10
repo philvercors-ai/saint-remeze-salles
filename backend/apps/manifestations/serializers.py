@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Manifestation
+from .models import Manifestation, ManifestationSettings
 
 
 class ManifestationSerializer(serializers.ModelSerializer):
@@ -23,6 +23,12 @@ class ManifestationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "status", "admin_comment", "reviewed_at", "created_at", "room_name"]
 
     def validate(self, data):
+        # Uniquement à la création — un agent doit toujours pouvoir gérer les
+        # demandes déjà déposées, même fonctionnalité mise en pause depuis.
+        if not self.instance and not ManifestationSettings.load().is_enabled:
+            raise serializers.ValidationError(
+                {"detail": "La création de nouvelles manifestations est temporairement indisponible."}
+            )
         # Uniquement à la création — voir ReservationSerializer.validate() pour le
         # raisonnement identique (une manifestation en salle communale est soumise
         # à la même restriction de groupes qu'une réservation classique).

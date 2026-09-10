@@ -1,6 +1,7 @@
 import client from "./client";
 
 export const manifestationsApi = {
+  config: () => client.get("/manifestations/config/"),
   list: (params) => client.get("/manifestations/", { params }),
   get: (id) => client.get(`/manifestations/${id}/`),
   create: (data) => client.post("/manifestations/", data),
