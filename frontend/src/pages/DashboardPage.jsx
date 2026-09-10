@@ -101,18 +101,18 @@ export default function DashboardPage() {
         <>
           <RoomSection
             title="Nos salles"
-            rooms={rooms.filter((r) => r.category === "salle" && r.restricted_groups.length === 0)}
+            rooms={rooms.filter((r) => r.category === "salle" && (r.restricted_groups || []).length === 0)}
             showPlanningLink
           />
           <RoomSection
             title="Nos lieux"
-            rooms={rooms.filter((r) => r.category === "lieu" && r.restricted_groups.length === 0)}
+            rooms={rooms.filter((r) => r.category === "lieu" && (r.restricted_groups || []).length === 0)}
           />
           {groupNames.map((groupName) => (
             <RoomSection
               key={groupName}
               title={`Réservé au groupe « ${groupName} »`}
-              rooms={rooms.filter((r) => r.restricted_groups.includes(groupName))}
+              rooms={rooms.filter((r) => (r.restricted_groups || []).includes(groupName))}
             />
           ))}
         </>
