@@ -58,9 +58,16 @@ export default function DashboardPage() {
     }).finally(() => setLoading(false));
   }, []);
 
-  // Groupes distincts trouvés parmi les salles restreintes (ex : "Conseil
-  // Municipal") — une section dédiée est générée pour chacun, dynamiquement.
-  const groupNames = [...new Set(rooms.flatMap((r) => r.restricted_groups || []))].sort();
+  // Une salle est "disponible pour les particuliers"/"pour les associations"
+  // si elle est ouverte à tous (aucun groupe défini) ou explicitement
+  // restreinte au groupe correspondant — jamais si réservation admin
+  // uniquement. Une salle réservée à un autre groupe (ex. "Conseil
+  // Municipal") n'apparaît dans aucune des deux sections.
+  const isOpenOrRestrictedTo = (room, groupName) => {
+    if (room.requires_admin_only) return false;
+    const groups = room.restricted_groups || [];
+    return groups.length === 0 || groups.includes(groupName);
+  };
 
   return (
     <div style={{ padding: "24px 20px 80px", maxWidth: 1000, margin: "0 auto" }} className="animate-fadein">
@@ -102,9 +109,13 @@ export default function DashboardPage() {
       ) : (
         <>
           <RoomSection
-            title="Nos salles"
-            rooms={rooms.filter((r) => r.category === "salle" && (r.restricted_groups || []).length === 0)}
+            title="Salles disponibles pour les particuliers"
+            rooms={rooms.filter((r) => r.category === "salle" && isOpenOrRestrictedTo(r, "Particulier"))}
             showPlanningLink
+          />
+          <RoomSection
+            title="Salles pour les associations"
+            rooms={rooms.filter((r) => r.category === "salle" && isOpenOrRestrictedTo(r, "Association"))}
           />
           {manifestationsEnabled && (
             <RoomSection
@@ -112,13 +123,6 @@ export default function DashboardPage() {
               rooms={rooms.filter((r) => r.category === "lieu" && (r.restricted_groups || []).length === 0)}
             />
           )}
-          {groupNames.map((groupName) => (
-            <RoomSection
-              key={groupName}
-              title={`Réservé au groupe « ${groupName} »`}
-              rooms={rooms.filter((r) => (r.restricted_groups || []).includes(groupName))}
-            />
-          ))}
         </>
       )}
 

@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.5 — Septembre 2026
+> Version 1.11.6 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -724,7 +724,8 @@ bord n'est affichée que si les manifestations sont **activées**. En effet, les
 de catégorie « lieu » (espaces extérieurs, ex. terrain municipal) ne sont réservables
 qu'au travers du formulaire de manifestation — les proposer sur l'accueil alors que
 ce formulaire est désactivé aurait affiché des tuiles menant à une page indisponible.
-« Nos salles » (catégorie « salle », réservables directement) reste toujours visible.
+Les sections « Salles disponibles pour les particuliers »/« Salles pour les
+associations » (catégorie « salle », réservables directement) restent toujours visibles.
 
 ---
 
@@ -859,10 +860,19 @@ salle du conseil) :
 - Cette restriction ne s'applique pas automatiquement aux **agents** : un agent qui
   n'est pas membre du groupe requis ne peut pas non plus réserver la salle (seul admin
   passe toujours). Ajoutez l'agent au groupe concerné si nécessaire.
-- **Page d'accueil (v1.9.3)** : les salles réservées à un groupe sont automatiquement
-  affichées à part, dans une section « Réservé au groupe « Nom du groupe » » distincte
-  de « Nos salles »/« Nos lieux » (`RoomSerializer.restricted_groups`, calculé côté
-  serveur ; `DashboardPage.jsx` génère une section par groupe rencontré).
+- **Page d'accueil (revu v1.11.6)** : le tableau de bord présente désormais deux
+  sections dédiées, dans cet ordre : **« Salles disponibles pour les particuliers »**
+  puis **« Salles pour les associations »**. Une salle apparaît dans l'une de ces
+  sections si elle est ouverte à tous (aucun groupe défini) **ou** explicitement
+  restreinte au groupe correspondant (« Particulier » ou « Association »), et jamais
+  si « Réservation admin uniquement » est coché. Une salle réservée à un autre groupe
+  (ex. « Conseil Municipal ») n'apparaît dans **aucune** des deux sections — elle reste
+  réservable normalement par ses membres via le formulaire de réservation, simplement
+  sans être mise en avant sur l'accueil public. « Nos lieux » (catégorie « lieu »,
+  ouverts à tous) reste affichée séparément, sous réserve que les manifestations
+  soient activées (voir plus haut). Logique dans `DashboardPage.jsx`
+  (`isOpenOrRestrictedTo()`), basée sur `RoomSerializer.restricted_groups` et
+  `requires_admin_only`.
 
 ### Fixtures initiales
 
@@ -2098,5 +2108,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.5) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.6) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

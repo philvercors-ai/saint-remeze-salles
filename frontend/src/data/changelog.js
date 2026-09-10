@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.11.5";
+export const APP_VERSION = "1.11.6";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.6",
+    date: "2026-09-10",
+    label: "Accueil réorganisé : particuliers puis associations",
+    changes: [
+      "La page d'accueil commence désormais par « Salles disponibles pour les particuliers », suivie de « Salles pour les associations »",
+      "Une salle réservée à un autre groupe (ex. « Conseil Municipal ») n'apparaît plus dans aucune de ces deux sections",
+    ],
+  },
   {
     version: "1.11.5",
     date: "2026-09-10",
