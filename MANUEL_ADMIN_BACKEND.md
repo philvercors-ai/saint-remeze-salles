@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.6 — Septembre 2026
+> Version 1.11.7 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -931,48 +931,61 @@ Hérite de `AbstractUser`. Champs additionnels :
 > endroit — ça s'est déjà produit une fois (le groupe créé dans `auth_group` restait
 > invisible partout dans l'app, qui ne lit que la collection `accounts_usergroup`).
 
-### Groupes automatiques « Particulier » / « Association » (v1.11.2, revu v1.11.5)
+### Groupes automatiques « Particulier » / « Association » (v1.11.2, revu v1.11.5/v1.11.7)
 
 Deux `UserGroup` sont créés et maintenus automatiquement, en miroir du champ
 `account_type` de chaque utilisateur : **« Particulier »** et **« Association »**.
 
-> ⚠️ **Principe important (v1.11.5)** : la distinction particulier/association
-> — pour le tarif journalier applicable et pour l'accès aux salles restreintes —
-> se fait **uniquement sur l'appartenance aux groupes de réservation**
+> ⚠️ **Principe important** : la distinction particulier/association — pour le
+> tarif journalier applicable et pour l'accès aux salles restreintes — se fait
+> **uniquement sur l'appartenance aux groupes de réservation**
 > (`reservation_groups`), jamais sur le champ `account_type` lui-même. Le champ
-> `account_type` ne sert qu'à **initialiser** cette appartenance à l'inscription
-> (« forcer le paramétrage » du groupe correspondant) ; ce n'est qu'un raccourci
-> de saisie, pas la source de vérité pour les droits.
+> `account_type` ne sert qu'à **initialiser/forcer** cette appartenance ; ce
+> n'est qu'un raccourci de saisie, pas la source de vérité pour les droits.
 
-- À chaque inscription (`RegisterSerializer.create()`), le nouvel utilisateur est
-  automatiquement ajouté au groupe correspondant à son `account_type` via
-  `CustomUser.sync_account_type_group()` (crée le groupe s'il n'existe pas encore).
-  Cet ajout est **additif uniquement** : il n'a jamais pour effet de retirer
-  l'utilisateur d'un autre groupe (voir cas du Conseil Municipal ci-dessous).
-- Les comptes déjà existants avant l'introduction de ces groupes ont été affectés
-  rétroactivement par la migration `accounts/0005_create_account_type_groups.py`.
-- Ces deux groupes fonctionnent exactement comme n'importe quel autre `UserGroup` :
-  ils peuvent être utilisés dans le champ **Groupes autorisés à réserver** d'une salle
-  (voir [Restreindre une salle à certains groupes](#restreindre-une-salle-à-certains-groupes-dutilisateurs))
-  pour réserver une salle aux seuls particuliers, ou aux seules associations, et le
-  tarif journalier applicable (`Room.daily_rate_for()`) se calcule de la même façon,
-  à partir de ces groupes.
+**Quand `CustomUser.sync_account_type_group()` s'exécute** (ajoute le groupe
+correspondant au nouvel `account_type`, **et retire l'autre** — ce couple reste
+mutuellement exclusif via ce mécanisme) :
+- à l'inscription (`RegisterSerializer.create()`) ;
+- lorsqu'un administrateur modifie `account_type` depuis la fiche utilisateur
+  (Django Admin) — mais **seulement si le champ a réellement changé** dans cette
+  sauvegarde ;
+- lorsque l'utilisateur modifie son type de compte depuis son profil — même
+  condition : seulement si la valeur a réellement changé.
 
-**Cas d'un utilisateur membre de plusieurs groupes (ex. élu du Conseil Municipal)** :
-un utilisateur peut librement appartenir à la fois au groupe « Particulier » et au
-groupe « Association », en plus d'un groupe métier comme « Conseil Municipal » —
-il suffit de cocher les deux dans le champ **Groupes de réservation** de sa fiche
-(Django Admin → Utilisateurs). Il bénéficie alors des **droits des deux** :
+Cette exécution conditionnée au changement réel est essentielle : elle permet à
+un administrateur de cocher **manuellement** les deux groupes « Particulier » et
+« Association » sur la fiche d'un utilisateur (ex. élu du Conseil Municipal,
+traité à la fois comme particulier et comme représentant associatif) sans que
+cet ajout ne soit défait à la sauvegarde suivante — tant que `account_type`
+lui-même n'est pas modifié dans la même opération, `sync_account_type_group()`
+n'est pas appelée et les deux groupes restent en place. Un tel utilisateur
+bénéficie alors des **droits des deux** :
 - **Tarif** : `Room.daily_rate_for()` renvoie le tarif le plus avantageux des deux
   (le minimum entre le tarif particulier et le tarif association de la salle).
 - **Accès aux salles restreintes** : `Room.user_can_reserve()` autorise dès qu'il
   est membre d'*au moins un* des groupes autorisés — donc l'accès réservé aux
   particuliers ET l'accès réservé aux associations, simultanément.
 
-Si un administrateur modifie le `account_type` d'un utilisateur depuis Django Admin,
-le champ **Groupes de réservation** n'est **pas** resynchronisé automatiquement
-(`sync_account_type_group()` n'est appelé qu'à l'inscription) — ajuster ce champ
-manuellement sur la fiche si nécessaire.
+**Rattrapage automatique au démarrage** : la commande
+`python manage.py resync_account_type_groups` (exécutée à chaque démarrage du
+serveur, Render et docker-compose) ajoute à chaque utilisateur le groupe
+correspondant à son `account_type` s'il en est dépourvu — via
+`CustomUser.ensure_account_type_group()`, **purement additif** (jamais de
+retrait, contrairement à `sync_account_type_group()`), donc sans danger à
+exécuter en continu : elle ne peut jamais défaire un second groupe accordé
+manuellement à un élu du Conseil Municipal. Elle corrige notamment le cas d'un
+utilisateur créé directement depuis Django Admin (sans passer par
+l'inscription) et qui se serait retrouvé sans aucun groupe de réservation — son
+tarif affiché ne correspondait alors plus à son type de compte.
+
+Les comptes déjà existants avant l'introduction de ces groupes ont initialement
+été affectés par la migration `accounts/0005_create_account_type_groups.py`.
+
+Ces deux groupes fonctionnent exactement comme n'importe quel autre `UserGroup` :
+ils peuvent être utilisés dans le champ **Groupes autorisés à réserver** d'une salle
+(voir [Restreindre une salle à certains groupes](#restreindre-une-salle-à-certains-groupes-dutilisateurs))
+pour réserver une salle aux seuls particuliers, ou aux seules associations.
 
 ### Changer le rôle d'un utilisateur
 
@@ -2108,5 +2121,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.6) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.7) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

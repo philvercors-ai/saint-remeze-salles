@@ -158,9 +158,16 @@ class MeView(APIView):
         return Response(UserProfileSerializer(request.user).data)
 
     def patch(self, request):
+        old_account_type = request.user.account_type
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        # Sans cet appel, changer son type de compte depuis le profil n'aurait
+        # aucun effet sur le tarif appliqué (basé sur les groupes de
+        # réservation, pas sur account_type — voir sync_account_type_group()).
+        # Ne se déclenche que si account_type a réellement changé.
+        if request.user.account_type != old_account_type:
+            request.user.sync_account_type_group()
         return Response(UserProfileSerializer(request.user).data)
 
 

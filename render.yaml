@@ -35,6 +35,7 @@ services:
       sh -c "python manage.py fix_migration_history;
              python manage.py migrate --noinput;
              python manage.py load_initial_fixtures;
+             python manage.py resync_account_type_groups;
              python manage.py ensure_superuser &&
              gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     healthCheckPath: /api/health/

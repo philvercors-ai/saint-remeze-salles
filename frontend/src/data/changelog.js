@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.11.6";
+export const APP_VERSION = "1.11.7";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.7",
+    date: "2026-09-10",
+    label: "Correction : tarif affiché incohérent avec le profil utilisateur",
+    changes: [
+      "Un compte créé directement depuis Django Admin (sans passer par l'inscription) pouvait se retrouver sans groupe de réservation et donc facturé au mauvais tarif — corrigé, avec rattrapage automatique au démarrage du serveur",
+      "Changer son type de compte (profil ou Django Admin) met désormais bien à jour le groupe de réservation associé, et donc le tarif affiché",
+      "Les groupes ajoutés manuellement (ex. élu du Conseil Municipal coché à la fois particulier et association) ne sont plus jamais effacés par une sauvegarde ultérieure ne touchant pas au type de compte",
+    ],
+  },
   {
     version: "1.11.6",
     date: "2026-09-10",

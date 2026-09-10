@@ -92,14 +92,40 @@ class CustomUser(AbstractUser):
     def sync_account_type_group(self):
         """Force l'appartenance de l'utilisateur au groupe de réservation
         ("Particulier" ou "Association", créé si besoin) correspondant à son
-        account_type actuel. N'ajoute que ce groupe — ne retire jamais l'autre
-        (ni aucun autre groupe) : un utilisateur peut légitimement appartenir
-        aux deux (ex. élu du Conseil Municipal traité à la fois comme
-        particulier et comme représentant associatif). La discrimination
-        (tarifs, accès aux salles restreintes) se fait sur les groupes de
-        réservation eux-mêmes — voir Room.daily_rate_for()/user_can_reserve()
-        — account_type ne sert qu'à initialiser cette appartenance. Nécessite
-        que l'utilisateur soit déjà enregistré (pk existant)."""
+        account_type actuel, et le retire de l'autre — ce couple reste
+        mutuellement exclusif via ce mécanisme. N'affecte jamais un autre
+        groupe (ex. « Conseil Municipal ») : un administrateur peut toujours
+        accorder manuellement les deux groupes "Particulier"/"Association" à
+        un utilisateur (ex. élu traité à la fois comme particulier et comme
+        représentant associatif) en les cochant directement sur sa fiche —
+        ce mécanisme n'appelle sync_account_type_group() que lorsque
+        account_type change réellement (inscription, ou modification
+        explicite du champ), jamais sur une simple sauvegarde n'y touchant
+        pas. La discrimination (tarifs, accès aux salles restreintes) se
+        fait sur les groupes de réservation eux-mêmes — voir
+        Room.daily_rate_for()/user_can_reserve() — account_type ne sert qu'à
+        initialiser cette appartenance. Nécessite que l'utilisateur soit déjà
+        enregistré (pk existant)."""
+        target_name = self.ACCOUNT_TYPE_GROUP_NAMES.get(self.account_type)
+        if not target_name:
+            return
+        for name in self.ACCOUNT_TYPE_GROUP_NAMES.values():
+            group, _ = UserGroup.objects.get_or_create(name=name)
+            if name == target_name:
+                self.reservation_groups.add(group)
+            else:
+                self.reservation_groups.remove(group)
+
+    def ensure_account_type_group(self):
+        """Version purement additive de sync_account_type_group() : ajoute le
+        groupe correspondant à account_type s'il manque, sans jamais retirer
+        l'autre. Contrairement à sync_account_type_group() (réservée aux
+        points où account_type change réellement), celle-ci est sans danger à
+        appeler pour n'importe quel utilisateur à n'importe quel moment (ex.
+        tâche de rattrapage périodique au démarrage du serveur — voir la
+        commande resync_account_type_groups) : elle ne peut jamais défaire un
+        second groupe accordé manuellement (ex. élu du Conseil Municipal
+        coché à la fois "Particulier" et "Association")."""
         target_name = self.ACCOUNT_TYPE_GROUP_NAMES.get(self.account_type)
         if not target_name:
             return

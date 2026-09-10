@@ -45,6 +45,22 @@ class CustomUserAdmin(MongoBulkDeleteMixin, UserAdmin):
     )
     actions = ["anonymize_users"]
 
+    def save_model(self, request, obj, form, change):
+        """Si account_type est modifié depuis cette fiche, resynchronise le
+        groupe de réservation correspondant — sans quoi le tarif appliqué
+        (basé sur les groupes, pas sur account_type — voir
+        Room.daily_rate_for()) resterait incohérent avec le type de compte
+        affiché. Ne se déclenche QUE si account_type a réellement changé :
+        une sauvegarde qui se contente de cocher manuellement "Particulier"
+        et "Association" dans le champ Groupes de réservation (ex. pour un
+        élu du Conseil Municipal) ne doit pas être écrasée par cette resync."""
+        old_account_type = None
+        if change:
+            old_account_type = CustomUser.objects.get(pk=obj.pk).account_type
+        super().save_model(request, obj, form, change)
+        if not change or old_account_type != obj.account_type:
+            obj.sync_account_type_group()
+
     def anonymize_users(self, request, queryset):
         for user in queryset:
             user.anonymize()
