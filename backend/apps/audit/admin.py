@@ -1,9 +1,10 @@
 from django.contrib import admin
+from apps.compat.admin import MongoBulkDeleteMixin
 from .models import AuditLog
 
 
 @admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
+class AuditLogAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["action", "user", "ip_address", "timestamp"]
     list_filter = ["action"]
     search_fields = ["action", "user__email", "ip_address"]

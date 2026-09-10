@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.0 — Septembre 2026
+> Version 1.11.1 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -256,6 +256,8 @@ En déploiement Docker, un conteneur `certbot` tourne en permanence et renouvell
 > **`QuerySet.prefetch_related()` n'est pas supporté** par `django-mongodb-backend` (`NotSupportedError` à l'exécution) — contrairement à `select_related()`, qui fonctionne normalement. Sur une relation ManyToMany ou une FK inverse consultée en boucle (ex : `room.allowed_groups.exists()` par salle dans une liste), chaque accès reste donc une requête séparée ; pas de solution d'optimisation équivalente à ce jour sur ce backend.
 >
 > **Un singleton Django classique (`self.pk = 1` forcé dans `save()`) casse aussi** sur ce backend : la clé primaire (`ObjectIdAutoField`) rejette un entier comme "1" (`ValidationError: "1" is not a valid Object Id`) — même famille de piège que les PK entiers dans les fixtures (section Dépannage). Pour un modèle singleton (ex. `ManifestationSettings`), utiliser un champ dédié `unique=True` (ex. `key`) comme clé de `get_or_create()`, jamais le pk.
+>
+> **L'action native Django Admin « Supprimer les éléments sélectionnés » (suppression groupée) ne fonctionne sur aucun modèle** sur ce backend : `QuerySet.delete()` lève `NotSupportedError: Cannot use QuerySet.delete() when querying across multiple collections on MongoDB.` — plantage en 500 dès qu'on sélectionne une ou plusieurs lignes et qu'on confirme la suppression groupée, sur n'importe quel modèle (constaté sur Réservations, reproductible partout). Corrigé une bonne fois via `apps/compat/admin.MongoBulkDeleteMixin` (supprime chaque objet individuellement au lieu d'un `queryset.delete()` groupé), appliqué à tous les `ModelAdmin` du projet. **Pour un nouveau modèle admin à l'avenir : hériter aussi de ce mixin**, sinon la suppression groupée replantera.
 
 ---
 
@@ -2022,5 +2024,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.0) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.1) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

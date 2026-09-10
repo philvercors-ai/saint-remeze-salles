@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.11.0";
+export const APP_VERSION = "1.11.1";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.1",
+    date: "2026-09-10",
+    label: "Correction de la suppression groupée dans l'administration",
+    changes: [
+      "La suppression groupée (sélection de plusieurs éléments) plantait dans le Django Admin, sur tous les types de fiches — corrigé",
+    ],
+  },
   {
     version: "1.11.0",
     date: "2026-09-10",

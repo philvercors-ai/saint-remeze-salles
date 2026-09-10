@@ -5,6 +5,7 @@ from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.http import HttpResponseRedirect
+from apps.compat.admin import MongoBulkDeleteMixin
 from .models import CustomUser, RGPDConsent, PasswordResetToken, UserGroup
 
 # django.contrib.auth.Group (menu « Authentification et autorisation → Groups »)
@@ -18,7 +19,7 @@ except admin.sites.NotRegistered:
 
 
 @admin.register(UserGroup)
-class UserGroupAdmin(admin.ModelAdmin):
+class UserGroupAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["name", "member_count", "allowed_room_count"]
     search_fields = ["name"]
 
@@ -32,7 +33,7 @@ class UserGroupAdmin(admin.ModelAdmin):
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(MongoBulkDeleteMixin, UserAdmin):
     list_display = ["email", "get_full_name", "account_type", "role", "email_verified", "is_active", "date_joined"]
     list_filter = ["account_type", "role", "email_verified", "is_active", "reservation_groups"]
     search_fields = ["email", "first_name", "last_name"]
@@ -68,7 +69,7 @@ class CustomUserAdmin(UserAdmin):
 
 
 @admin.register(RGPDConsent)
-class RGPDConsentAdmin(admin.ModelAdmin):
+class RGPDConsentAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["user", "consent_type", "granted", "timestamp", "policy_version"]
     list_filter = ["consent_type", "granted"]
     search_fields = ["user__email"]
@@ -83,7 +84,7 @@ class RGPDConsentAdmin(admin.ModelAdmin):
 
 
 @admin.register(PasswordResetToken)
-class PasswordResetTokenAdmin(admin.ModelAdmin):
+class PasswordResetTokenAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["user", "created_at", "expires_at", "used"]
     list_filter = ["used"]
     readonly_fields = ["user", "token", "created_at", "expires_at", "used"]

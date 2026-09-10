@@ -1,12 +1,14 @@
 from django.contrib import admin
 from django.shortcuts import redirect
+from apps.compat.admin import MongoBulkDeleteMixin
 from .models import Manifestation, EquipmentStock, ManifestationSettings
 
 
 @admin.register(ManifestationSettings)
 class ManifestationSettingsAdmin(admin.ModelAdmin):
-    """Singleton — redirige toujours vers l'unique ligne (pk=1, créée à la
-    volée) au lieu de montrer une liste, et interdit ajout/suppression."""
+    """Singleton — redirige toujours vers l'unique ligne (créée à la volée,
+    identifiée par son champ "key" plutôt qu'un pk forcé, voir le modèle)
+    au lieu de montrer une liste, et interdit ajout/suppression."""
     fields = ["is_enabled", "updated_at"]
     readonly_fields = ["updated_at"]
 
@@ -22,7 +24,7 @@ class ManifestationSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(Manifestation)
-class ManifestationAdmin(admin.ModelAdmin):
+class ManifestationAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["title", "association", "date_start", "date_end", "location", "status", "created_at"]
     list_filter = ["status", "date_start"]
     search_fields = ["title", "association", "contact_name", "contact_email"]
@@ -31,6 +33,6 @@ class ManifestationAdmin(admin.ModelAdmin):
 
 
 @admin.register(EquipmentStock)
-class EquipmentStockAdmin(admin.ModelAdmin):
+class EquipmentStockAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["name", "total_quantity"]
     ordering = ["name"]

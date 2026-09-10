@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.utils import timezone
+from apps.compat.admin import MongoBulkDeleteMixin
 from .models import Reservation
 from services.email_service import EmailService
 
 
 @admin.register(Reservation)
-class ReservationAdmin(admin.ModelAdmin):
+class ReservationAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     list_display = ["title", "room", "date", "start_time", "end_time", "contact_name", "status", "created_at"]
     list_filter = ["status", "room", "date"]
     search_fields = ["title", "contact_name", "contact_email", "association"]
