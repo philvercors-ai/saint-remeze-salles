@@ -65,22 +65,21 @@ function AppLayout({ children }) {
 
 // ── Bootstrap: restore auth from refresh token ────────────────────────────────
 function AuthBootstrap() {
-  const { setAuth, logout, setLoading, setAccessToken } = useAuthStore();
+  const { setAuth, logout, setAccessToken } = useAuthStore();
 
   useEffect(() => {
-    const refresh = localStorage.getItem("refreshToken");
-    if (!refresh) { setLoading(false); return; }
-
-    authApi.refreshToken(refresh)
+    // Le refresh token vit dans un cookie httpOnly, invisible en JS — on ne
+    // peut pas savoir à l'avance s'il existe, donc on tente systématiquement ;
+    // ça échoue proprement (401) pour un visiteur jamais connecté.
+    authApi.refreshToken()
       .then(({ data }) => {
         // Stocker le token AVANT d'appeler me() pour que l'intercepteur l'injecte
         setAccessToken(data.access);
         authApi.me().then(({ data: user }) => {
-          setAuth(user, data.access, data.refresh || refresh);
+          setAuth(user, data.access);
         }).catch(() => logout());
       })
       .catch(() => {
-        localStorage.removeItem("refreshToken");
         logout();
       });
   }, []);

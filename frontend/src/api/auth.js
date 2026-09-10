@@ -5,8 +5,9 @@ export const authApi = {
   verifyEmail: (token) => client.post("/auth/verify-email/", { token }),
   resendVerification: (email) => client.post("/auth/resend-verification/", { email }),
   login: (email, password) => client.post("/auth/login/", { email, password }),
-  logout: (refresh) => client.post("/auth/logout/", { refresh }),
-  refreshToken: (refresh) => client.post("/auth/token/refresh/", { refresh }),
+  // Le refresh token voyage dans un cookie httpOnly, jamais dans le corps.
+  logout: () => client.post("/auth/logout/"),
+  refreshToken: () => client.post("/auth/token/refresh/"),
   me: () => client.get("/auth/me/"),
   updateMe: (data) => client.patch("/auth/me/", data),
   changePassword: (data) => client.post("/auth/change-password/", data),

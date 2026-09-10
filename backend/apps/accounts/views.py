@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from services.email_service import EmailService
+from .cookies import set_refresh_cookie, clear_refresh_cookie, REFRESH_COOKIE_NAME
 from .models import CustomUser, RGPDConsent, PasswordResetToken
 from .serializers import (
     RegisterSerializer,
@@ -90,13 +91,15 @@ class VerifyEmailView(APIView):
         user.email_verify_token = ""
         user.save(update_fields=["email_verified", "email_verify_token"])
 
-        # Génère JWT directement
+        # Génère JWT directement — le refresh part dans un cookie httpOnly,
+        # jamais dans le corps JSON (lisible par JS sinon).
         refresh = RefreshToken.for_user(user)
-        return Response({
+        response = Response({
             "access": str(refresh.access_token),
-            "refresh": str(refresh),
             "user": UserProfileSerializer(user).data,
         })
+        set_refresh_cookie(response, str(refresh))
+        return response
 
 
 class LoginView(TokenObtainPairView):
@@ -104,16 +107,48 @@ class LoginView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "login"
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200 and "refresh" in response.data:
+            set_refresh_cookie(response, response.data.pop("refresh"))
+        return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    """Comme TokenRefreshView, mais lit/écrit le refresh token via le cookie
+    httpOnly refresh_token plutôt que dans le corps de la requête/réponse."""
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
+        if not refresh_token:
+            return Response({"detail": "Refresh token manquant."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = self.get_serializer(data={"refresh": refresh_token})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception:
+            response = Response({"detail": "Refresh token invalide ou expiré."}, status=status.HTTP_401_UNAUTHORIZED)
+            clear_refresh_cookie(response)
+            return response
+
+        data = dict(serializer.validated_data)
+        new_refresh = data.pop("refresh", None)
+        response = Response(data)
+        if new_refresh:
+            set_refresh_cookie(response, new_refresh)
+        return response
+
 
 class LogoutView(APIView):
-    # AllowAny : aucune opération serveur réelle (pas de blacklist JWT,
-    # incompatible MongoDB). La sécurité repose sur la courte durée de
-    # l'access token (15 min) et la rotation des refresh tokens.
+    # AllowAny : aucune opération serveur réelle sur le token lui-même (pas de
+    # blacklist JWT, incompatible MongoDB) — mais on efface bien le cookie.
     # IsAuthenticated causait un 401 inutile si le token était expiré.
     permission_classes = [AllowAny]
 
     def post(self, request):
-        return Response({"detail": "Déconnexion réussie."})
+        response = Response({"detail": "Déconnexion réussie."})
+        clear_refresh_cookie(response)
+        return response
 
 
 class MeView(APIView):

@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.9.0";
+export const APP_VERSION = "1.9.1";
 
 export const CHANGELOG = [
+  {
+    version: "1.9.1",
+    date: "2026-09-10",
+    label: "Refresh token en cookie sécurisé + restriction Swagger",
+    changes: [
+      "Le jeton de connexion longue durée n'est plus stocké en localStorage (vulnérable en cas de faille XSS future) mais dans un cookie sécurisé inaccessible à JavaScript",
+      "Documentation technique de l'API (/api/docs/) restreinte aux agents et administrateurs",
+    ],
+  },
   {
     version: "1.9.0",
     date: "2026-09-10",

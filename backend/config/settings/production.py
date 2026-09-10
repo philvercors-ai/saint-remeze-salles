@@ -36,6 +36,13 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Frontend et backend sont sur des sous-domaines onrender.com distincts, donc
+# cross-site pour le navigateur (onrender.com est sur la Public Suffix List) —
+# le cookie refresh_token doit être SameSite=None pour être transmis, ce qui
+# impose Secure=True (exigé par les navigateurs dès que SameSite=None).
+REFRESH_COOKIE_SAMESITE = "None"
+REFRESH_COOKIE_SECURE = True
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

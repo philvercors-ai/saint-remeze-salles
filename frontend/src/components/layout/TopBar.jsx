@@ -12,8 +12,7 @@ export default function TopBar({ pendingCount = 0 }) {
   const isAdminMode = location.pathname.startsWith("/admin");
 
   const handleLogout = async () => {
-    const refresh = localStorage.getItem("refreshToken");
-    try { await authApi.logout(refresh); } catch (_) {}
+    try { await authApi.logout(); } catch (_) {}
     logout();
     showToast("Déconnexion réussie");
     navigate("/login");

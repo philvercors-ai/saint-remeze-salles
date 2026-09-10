@@ -150,6 +150,20 @@ SIMPLE_JWT = {
     "TOKEN_OBTAIN_SERIALIZER": "apps.accounts.serializers.CustomTokenObtainPairSerializer",
 }
 
+# ── Cookie du refresh token ──────────────────────────────────────────────────
+# Lax + non-Secure convient en dev (localhost, même "site" pour le navigateur).
+# La prod (frontend/backend sur des sous-domaines onrender.com distincts,
+# traités comme des sites différents) surcharge en None/True — voir production.py.
+REFRESH_COOKIE_SAMESITE = "Lax"
+REFRESH_COOKIE_SECURE = False
+
+# Nécessaire pour que le navigateur envoie/accepte le cookie refresh_token sur
+# les requêtes cross-origin frontend -> backend (jamais combiné à un CORS
+# wildcard non contrôlé : CORS_ALLOWED_ORIGINS est une liste explicite en prod,
+# et CORS_ALLOW_ALL_ORIGINS en dev est géré nativement par django-cors-headers
+# en reflétant l'origine exacte de la requête plutôt qu'un "*" littéral).
+CORS_ALLOW_CREDENTIALS = True
+
 # ── Resend (emails) ─────────────────────────────────────────────────────────────
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 # Sans domaine vérifié dans Resend, utiliser onboarding@resend.dev

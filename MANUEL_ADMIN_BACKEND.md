@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.9.0 — Septembre 2026
+> Version 1.9.1 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -1364,19 +1364,31 @@ db.audit_auditlog.find(
 
 ### Authentification JWT
 
-- **Access token** : durée de vie 15 minutes, transmis dans le header `Authorization: Bearer <token>`
-- **Refresh token** : durée de vie 7 jours, stocké côté client (localStorage ou cookie)
+- **Access token** : durée de vie 15 minutes, transmis dans le header `Authorization: Bearer <token>`, gardé en mémoire côté frontend (store Zustand, jamais persisté sur disque)
+- **Refresh token** : durée de vie 7 jours, transporté dans un **cookie httpOnly** `refresh_token` (`apps/accounts/cookies.py`) — jamais exposé au JSON de réponse, donc invisible et inaccessible à JavaScript (protection contre le vol par XSS). Avant la v1.9.1, il était dupliqué dans le `localStorage`, lisible par n'importe quel script injecté en cas de faille XSS future.
 - **Rotation** : chaque renouvellement émet un nouveau refresh token et invalide le précédent
-- **Pas de blacklist** : `token_blacklist` Django est incompatible MongoDB. La sécurité repose sur la courte durée de l'access token et la rotation du refresh token.
+- **Pas de blacklist** : `token_blacklist` Django est incompatible MongoDB. La sécurité repose sur la courte durée de l'access token et la rotation du refresh token — un refresh token déjà émis reste donc valable jusqu'à 7 jours même après une déconnexion ou un changement de mot de passe volontaire (voir recommandations restantes plus bas).
+
+**Cookie cross-site** : le frontend et le backend sont sur des sous-domaines
+`*.onrender.com` distincts, traités comme des sites différents par les
+navigateurs (`onrender.com` est sur la Public Suffix List). Le cookie est donc
+`SameSite=None; Secure` en production (`REFRESH_COOKIE_SAMESITE`/`_SECURE` dans
+`production.py`), et `SameSite=Lax` sans `Secure` en dev local (`base.py`) où
+frontend et backend sont sur `localhost`, un seul et même site. `CORS_ALLOW_CREDENTIALS = True`
+est nécessaire pour que le navigateur transmette le cookie sur les requêtes
+cross-origin — sans danger ici car `CORS_ALLOWED_ORIGINS` reste une liste
+explicite (jamais de wildcard combiné à des credentials).
 
 ### Renouvellement automatique côté frontend
 
-L'intercepteur Axios (`frontend/src/api/client.js`) gère automatiquement :
+L'intercepteur Axios (`frontend/src/api/client.js`, `withCredentials: true`)
+gère automatiquement :
 1. Détection d'un 401
-2. Tentative de renouvellement avec le refresh token
+2. Tentative de renouvellement — `POST /api/auth/token/refresh/` sans corps,
+   le cookie `refresh_token` suffit (envoyé automatiquement par le navigateur)
 3. File d'attente des requêtes en cours pendant le renouvellement
 4. Retry automatique avec le nouvel access token
-5. Déconnexion automatique si le refresh échoue
+5. Déconnexion automatique si le refresh échoue (401 → pas de cookie ou expiré)
 
 ### Sécurité HTTPS (production)
 
@@ -1439,12 +1451,18 @@ Un audit complet a été mené (application destinée à une commune). **Corrig�
 - **Historique des notifications** (`/api/notifications/history/`) cassé par
   le même `prefetch_related()` non supporté que `RoomViewSet`.
 
+**Corrigé également (validé avec l'utilisateur avant modification)** :
+
+- **Refresh token en `localStorage`** → migré en cookie `httpOnly` (v1.9.1,
+  voir plus haut) — protection en profondeur contre le vol par XSS.
+- **`/api/docs/` et `/api/schema/`** (Swagger) → restreints au rôle agent/admin
+  (`IsAgent`, `config/urls.py`). Note pratique : comme ce projet utilise des
+  JWT en header et non des sessions/cookies pour l'API, une simple navigation
+  au navigateur ne peut pas s'authentifier — il faut joindre le token d'accès
+  manuellement (ex. extension REST client) pour consulter la doc.
+
 **Recommandations restantes (arbitrage produit, pas corrigées d'office)** :
 
-- **Refresh token en `localStorage`** — vulnérable en cas de XSS (aucune faille
-  XSS active trouvée à ce jour, mais pas de protection en profondeur). Migrer
-  vers un cookie `httpOnly` serait plus robuste mais demande de revoir le flux
-  CSRF ; à discuter avant de faire ce changement d'architecture.
 - **Pas d'invalidation des sessions existantes** au changement de mot de passe
   ou à la demande de suppression de compte — un refresh token déjà émis reste
   valable jusqu'à 7 jours même après un changement volontaire de mot de passe
@@ -1461,9 +1479,6 @@ Un audit complet a été mené (application destinée à une commune). **Corrig�
   réservations simultanées pour le même créneau peuvent théoriquement passer
   toutes les deux (race condition). Risque pratique faible vu le trafic
   attendu.
-- **`/api/docs/`** (Swagger) accessible publiquement sans authentification —
-  expose la structure complète de l'API. Décision à prendre : acceptable pour
-  un usage interne réduit, ou à restreindre aux agents/admin.
 - **MongoDB Atlas** : accès réseau `0.0.0.0/0` nécessaire (Render free n'a pas
   d'IP fixe) — la sécurité repose entièrement sur des identifiants robustes,
   pas sur une restriction réseau.
@@ -1972,5 +1987,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.9.1) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

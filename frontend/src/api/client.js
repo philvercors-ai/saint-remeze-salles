@@ -9,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api";
 const client = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // envoie/reçoit le cookie httpOnly refresh_token
 });
 
 // ── Inject access token ─────────────────────────────────────────────────────
@@ -44,17 +45,12 @@ client.interceptors.response.use(
       }
 
       isRefreshing = true;
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if (!refreshToken) {
-        useAuthStore.getState().logout();
-        return Promise.reject(error);
-      }
 
       try {
-        const { data } = await axios.post(`${API_BASE}/auth/token/refresh/`, {
-          refresh: refreshToken,
-        });
+        // Le refresh token voyage dans le cookie httpOnly, pas ici — on ne
+        // sait pas côté JS s'il existe, on laisse simplement l'appel échouer
+        // proprement (401) si le cookie est absent ou expiré.
+        const { data } = await axios.post(`${API_BASE}/auth/token/refresh/`, {}, { withCredentials: true });
         const newAccess = data.access;
         useAuthStore.getState().setAccessToken(newAccess);
 

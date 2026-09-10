@@ -26,7 +26,7 @@ export default function LoginPage() {
     setResent(false);
     try {
       const { data } = await authApi.login(form.email, form.password);
-      setAuth(data.user, data.access, data.refresh);
+      setAuth(data.user, data.access);
       showToast(`Bienvenue ${data.user.first_name || data.user.email} !`);
       const isStaff = ["agent", "admin"].includes(data.user.role);
       // from = page d'origine si redirigé, sinon /admin pour les agents/admins

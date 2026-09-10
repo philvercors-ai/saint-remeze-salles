@@ -14,7 +14,7 @@ export default function VerifyEmailPage() {
     if (!token) { setStatus("error"); return; }
     authApi.verifyEmail(token)
       .then(({ data }) => {
-        setAuth(data.user, data.access, data.refresh);
+        setAuth(data.user, data.access);
         setStatus("success");
         setTimeout(() => navigate("/"), 2000);
       })
