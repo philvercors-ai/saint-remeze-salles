@@ -51,12 +51,22 @@ class Room(models.Model):
         return self.reservation_set.filter(status=status).count()
 
     def daily_rate_for(self, user):
-        """Tarif journalier applicable à cet utilisateur (association si le
-        compte est enregistré comme tel, particulier sinon — y compris pour
-        un visiteur non connecté)."""
-        if user and getattr(user, "is_authenticated", False) and user.account_type == "association":
-            return self.daily_rate_association
-        return self.daily_rate_individual
+        """Tarif journalier applicable, déterminé par l'appartenance aux
+        groupes de réservation "Particulier"/"Association" — pas par le champ
+        account_type, qui ne sert qu'à initialiser ces groupes à l'inscription
+        (voir CustomUser.sync_account_type_group()). Un utilisateur membre des
+        deux groupes à la fois (ex. élu du Conseil Municipal, ajouté manuellement
+        aux deux) bénéficie du tarif le plus avantageux des deux. Visiteur non
+        connecté ou sans groupe : tarif particulier par défaut."""
+        if not (user and getattr(user, "is_authenticated", False)):
+            return self.daily_rate_individual
+        group_names = set(user.reservation_groups.values_list("name", flat=True))
+        rates = []
+        if "Particulier" in group_names:
+            rates.append(self.daily_rate_individual)
+        if "Association" in group_names:
+            rates.append(self.daily_rate_association)
+        return min(rates) if rates else self.daily_rate_individual
 
     def user_can_reserve(self, user):
         """Un admin peut toujours tout réserver. Sinon, une salle en accès

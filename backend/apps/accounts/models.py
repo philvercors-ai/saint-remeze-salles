@@ -90,19 +90,21 @@ class CustomUser(AbstractUser):
         return (timezone.now() - self.email_verify_token_created).total_seconds() < 86400  # 24h
 
     def sync_account_type_group(self):
-        """Ajoute l'utilisateur au groupe de réservation ("Particulier" ou
-        "Association", créé si besoin) correspondant à son account_type
-        actuel, et le retire de l'autre. Nécessite que l'utilisateur soit
-        déjà enregistré (pk existant)."""
+        """Force l'appartenance de l'utilisateur au groupe de réservation
+        ("Particulier" ou "Association", créé si besoin) correspondant à son
+        account_type actuel. N'ajoute que ce groupe — ne retire jamais l'autre
+        (ni aucun autre groupe) : un utilisateur peut légitimement appartenir
+        aux deux (ex. élu du Conseil Municipal traité à la fois comme
+        particulier et comme représentant associatif). La discrimination
+        (tarifs, accès aux salles restreintes) se fait sur les groupes de
+        réservation eux-mêmes — voir Room.daily_rate_for()/user_can_reserve()
+        — account_type ne sert qu'à initialiser cette appartenance. Nécessite
+        que l'utilisateur soit déjà enregistré (pk existant)."""
         target_name = self.ACCOUNT_TYPE_GROUP_NAMES.get(self.account_type)
         if not target_name:
             return
-        for name in self.ACCOUNT_TYPE_GROUP_NAMES.values():
-            group, _ = UserGroup.objects.get_or_create(name=name)
-            if name == target_name:
-                self.reservation_groups.add(group)
-            else:
-                self.reservation_groups.remove(group)
+        group, _ = UserGroup.objects.get_or_create(name=target_name)
+        self.reservation_groups.add(group)
 
     def anonymize(self):
         """Anonymise les données personnelles (droit à l'oubli RGPD)."""

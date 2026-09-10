@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.11.4";
+export const APP_VERSION = "1.11.5";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.5",
+    date: "2026-09-10",
+    label: "Tarifs et accès basés sur les groupes, pas sur le type de compte",
+    changes: [
+      "Le tarif journalier applicable est désormais déterminé par l'appartenance aux groupes de réservation « Particulier »/« Association », plus par le champ « type de compte »",
+      "Un utilisateur membre des deux groupes (ex. élu du Conseil Municipal) bénéficie automatiquement du tarif le plus avantageux et de l'accès aux salles réservées à l'un ou l'autre groupe",
+      "Le type de compte choisi à l'inscription continue d'initialiser le groupe correspondant, sans jamais retirer un groupe ajouté manuellement",
+    ],
+  },
   {
     version: "1.11.4",
     date: "2026-09-10",
