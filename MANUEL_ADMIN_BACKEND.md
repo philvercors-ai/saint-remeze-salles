@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.7 — Septembre 2026
+> Version 1.11.8 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -873,6 +873,16 @@ salle du conseil) :
   soient activées (voir plus haut). Logique dans `DashboardPage.jsx`
   (`isOpenOrRestrictedTo()`), basée sur `RoomSerializer.restricted_groups` et
   `requires_admin_only`.
+
+> ⚠️ **Bug corrigé (v1.11.8)** : la tuile de chaque salle affichait
+> `applicable_daily_rate` — le tarif calculé pour le **viewer connecté**,
+> unique par salle — dans les deux sections. Une salle ouverte à tous apparaît
+> dans les deux sections à la fois ; un particulier connecté y voyait donc son
+> propre tarif particulier répété sur la tuile « associations » au lieu du
+> tarif association réel. Corrigé : la section particuliers affiche
+> `daily_rate_individual`, la section associations affiche
+> `daily_rate_association` — les deux tarifs bruts de la salle, indépendants
+> du viewer connecté (prop `rateField` de `RoomSection`).
 
 ### Fixtures initiales
 
@@ -2121,5 +2131,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.7) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.8) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

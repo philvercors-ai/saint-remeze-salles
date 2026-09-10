@@ -8,7 +8,7 @@ import { useConfigStore } from "../store/configStore";
 import { fmtDateFr, fmtTime } from "../utils/dates";
 import StatusBadge from "../components/ui/Badge";
 
-function RoomSection({ title, rooms, showPlanningLink = false }) {
+function RoomSection({ title, rooms, showPlanningLink = false, rateField = "applicable_daily_rate" }) {
   if (rooms.length === 0) return null;
   return (
     <section style={{ marginBottom: 32 }}>
@@ -29,8 +29,8 @@ function RoomSection({ title, rooms, showPlanningLink = false }) {
               <span><Users size={12} style={{ verticalAlign: "middle" }} /> {room.capacity} pers.</span>
               <span><Building2 size={12} style={{ verticalAlign: "middle" }} /> {room.area_sqm} m²</span>
             </div>
-            {room.applicable_daily_rate > 0 && (
-              <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room.applicable_daily_rate} €/jour</p>
+            {room[rateField] > 0 && (
+              <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room[rateField]} €/jour</p>
             )}
           </div>
         ))}
@@ -111,11 +111,13 @@ export default function DashboardPage() {
           <RoomSection
             title="Salles disponibles pour les particuliers"
             rooms={rooms.filter((r) => r.category === "salle" && isOpenOrRestrictedTo(r, "Particulier"))}
+            rateField="daily_rate_individual"
             showPlanningLink
           />
           <RoomSection
             title="Salles pour les associations"
             rooms={rooms.filter((r) => r.category === "salle" && isOpenOrRestrictedTo(r, "Association"))}
+            rateField="daily_rate_association"
           />
           {manifestationsEnabled && (
             <RoomSection

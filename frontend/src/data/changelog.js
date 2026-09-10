@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.11.7";
+export const APP_VERSION = "1.11.8";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.8",
+    date: "2026-09-10",
+    label: "Correction : tarifs des tuiles de l'accueil",
+    changes: [
+      "La tuile « Salles pour les associations » affichait le même tarif que la tuile particulier de la même salle — corrigé : chaque section affiche maintenant son tarif propre (particulier ou association), tel que défini dans Django",
+    ],
+  },
   {
     version: "1.11.7",
     date: "2026-09-10",
