@@ -11,18 +11,6 @@ function toISOWeekParam(date) {
   return `${getISOWeekYear(date)}-W${w}`;
 }
 
-/** Palette de couleurs distinctes pour les salles */
-const PALETTE = [
-  "#1a3a5a", // navy
-  "#d97706", // amber
-  "#059669", // vert
-  "#7c3aed", // violet
-  "#dc2626", // rouge
-  "#0891b2", // cyan
-  "#db2777", // rose
-  "#65a30d", // lime
-];
-
 const DAY_START_MIN = 7 * 60;   // 07:00 — doit correspondre à HOURS[0]
 const DAY_END_MIN = 22 * 60;    // 22:00 — fin du dernier créneau HOURS
 const HOUR_HEIGHT = 44;         // px par heure dans la grille
@@ -80,11 +68,11 @@ export default function PlanningPage() {
     }).catch(() => {});
   }, [week, selectedRoom]);
 
-  /** Map roomId → couleur vive garantissant la distinction entre salles */
+  /** Map roomId → couleur définie dans Django Admin (fiche de la salle) */
   const colorMap = useMemo(() => {
     const map = {};
-    rooms.forEach((r, i) => {
-      map[r.id] = PALETTE[i % PALETTE.length];
+    rooms.forEach((r) => {
+      map[r.id] = r.color;
     });
     return map;
   }, [rooms]);

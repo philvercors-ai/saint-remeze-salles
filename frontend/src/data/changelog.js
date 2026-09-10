@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.11.3";
+export const APP_VERSION = "1.11.4";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.4",
+    date: "2026-09-10",
+    label: "Correction des couleurs du Planning",
+    changes: [
+      "Le Planning ignorait la couleur définie sur la fiche de la salle (Django Admin) et en générait une automatiquement — corrigé : la couleur choisie pour une salle ou un lieu s'applique désormais bien à ses tuiles dans le Planning",
+    ],
+  },
   {
     version: "1.11.3",
     date: "2026-09-10",

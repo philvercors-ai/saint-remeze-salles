@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.3 — Septembre 2026
+> Version 1.11.4 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -514,9 +514,18 @@ Idem réservations.
 | `equipment` | array | Liste des équipements disponibles |
 | `description` | string | Description |
 | `image_emoji` | string | Emoji représentatif |
-| `color` | string | Couleur hex (#rrggbb) |
+| `color` | string | Couleur hex (#rrggbb) — utilisée pour la tuile de la salle dans le Planning (voir ci-dessous) |
 | `is_active` | bool | Salle visible dans l'application |
 | `requires_admin_only` | bool | Réservation réservée aux admins |
+
+> **Couleur des tuiles du Planning (bug corrigé v1.11.4)** : le Planning affichait
+> auparavant une couleur générée automatiquement par salle (palette fixe assignée
+> par ordre d'affichage), en ignorant totalement le champ `color` défini sur la
+> fiche de la salle — modifier la couleur dans Django Admin n'avait donc aucun
+> effet visible. `PlanningPage.jsx` utilise désormais directement `room.color`
+> (renvoyé par `GET /api/rooms/` et par `room_color` sur l'endpoint planning) :
+> changer la couleur d'une salle ou d'un lieu dans Django Admin met immédiatement
+> à jour sa couleur sur le Planning.
 
 ---
 
@@ -2066,5 +2075,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.3) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.4) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
