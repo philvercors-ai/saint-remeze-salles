@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.8.0 — Septembre 2026
+> Version 1.9.0 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -1400,6 +1400,74 @@ Django utilise PBKDF2 avec SHA-256 par défaut (recommandation NIST).
 - Non présent dans la liste des mots de passe courants
 - Non entièrement numérique
 
+### Rate limiting (anti brute-force / email bombing)
+
+Depuis la v1.9.0, les endpoints sensibles sont limités via `DEFAULT_THROTTLE_CLASSES`
+(DRF) — voir `config/settings/base.py` :
+
+| Endpoint | Limite |
+|---|---|
+| `POST /api/auth/login/` | 10/minute |
+| `POST /api/auth/register/` | 5/heure |
+| `POST /api/auth/forgot-password/`, `/reset-password/` | 5/heure |
+| `POST /api/auth/resend-verification/`, `/verify-email/` | 5/heure |
+| Reste de l'API (par IP anonyme / par utilisateur) | 100/h anonyme, 1000/h connecté |
+
+Sans ça, rien n'empêchait un brute-force de mot de passe, ni un spam qui vide le
+quota gratuit Resend (3000 emails/mois) en déclenchant `forgot-password` ou
+`resend-verification` en boucle.
+
+### Audit de sécurité — 2026-09
+
+Un audit complet a été mené (application destinée à une commune). **Corrigé** :
+
+- **Clé API Resend exposée** — `old.env`, committé en clair sur le dépôt GitHub
+  **public** depuis le commit initial, contenait une vraie clé Resend. Révoquée
+  côté Resend, fichier supprimé, `.gitignore` renforcé. *(La présence passée
+  dans l'historique git n'a plus d'impact : une clé révoquée est inoffensive.)*
+- **axios** 1.13.6 → 1.20.0 : plusieurs CVE haute sévérité (SSRF, pollution de
+  prototype, injection CRLF).
+- **`IsOwnerOrAgent`** plantait en 500 (au lieu de 401) pour tout accès anonyme
+  direct à une réservation/manifestation par son ID.
+- **`SECRET_KEY`** : la prod refuse maintenant de démarrer si la variable est
+  absente, au placeholder de `.env.example`, ou trop courte.
+- **CORS** : retrait du wildcard `*.onrender.com` (partagé par tous les projets
+  Render, pas seulement les nôtres) — `CORS_ALLOWED_ORIGINS` explicite suffit.
+- **Injection HTML dans les emails** : les champs saisis par les citoyens
+  (nom, titre, commentaire admin, message de notification) étaient interpolés
+  bruts dans le HTML des emails. Échappés via `django.utils.html.escape()`.
+- **Historique des notifications** (`/api/notifications/history/`) cassé par
+  le même `prefetch_related()` non supporté que `RoomViewSet`.
+
+**Recommandations restantes (arbitrage produit, pas corrigées d'office)** :
+
+- **Refresh token en `localStorage`** — vulnérable en cas de XSS (aucune faille
+  XSS active trouvée à ce jour, mais pas de protection en profondeur). Migrer
+  vers un cookie `httpOnly` serait plus robuste mais demande de revoir le flux
+  CSRF ; à discuter avant de faire ce changement d'architecture.
+- **Pas d'invalidation des sessions existantes** au changement de mot de passe
+  ou à la demande de suppression de compte — un refresh token déjà émis reste
+  valable jusqu'à 7 jours même après un changement volontaire de mot de passe
+  suite à une suspicion de piratage. Nécessiterait une liste de révocation
+  maison (le module `token_blacklist` officiel est incompatible MongoDB, mais
+  un modèle simple type `PasswordResetToken` referait l'affaire).
+- **`react-router-dom`** : vulnérabilité de redirection ouverte, corrigée
+  uniquement en v7 (migration majeure depuis la v6 actuelle, à tester
+  séparément — pas de correctif dans la branche 6.x).
+- **Vite/esbuild** : vulnérabilité modérée (serveur de dev uniquement, pas le
+  site déployé) ; correctif nécessite Vite 8, changement majeur.
+- **Réservations concurrentes** : la détection de chevauchement de créneau se
+  fait par une requête puis un enregistrement séparés, sans verrou — deux
+  réservations simultanées pour le même créneau peuvent théoriquement passer
+  toutes les deux (race condition). Risque pratique faible vu le trafic
+  attendu.
+- **`/api/docs/`** (Swagger) accessible publiquement sans authentification —
+  expose la structure complète de l'API. Décision à prendre : acceptable pour
+  un usage interne réduit, ou à restreindre aux agents/admin.
+- **MongoDB Atlas** : accès réseau `0.0.0.0/0` nécessaire (Render free n'a pas
+  d'IP fixe) — la sécurité repose entièrement sur des identifiants robustes,
+  pas sur une restriction réseau.
+
 ---
 
 ## 13. Déploiement Docker
@@ -1904,5 +1972,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 9 septembre 2026 — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

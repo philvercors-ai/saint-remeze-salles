@@ -1,6 +1,20 @@
-export const APP_VERSION = "1.8.0";
+export const APP_VERSION = "1.9.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.9.0",
+    date: "2026-09-10",
+    label: "Audit de sécurité",
+    changes: [
+      "Clé API Resend exposée publiquement sur le dépôt GitHub : révoquée et retirée",
+      "Protection anti brute-force (login) et anti email-bombing (mot de passe oublié, vérification email)",
+      "Correction d'un plantage serveur sur les accès anonymes à une réservation/manifestation",
+      "Blocage du démarrage en production avec une clé secrète absente ou faible",
+      "Restriction CORS resserrée, échappement des champs utilisateur dans les emails",
+      "Correction de l'historique des notifications, resté cassé depuis son lancement",
+      "Dépendance axios mise à jour (plusieurs failles de sécurité corrigées)",
+    ],
+  },
   {
     version: "1.8.0",
     date: "2026-09-09",
