@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.2 — Septembre 2026
+> Version 1.11.3 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -861,7 +861,22 @@ Les salles et services municipaux par défaut sont dans :
 - `backend/apps/rooms/fixtures.json`
 - `backend/apps/notifications/fixtures.json`
 
-Pour les recharger :
+Elles sont chargées automatiquement **une seule fois**, au tout premier démarrage
+sur une base vide, par la commande `python manage.py load_initial_fixtures`
+(appelée depuis le startCommand Render et docker-compose, à chaque démarrage du
+service, mais sans effet si des salles ou services existent déjà).
+
+> ⚠️ **Bug corrigé (v1.11.3)** : avant cette commande, le startCommand appelait
+> directement `loaddata apps/rooms/fixtures.json` à **chaque** redémarrage du
+> service (déploiement, crash, restart manuel). Or `loaddata` réinsère chaque
+> objet avec son pk fixe s'il n'existe plus — une salle supprimée volontairement
+> par un administrateur depuis Django Admin ("Salle des Fêtes", "Salle
+> Polyvalente", "Terrain de Sport"...) réapparaissait donc à chaque redémarrage.
+> `load_initial_fixtures` (`apps/rooms/management/commands/`) vérifie d'abord
+> que la collection est vide avant de charger quoi que ce soit.
+
+Pour forcer un rechargement manuel (écrase les personnalisations existantes, à
+utiliser seulement pour réinitialiser une base de test) :
 ```bash
 python manage.py loaddata apps/rooms/fixtures.json apps/notifications/fixtures.json
 ```
@@ -2051,5 +2066,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.2) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.3) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

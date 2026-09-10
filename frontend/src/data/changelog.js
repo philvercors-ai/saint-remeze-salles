@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.11.2";
+export const APP_VERSION = "1.11.3";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.3",
+    date: "2026-09-10",
+    label: "Correction : les salles supprimées réapparaissaient au redémarrage",
+    changes: [
+      "Une salle supprimée depuis le Django Admin (ex. Salle des Fêtes, Salle Polyvalente, Terrain de Sport) réapparaissait à chaque redémarrage du serveur — corrigé",
+      "Les fixtures initiales (salles, services municipaux) ne sont désormais chargées qu'une seule fois, au tout premier démarrage sur une base vide",
+    ],
+  },
   {
     version: "1.11.2",
     date: "2026-09-10",

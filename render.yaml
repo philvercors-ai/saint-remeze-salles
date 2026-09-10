@@ -34,7 +34,7 @@ services:
     startCommand: >-
       sh -c "python manage.py fix_migration_history;
              python manage.py migrate --noinput;
-             (python manage.py loaddata apps/rooms/fixtures.json apps/notifications/fixtures.json 2>/dev/null || true) &&
+             python manage.py load_initial_fixtures;
              python manage.py ensure_superuser &&
              gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     healthCheckPath: /api/health/
