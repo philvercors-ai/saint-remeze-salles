@@ -56,5 +56,6 @@ class SendNotificationView(APIView):
 
 class NotificationHistoryView(ListAPIView):
     permission_classes = [IsAgent]
-    queryset = Notification.objects.select_related("sent_by").prefetch_related("services").all()
+    # prefetch_related() n'est pas supporté par django-mongodb-backend (voir Room)
+    queryset = Notification.objects.select_related("sent_by").all()
     serializer_class = NotificationSerializer
