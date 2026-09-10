@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.9.3 — Septembre 2026
+> Version 1.9.4 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -1991,5 +1991,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.9.3) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.9.4) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

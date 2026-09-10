@@ -23,6 +23,44 @@ const PALETTE = [
   "#65a30d", // lime
 ];
 
+const DAY_START_MIN = 7 * 60;   // 07:00 — doit correspondre à HOURS[0]
+const DAY_END_MIN = 22 * 60;    // 22:00 — fin du dernier créneau HOURS
+const HOUR_HEIGHT = 44;         // px par heure dans la grille
+
+const toMin = (t) => {
+  if (!t) return 0;
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/**
+ * Assigne à chaque réservation d'une journée une colonne (côte à côte plutôt
+ * qu'empilées) : algorithme classique de mise en page calendrier — tri par
+ * heure de début, placement dans la première colonne libre, regroupement des
+ * réservations qui se chevauchent pour ne diviser la largeur qu'entre elles.
+ */
+function layoutDayEvents(events) {
+  const sorted = [...events].sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+  const groups = [];
+
+  sorted.forEach((ev) => {
+    let group = groups[groups.length - 1];
+    if (!group || group.maxEnd <= ev.startMin) {
+      group = { events: [], columns: [], maxEnd: -Infinity };
+      groups.push(group);
+    }
+    let col = 0;
+    while (group.columns[col] !== undefined && group.columns[col] > ev.startMin) col++;
+    group.columns[col] = ev.endMin;
+    group.maxEnd = Math.max(group.maxEnd, ev.endMin);
+    group.events.push({ ...ev, col });
+  });
+
+  return groups.flatMap((group) =>
+    group.events.map((ev) => ({ ...ev, totalCols: group.columns.length }))
+  );
+}
+
 export default function PlanningPage() {
   const [week, setWeek]             = useState(new Date());
   const [reservations, setRes]      = useState([]);
@@ -53,16 +91,24 @@ export default function PlanningPage() {
 
   const getRoomColor = (ev) => colorMap[ev.room] || ev.room_color || "#1a3a5a";
 
-  const getSlotEvents = (day, hour) => {
-    const dateStr = fmtDate(day);
-    const h = parseInt(hour);
-    return reservations.filter((r) => {
-      if (r.date !== dateStr) return false;
-      const sh = parseInt(r.start_time);
-      const eh = parseInt(r.end_time);
-      return h >= sh && h < eh;
+  /** Réservations positionnées (top/hauteur/colonne) pour chaque jour affiché,
+   * une seule tuile par réservation quelle que soit sa durée. */
+  const layoutByDay = useMemo(() => {
+    const map = {};
+    days.forEach((day) => {
+      const dateStr = fmtDate(day);
+      const dayEvents = reservations
+        .filter((r) => r.date === dateStr)
+        .map((r) => ({
+          ...r,
+          startMin: Math.max(DAY_START_MIN, toMin(r.start_time)),
+          endMin: Math.min(DAY_END_MIN, toMin(r.end_time)),
+        }))
+        .filter((r) => r.endMin > r.startMin);
+      map[dateStr] = layoutDayEvents(dayEvents);
     });
-  };
+    return map;
+  }, [reservations, days]);
 
   /** Salles présentes dans les réservations de la semaine affichée */
   const activeRooms = useMemo(() => {
@@ -74,6 +120,7 @@ export default function PlanningPage() {
   }, [reservations]);
 
   const today = fmtDate(new Date());
+  const gridHeight = ((DAY_END_MIN - DAY_START_MIN) / 60) * HOUR_HEIGHT;
 
   return (
     <div style={{ padding: "20px", paddingBottom: 80 }}>
@@ -120,88 +167,114 @@ export default function PlanningPage() {
         </div>
       )}
 
-      {/* Grille */}
+      {/* Grille calendrier */}
       <div style={{ overflowX: "auto" }}>
-        <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 600, fontSize: 12 }}>
-          <thead>
-            <tr>
-              <th style={{ width: 52, padding: "8px 4px", color: "#9ca3af", fontWeight: 400 }}></th>
-              {days.map((d) => {
-                const ds = fmtDate(d);
-                const isToday = ds === today;
-                return (
-                  <th key={ds} style={{
-                    padding: "8px 4px", textAlign: "center",
-                    color: isToday ? "#1a3a5a" : "#6b7280",
-                    fontWeight: isToday ? 700 : 400,
+        <div style={{ minWidth: 700 }}>
+          {/* En-tête des jours */}
+          <div style={{ display: "grid", gridTemplateColumns: "52px repeat(7, 1fr)" }}>
+            <div />
+            {days.map((d) => {
+              const ds = fmtDate(d);
+              const isToday = ds === today;
+              return (
+                <div key={ds} style={{
+                  padding: "8px 4px", textAlign: "center", fontSize: 12,
+                  color: isToday ? "#1a3a5a" : "#6b7280",
+                  fontWeight: isToday ? 700 : 400,
+                }}>
+                  {d.toLocaleDateString("fr-FR", { weekday: "short" })}
+                  <br />
+                  <span style={{
+                    fontSize: 15, fontWeight: 700,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    width: 26, height: 26, borderRadius: "50%",
+                    background: isToday ? "#1a3a5a" : "transparent",
+                    color: isToday ? "#fff" : "inherit",
                   }}>
-                    {d.toLocaleDateString("fr-FR", { weekday: "short" })}
-                    <br />
-                    <span style={{
-                      fontSize: 15, fontWeight: 700,
-                      display: "inline-flex", alignItems: "center", justifyContent: "center",
-                      width: 26, height: 26, borderRadius: "50%",
-                      background: isToday ? "#1a3a5a" : "transparent",
-                      color: isToday ? "#fff" : "inherit",
-                    }}>
-                      {d.getDate()}
-                    </span>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {HOURS.map((hour) => (
-              <tr key={hour}>
-                <td style={{ padding: "1px 8px 1px 0", color: "#9ca3af", textAlign: "right", verticalAlign: "top", borderTop: "1px solid #f1f5f9", fontSize: 11 }}>
+                    {d.getDate()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Corps : colonne des heures + une colonne par jour, événements en blocs positionnés */}
+          <div style={{ display: "grid", gridTemplateColumns: "52px repeat(7, 1fr)" }}>
+            {/* Heures */}
+            <div style={{ position: "relative", height: gridHeight }}>
+              {HOURS.map((hour, i) => (
+                <div key={hour} style={{
+                  position: "absolute", top: i * HOUR_HEIGHT - 6, right: 8,
+                  fontSize: 11, color: "#9ca3af",
+                }}>
                   {hour}
-                </td>
-                {days.map((day) => {
-                  const events = getSlotEvents(day, hour);
-                  return (
-                    <td key={fmtDate(day)} style={{ border: "1px solid #f1f5f9", padding: 2, verticalAlign: "top", minHeight: 28 }}>
-                      {events.map((ev) => {
-                        const isPrivate = ev.is_public === false;
-                        const color = isPrivate ? "#94a3b8" : getRoomColor(ev);
-                        return (
-                          <div
-                            key={ev.id}
-                            title={isPrivate
-                              ? `Créneau privé\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
-                              : `${ev.title}\n${ev.room_name}\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
-                            }
-                            style={{
-                              background: isPrivate ? "#f1f5f9" : color,
-                              color: isPrivate ? "#64748b" : "#fff",
-                              borderRadius: 4,
-                              padding: "2px 5px",
-                              fontSize: 10,
-                              marginBottom: 2,
-                              overflow: "hidden",
-                              lineHeight: 1.4,
-                              borderLeft: `3px solid ${isPrivate ? "#94a3b8" : color}`,
-                              border: isPrivate ? "1px solid #cbd5e1" : "none",
-                            }}
-                          >
-                            <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {isPrivate ? "🔒 Réservé" : ev.title}
-                            </div>
-                            {!isPrivate && (
-                              <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {ev.room_name}
-                              </div>
-                            )}
+                </div>
+              ))}
+            </div>
+
+            {days.map((day) => {
+              const dateStr = fmtDate(day);
+              const events = layoutByDay[dateStr] || [];
+              return (
+                <div
+                  key={dateStr}
+                  style={{
+                    position: "relative", height: gridHeight,
+                    borderLeft: "1px solid #f1f5f9",
+                    backgroundImage: `repeating-linear-gradient(to bottom, #f1f5f9 0, #f1f5f9 1px, transparent 1px, transparent ${HOUR_HEIGHT}px)`,
+                  }}
+                >
+                  {events.map((ev) => {
+                    const isPrivate = ev.is_public === false;
+                    const color = isPrivate ? "#94a3b8" : getRoomColor(ev);
+                    const top = ((ev.startMin - DAY_START_MIN) / 60) * HOUR_HEIGHT;
+                    const height = Math.max(((ev.endMin - ev.startMin) / 60) * HOUR_HEIGHT - 2, 16);
+                    const widthPct = 100 / ev.totalCols;
+                    return (
+                      <div
+                        key={ev.id}
+                        title={isPrivate
+                          ? `Créneau privé\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
+                          : `${ev.title}\n${ev.room_name}\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
+                        }
+                        style={{
+                          position: "absolute",
+                          top, height,
+                          left: `${ev.col * widthPct}%`,
+                          width: `calc(${widthPct}% - 3px)`,
+                          background: isPrivate ? "#f1f5f9" : color,
+                          color: isPrivate ? "#64748b" : "#fff",
+                          borderRadius: 4,
+                          padding: "2px 5px",
+                          fontSize: 10,
+                          overflow: "hidden",
+                          lineHeight: 1.35,
+                          borderLeft: `3px solid ${isPrivate ? "#94a3b8" : color}`,
+                          border: isPrivate ? "1px solid #cbd5e1" : "none",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {isPrivate ? "🔒 Réservé" : ev.title}
+                        </div>
+                        {!isPrivate && height > 26 && (
+                          <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ev.room_name}
                           </div>
-                        );
-                      })}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                        )}
+                        {!isPrivate && height > 26 && (
+                          <div style={{ opacity: 0.75, fontSize: 9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ev.start_time?.slice(0, 5)}–{ev.end_time?.slice(0, 5)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

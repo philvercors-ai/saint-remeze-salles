@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.9.3";
+export const APP_VERSION = "1.9.4";
 
 export const CHANGELOG = [
+  {
+    version: "1.9.4",
+    date: "2026-09-10",
+    label: "Refonte visuelle du Planning",
+    changes: [
+      "Une réservation sur plusieurs heures forme désormais un seul bloc (au lieu de se répéter sur chaque case horaire)",
+      "Les réservations simultanées de salles différentes s'affichent côte à côte plutôt qu'empilées",
+    ],
+  },
   {
     version: "1.9.3",
     date: "2026-09-10",
