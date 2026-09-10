@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.9.2 — Septembre 2026
+> Version 1.9.3 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -812,6 +812,10 @@ salle du conseil) :
 - Cette restriction ne s'applique pas automatiquement aux **agents** : un agent qui
   n'est pas membre du groupe requis ne peut pas non plus réserver la salle (seul admin
   passe toujours). Ajoutez l'agent au groupe concerné si nécessaire.
+- **Page d'accueil (v1.9.3)** : les salles réservées à un groupe sont automatiquement
+  affichées à part, dans une section « Réservé au groupe « Nom du groupe » » distincte
+  de « Nos salles »/« Nos lieux » (`RoomSerializer.restricted_groups`, calculé côté
+  serveur ; `DashboardPage.jsx` génère une section par groupe rencontré).
 
 ### Fixtures initiales
 
@@ -1987,5 +1991,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.9.2) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.9.3) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

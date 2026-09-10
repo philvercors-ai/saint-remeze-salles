@@ -7,6 +7,7 @@ class RoomSerializer(serializers.ModelSerializer):
     equipment = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     reservation_count = serializers.SerializerMethodField()
     can_reserve = serializers.SerializerMethodField()
+    restricted_groups = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -14,8 +15,9 @@ class RoomSerializer(serializers.ModelSerializer):
             "id", "name", "category", "capacity", "area_sqm", "hourly_rate",
             "equipment", "description", "image_emoji", "color",
             "is_active", "requires_admin_only", "reservation_count", "can_reserve",
+            "restricted_groups",
         ]
-        read_only_fields = ["id", "reservation_count", "can_reserve"]
+        read_only_fields = ["id", "reservation_count", "can_reserve", "restricted_groups"]
 
     def get_reservation_count(self, obj):
         return obj.reservation_count("approved")
@@ -25,6 +27,12 @@ class RoomSerializer(serializers.ModelSerializer):
         Groupes/admin-only : voir Room.user_can_reserve()."""
         request = self.context.get("request")
         return obj.user_can_reserve(getattr(request, "user", None))
+
+    def get_restricted_groups(self, obj):
+        """Noms des groupes autorisés à réserver — [] si ouverte à tous.
+        Affiché publiquement (dashboard) pour informer qu'une salle est
+        réservée à un usage spécifique, ex. « Conseil Municipal »."""
+        return list(obj.allowed_groups.values_list("name", flat=True))
 
 
 class RoomAvailabilitySerializer(serializers.Serializer):

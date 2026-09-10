@@ -7,6 +7,37 @@ import { useAuthStore } from "../store/authStore";
 import { fmtDateFr, fmtTime } from "../utils/dates";
 import StatusBadge from "../components/ui/Badge";
 
+function RoomSection({ title, rooms, showPlanningLink = false }) {
+  if (rooms.length === 0) return null;
+  return (
+    <section style={{ marginBottom: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 style={{ fontSize: 18 }}>{title}</h2>
+        {showPlanningLink && (
+          <Link to="/planning" style={{ color: "#1a3a5a", fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}>
+            Voir le planning <ChevronRight size={16} />
+          </Link>
+        )}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+        {rooms.map((room) => (
+          <div key={room.id} style={{ background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(26,58,90,.08)" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>{room.image_emoji}</div>
+            <h3 style={{ fontSize: 15, marginBottom: 4 }}>{room.name}</h3>
+            <div style={{ display: "flex", gap: 12, color: "#6b7280", fontSize: 12 }}>
+              <span><Users size={12} style={{ verticalAlign: "middle" }} /> {room.capacity} pers.</span>
+              <span><Building2 size={12} style={{ verticalAlign: "middle" }} /> {room.area_sqm} m²</span>
+            </div>
+            {room.hourly_rate > 0 && (
+              <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room.hourly_rate} €/h</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const [rooms, setRooms] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
@@ -24,6 +55,10 @@ export default function DashboardPage() {
       setUpcoming(all.filter((r) => r.date >= today && r.status === "approved").slice(0, 5));
     }).finally(() => setLoading(false));
   }, []);
+
+  // Groupes distincts trouvés parmi les salles restreintes (ex : "Conseil
+  // Municipal") — une section dédiée est générée pour chacun, dynamiquement.
+  const groupNames = [...new Set(rooms.flatMap((r) => r.restricted_groups || []))].sort();
 
   return (
     <div style={{ padding: "24px 20px 80px", maxWidth: 1000, margin: "0 auto" }} className="animate-fadein">
@@ -60,33 +95,28 @@ export default function DashboardPage() {
       </div>
 
       {/* Rooms */}
-      <section style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18 }}>Nos salles</h2>
-          <Link to="/planning" style={{ color: "#1a3a5a", fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}>
-            Voir le planning <ChevronRight size={16} />
-          </Link>
-        </div>
-        {loading ? (
-          <p style={{ color: "#9ca3af" }}>Chargement…</p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
-            {rooms.map((room) => (
-              <div key={room.id} style={{ background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(26,58,90,.08)" }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>{room.image_emoji}</div>
-                <h3 style={{ fontSize: 15, marginBottom: 4 }}>{room.name}</h3>
-                <div style={{ display: "flex", gap: 12, color: "#6b7280", fontSize: 12 }}>
-                  <span><Users size={12} style={{ verticalAlign: "middle" }} /> {room.capacity} pers.</span>
-                  <span><Building2 size={12} style={{ verticalAlign: "middle" }} /> {room.area_sqm} m²</span>
-                </div>
-                {room.hourly_rate > 0 && (
-                  <p style={{ fontSize: 12, color: "#c9a84c", fontWeight: 600, marginTop: 6 }}>{room.hourly_rate} €/h</p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {loading ? (
+        <p style={{ color: "#9ca3af" }}>Chargement…</p>
+      ) : (
+        <>
+          <RoomSection
+            title="Nos salles"
+            rooms={rooms.filter((r) => r.category === "salle" && r.restricted_groups.length === 0)}
+            showPlanningLink
+          />
+          <RoomSection
+            title="Nos lieux"
+            rooms={rooms.filter((r) => r.category === "lieu" && r.restricted_groups.length === 0)}
+          />
+          {groupNames.map((groupName) => (
+            <RoomSection
+              key={groupName}
+              title={`Réservé au groupe « ${groupName} »`}
+              rooms={rooms.filter((r) => r.restricted_groups.includes(groupName))}
+            />
+          ))}
+        </>
+      )}
 
       {/* Upcoming reservations */}
       {upcoming.length > 0 && (

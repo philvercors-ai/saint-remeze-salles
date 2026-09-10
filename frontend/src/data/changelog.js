@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.9.2";
+export const APP_VERSION = "1.9.3";
 
 export const CHANGELOG = [
+  {
+    version: "1.9.3",
+    date: "2026-09-10",
+    label: "Sections distinctes sur l'accueil : salles, lieux, groupes",
+    changes: [
+      "La page d'accueil sépare maintenant les salles, les lieux, et les salles réservées à un groupe (ex. « Conseil Municipal ») en sections distinctes",
+      "Une section dédiée apparaît automatiquement pour chaque groupe ayant au moins une salle qui lui est réservée",
+    ],
+  },
   {
     version: "1.9.2",
     date: "2026-09-10",
