@@ -37,6 +37,11 @@ media/
 .env
 .env.local
 .env.*.local
+.env.bak
+.env.old
+old.env
+*.env.bak
+*.env.old
 *.pem
 *.key
 
