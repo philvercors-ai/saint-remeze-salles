@@ -38,6 +38,10 @@ class CustomUser(AbstractUser):
         ("particulier", "Particulier"),
         ("association", "Association"),
     ]
+    # Noms des UserGroup miroir de chaque type de compte (créés si besoin) —
+    # permet de restreindre une salle aux particuliers ou aux associations
+    # via le même mécanisme que n'importe quel autre groupe (Room.allowed_groups).
+    ACCOUNT_TYPE_GROUP_NAMES = dict(ACCOUNT_TYPE_CHOICES)
 
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
@@ -84,6 +88,21 @@ class CustomUser(AbstractUser):
         if not self.email_verify_token_created:
             return False
         return (timezone.now() - self.email_verify_token_created).total_seconds() < 86400  # 24h
+
+    def sync_account_type_group(self):
+        """Ajoute l'utilisateur au groupe de réservation ("Particulier" ou
+        "Association", créé si besoin) correspondant à son account_type
+        actuel, et le retire de l'autre. Nécessite que l'utilisateur soit
+        déjà enregistré (pk existant)."""
+        target_name = self.ACCOUNT_TYPE_GROUP_NAMES.get(self.account_type)
+        if not target_name:
+            return
+        for name in self.ACCOUNT_TYPE_GROUP_NAMES.values():
+            group, _ = UserGroup.objects.get_or_create(name=name)
+            if name == target_name:
+                self.reservation_groups.add(group)
+            else:
+                self.reservation_groups.remove(group)
 
     def anonymize(self):
         """Anonymise les données personnelles (droit à l'oubli RGPD)."""

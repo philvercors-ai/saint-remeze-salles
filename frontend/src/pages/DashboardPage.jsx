@@ -106,10 +106,12 @@ export default function DashboardPage() {
             rooms={rooms.filter((r) => r.category === "salle" && (r.restricted_groups || []).length === 0)}
             showPlanningLink
           />
-          <RoomSection
-            title="Nos lieux"
-            rooms={rooms.filter((r) => r.category === "lieu" && (r.restricted_groups || []).length === 0)}
-          />
+          {manifestationsEnabled && (
+            <RoomSection
+              title="Nos lieux"
+              rooms={rooms.filter((r) => r.category === "lieu" && (r.restricted_groups || []).length === 0)}
+            />
+          )}
           {groupNames.map((groupName) => (
             <RoomSection
               key={groupName}

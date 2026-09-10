@@ -1,6 +1,16 @@
-export const APP_VERSION = "1.11.1";
+export const APP_VERSION = "1.11.2";
 
 export const CHANGELOG = [
+  {
+    version: "1.11.2",
+    date: "2026-09-10",
+    label: "Accueil lié à Manifestation + groupes Particulier/Association",
+    changes: [
+      "La section « Nos lieux » de l'accueil n'apparaît plus que si la fonctionnalité Manifestation est activée (ces salles ne sont réservables que via ce formulaire)",
+      "Deux groupes d'utilisateurs « Particulier » et « Association » sont désormais créés automatiquement et affectés à chaque utilisateur selon son type de compte, dès l'inscription",
+      "Ces groupes peuvent être utilisés comme n'importe quel groupe pour réserver une salle aux seuls particuliers ou aux seules associations",
+    ],
+  },
   {
     version: "1.11.1",
     date: "2026-09-10",

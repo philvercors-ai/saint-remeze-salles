@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.1 — Septembre 2026
+> Version 1.11.2 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -710,6 +710,13 @@ créée automatiquement au premier accès — `ManifestationSettings.load()`).
 > qui rejette un entier comme "1" (même bug que les anciennes fixtures — voir
 > Dépannage). L'unicité repose donc sur un champ `key` dédié, jamais sur le pk.
 
+**Effet sur la page d'accueil (v1.11.2)** : la section « Nos lieux » du tableau de
+bord n'est affichée que si les manifestations sont **activées**. En effet, les salles
+de catégorie « lieu » (espaces extérieurs, ex. terrain municipal) ne sont réservables
+qu'au travers du formulaire de manifestation — les proposer sur l'accueil alors que
+ce formulaire est désactivé aurait affiché des tuiles menant à une page indisponible.
+« Nos salles » (catégorie « salle », réservables directement) reste toujours visible.
+
 ---
 
 ### Stocks logistiques (`EquipmentStock`)
@@ -889,6 +896,26 @@ Hérite de `AbstractUser`. Champs additionnels :
 > `apps/accounts/admin.py`) précisément pour éviter de créer un groupe au mauvais
 > endroit — ça s'est déjà produit une fois (le groupe créé dans `auth_group` restait
 > invisible partout dans l'app, qui ne lit que la collection `accounts_usergroup`).
+
+### Groupes automatiques « Particulier » / « Association » (v1.11.2)
+
+Deux `UserGroup` sont créés et maintenus automatiquement, en miroir du champ
+`account_type` de chaque utilisateur : **« Particulier »** et **« Association »**.
+
+- À chaque inscription (`RegisterSerializer.create()`), le nouvel utilisateur est
+  automatiquement ajouté au groupe correspondant à son `account_type`, via
+  `CustomUser.sync_account_type_group()` (crée le groupe s'il n'existe pas encore,
+  et retire l'utilisateur de l'autre groupe).
+- Les comptes déjà existants avant cette version ont été affectés rétroactivement par
+  la migration `accounts/0005_create_account_type_groups.py`, lors de son application.
+- Ces deux groupes fonctionnent exactement comme n'importe quel autre `UserGroup` :
+  ils peuvent être utilisés dans le champ **Groupes autorisés à réserver** d'une salle
+  (voir [Restreindre une salle à certains groupes](#restreindre-une-salle-à-certains-groupes-dutilisateurs))
+  pour réserver une salle aux seuls particuliers, ou aux seules associations.
+- Si un administrateur modifie le `account_type` d'un utilisateur directement depuis
+  Django Admin (fiche utilisateur), le champ **Groupes de réservation** n'est **pas**
+  resynchronisé automatiquement (`sync_account_type_group()` n'est appelé qu'à
+  l'inscription) — il faut alors ajuster ce champ manuellement sur la fiche.
 
 ### Changer le rôle d'un utilisateur
 
@@ -2024,5 +2051,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.1) — Mairie de Saint Remèze*
+*Document mis à jour le 10 septembre 2026 (v1.11.2) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

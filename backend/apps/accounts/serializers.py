@@ -61,6 +61,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             email_verified=False,
             rgpd_consent_date=timezone.now(),
         )
+        user.sync_account_type_group()
         return user
 
 
