@@ -10,6 +10,7 @@ import Sidebar from "./components/layout/Sidebar";
 import BottomNav from "./components/layout/BottomNav";
 import Toast from "./components/ui/Toast";
 import CookieBanner from "./components/rgpd/CookieBanner";
+import ColdStartOverlay from "./components/ui/ColdStartOverlay";
 
 import DashboardPage      from "./pages/DashboardPage";
 import LoginPage          from "./pages/LoginPage";
@@ -120,6 +121,7 @@ export default function App() {
     <BrowserRouter>
       <AuthBootstrap />
       <ConfigBootstrap />
+      <ColdStartOverlay />
       <AppLayout>
         <Routes>
           {/* Public */}

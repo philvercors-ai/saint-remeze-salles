@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.4 — Septembre 2026
+> Version 1.12.5 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -1795,7 +1795,19 @@ docker compose run --rm certbot certonly \
 
 Le projet inclut un fichier `render.yaml` pour déploiement sur [render.com](https://render.com).
 
-> **Plan utilisé : Free** — le service backend dort après 15 min d'inactivité (cold start ~30 s). Celery n'est pas disponible sur ce plan.
+> **Plan utilisé : Free** — le service backend dort après 15 min d'inactivité (cold start ~30 s, parfois plus). Celery n'est pas disponible sur ce plan.
+
+**Animation de réveil côté frontend (v1.12.5)** : pendant ce cold start, le
+premier appel API (`AuthBootstrap`, déclenché au chargement de l'application)
+peut prendre jusqu'à une minute. Sans indication, l'application semblait figée
+ou en panne. `ColdStartOverlay.jsx` affiche désormais un écran avec animation
+(spinner + points animés) et un message expliquant le réveil du serveur —
+mais seulement si l'attente dépasse **1,5 seconde** (`SHOW_DELAY_MS`), pour ne
+jamais s'afficher quand le serveur est déjà chaud (cas normal la plupart du
+temps). Au-delà de **15 secondes** (`LONG_WAIT_MS`), le message se met à jour
+pour rassurer sur un réveil anormalement long. Basé sur `useAuthStore`
+(`isLoading`), déjà utilisé par ailleurs (`PrivateRoute`) comme signal
+« le bootstrap initial est-il terminé ? ».
 
 ### Services Render
 
@@ -2228,5 +2240,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 11 septembre 2026 (v1.12.4) — Mairie de Saint Remèze*
+*Document mis à jour le 11 septembre 2026 (v1.12.5) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

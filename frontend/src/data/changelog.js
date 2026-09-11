@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.12.4";
+export const APP_VERSION = "1.12.5";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.5",
+    date: "2026-09-11",
+    label: "Animation de réveil pendant le redémarrage du serveur",
+    changes: [
+      "Le serveur (hébergement gratuit) se met en veille après une période d'inactivité et peut mettre jusqu'à une minute à redémarrer",
+      "Un écran d'attente animé s'affiche désormais pendant ce réveil, avec un message explicatif — invisible si le serveur est déjà actif",
+    ],
+  },
   {
     version: "1.12.4",
     date: "2026-09-11",
