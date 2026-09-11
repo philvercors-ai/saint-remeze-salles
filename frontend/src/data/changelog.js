@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.12.3";
+export const APP_VERSION = "1.12.4";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.4",
+    date: "2026-09-11",
+    label: "Meilleure lisibilité des tuiles du Planning",
+    changes: [
+      "Texte des tuiles agrandi et mis en gras, avec une ombre portée pour rester lisible sur toutes les couleurs de salle",
+      "Les tuiles courtes (créneaux de 30 minutes) sont légèrement plus hautes pour laisser au texte la place de respirer",
+    ],
+  },
   {
     version: "1.12.3",
     date: "2026-09-11",

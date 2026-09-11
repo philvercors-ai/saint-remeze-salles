@@ -13,7 +13,7 @@ function toISOWeekParam(date) {
 
 const DAY_START_MIN = 7 * 60;    // 07:00 — doit correspondre à HOURS[0]
 const DAY_END_MIN = 24 * 60;     // minuit — fin du dernier créneau HOURS (23:00-00:00)
-const HOUR_HEIGHT = 44;         // px par heure dans la grille
+const HOUR_HEIGHT = 48;         // px par heure dans la grille (48 au lieu de 44 — laisse un peu plus de place au texte agrandi des tuiles)
 
 const toMin = (t) => {
   if (!t) return 0;
@@ -364,9 +364,9 @@ export default function PlanningPage() {
                     const showsRealSubject = isPrivate && ev.subject_visible;
                     const color = getRoomColor(ev);
                     const top = ((ev.startMin - DAY_START_MIN) / 60) * HOUR_HEIGHT;
-                    const height = Math.max(((ev.endMin - ev.startMin) / 60) * HOUR_HEIGHT - 2, 16);
+                    const height = Math.max(((ev.endMin - ev.startMin) / 60) * HOUR_HEIGHT - 2, 20);
                     const widthPct = 100 / ev.totalCols;
-                    const showDetails = height > 26;
+                    const showDetails = height > 30;
                     return (
                       <div
                         key={ev.id}
@@ -385,31 +385,32 @@ export default function PlanningPage() {
                           width: `calc(${widthPct}% - 3px)`,
                           background: color,
                           color: "#fff",
+                          textShadow: "0 1px 2px rgba(0,0,0,.55)",
                           borderRadius: 4,
-                          padding: "2px 5px",
-                          fontSize: 10,
+                          padding: "3px 6px",
+                          fontSize: 11.5,
                           overflow: "hidden",
-                          lineHeight: 1.35,
+                          lineHeight: 1.4,
                           borderLeft: `3px solid ${color}`,
                           boxSizing: "border-box",
                           cursor: ev.can_edit ? "pointer" : "default",
                         }}
                       >
-                        <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {isPrivate && "🔒 "}{isPrivate && !showsRealSubject ? "PRIVATISÉE" : ev.title}
                         </div>
                         {showDetails && (
-                          <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontWeight: 500, color: "rgba(255,255,255,.94)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ev.room_name}
                           </div>
                         )}
                         {showDetails && (
-                          <div style={{ opacity: 0.75, fontSize: 9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontWeight: 500, color: "rgba(255,255,255,.88)", fontSize: 10.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ev.start_time?.slice(0, 5)}–{ev.end_time?.slice(0, 5)}
                           </div>
                         )}
                         {showsRealSubject && showDetails && (
-                          <div style={{ opacity: 0.9, fontSize: 9, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ color: "rgba(255,255,255,.94)", fontSize: 10.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             🔒 Privatisée
                           </div>
                         )}

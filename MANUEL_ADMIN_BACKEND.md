@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.3 — Septembre 2026
+> Version 1.12.4 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -642,6 +642,13 @@ auparavant) : un citoyen peut donc réserver jusqu'à minuit. Aucune limite
 d'horaire n'existe côté backend (`Reservation.clean()` ne vérifie que le
 chevauchement et l'ordre début/fin) — la limite n'a toujours été qu'une
 contrainte du formulaire HTML.
+
+**Lisibilité des tuiles (v1.12.4)** : texte agrandi (titre 11,5px en gras,
+sous-lignes 10,5px) avec une ombre portée sur le texte pour rester lisible
+quelle que soit la couleur de la salle, y compris les teintes claires. La
+hauteur d'une heure dans la grille (`HOUR_HEIGHT`) passe de 44 à 48px, et la
+hauteur minimale d'une tuile de 16 à 20px, pour laisser au texte agrandi la
+place de respirer même sur un créneau de 30 minutes.
 
 **Visibilité — jamais filtrée par groupe.** Le Planning est accessible à tous
 (`AllowAny`) et n'est **jamais** filtré par `Room.allowed_groups` : même une
@@ -2221,5 +2228,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 11 septembre 2026 (v1.12.3) — Mairie de Saint Remèze*
+*Document mis à jour le 11 septembre 2026 (v1.12.4) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
