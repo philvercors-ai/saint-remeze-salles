@@ -11,8 +11,8 @@ function toISOWeekParam(date) {
   return `${getISOWeekYear(date)}-W${w}`;
 }
 
-const DAY_START_MIN = 7 * 60;   // 07:00 — doit correspondre à HOURS[0]
-const DAY_END_MIN = 22 * 60;    // 22:00 — fin du dernier créneau HOURS
+const DAY_START_MIN = 7 * 60;    // 07:00 — doit correspondre à HOURS[0]
+const DAY_END_MIN = 24 * 60;     // minuit — fin du dernier créneau HOURS (23:00-00:00)
 const HOUR_HEIGHT = 44;         // px par heure dans la grille
 
 const toMin = (t) => {

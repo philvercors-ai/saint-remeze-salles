@@ -14,6 +14,6 @@ export const getWeekDays = (date = new Date()) => {
 
 export const isSameDay = (a, b) => fmtDate(a) === fmtDate(b);
 
-export const HOURS = Array.from({ length: 15 }, (_, i) => `${(i + 7).toString().padStart(2, "0")}:00`); // 07:00 → 21:00
+export const HOURS = Array.from({ length: 17 }, (_, i) => `${(i + 7).toString().padStart(2, "0")}:00`); // 07:00 → 23:00 (jusqu'à minuit)
 
 export { addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth };

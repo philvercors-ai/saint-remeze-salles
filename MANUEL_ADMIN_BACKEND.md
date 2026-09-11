@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.0 — Septembre 2026
+> Version 1.12.1 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -630,6 +630,15 @@ ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, P
 Le Planning (`PlanningPage.jsx`, `GET /api/reservations/planning/`) affiche les
 réservations de la semaine en cours, une tuile par réservation, colorée selon
 `Room.color` (voir plus haut).
+
+**Plage horaire affichée (v1.12.1)** : la grille couvre 07:00 à minuit
+(`HOURS` dans `utils/dates.js`, `DAY_START_MIN`/`DAY_END_MIN` dans
+`PlanningPage.jsx`). Une réservation se terminant tard en soirée (ex. 23h45)
+s'affiche donc entièrement, sans être coupée en bas de grille. Le formulaire
+de réservation citoyen (`ReservationPage.jsx`) plafonne quant à lui toujours
+les horaires à 21:00 (`<input type="time" max="21:00">`) — une réservation
+allant au-delà ne peut donc être créée que depuis Django Admin ou l'API
+directement (par un agent, par exemple), pas via le formulaire public.
 
 **Visibilité — jamais filtrée par groupe.** Le Planning est accessible à tous
 (`AllowAny`) et n'est **jamais** filtré par `Room.allowed_groups` : même une
@@ -2197,5 +2206,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 11 septembre 2026 (v1.12.0) — Mairie de Saint Remèze*
+*Document mis à jour le 11 septembre 2026 (v1.12.1) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.0";
+export const APP_VERSION = "1.12.1";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.1",
+    date: "2026-09-11",
+    label: "Planning affiché jusqu'à minuit",
+    changes: [
+      "La grille du Planning couvre désormais 07h00 à minuit (au lieu de 21h00) — les événements se terminant tard en soirée s'affichent entièrement",
+    ],
+  },
   {
     version: "1.12.0",
     date: "2026-09-11",
