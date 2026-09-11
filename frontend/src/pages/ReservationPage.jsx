@@ -214,12 +214,12 @@ export default function ReservationPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>Début *</label>
-              <input type="time" value={form.start_time} onChange={set("start_time")} min="07:00" max="21:00" step="1800"
+              <input type="time" value={form.start_time} onChange={set("start_time")} min="07:00" max="23:59" step="1800"
                 style={slotConflict ? { borderColor: "#dc2626" } : {}} />
             </div>
             <div>
               <label style={labelStyle}>Fin *</label>
-              <input type="time" value={form.end_time} onChange={set("end_time")} min="07:00" max="21:00" step="1800"
+              <input type="time" value={form.end_time} onChange={set("end_time")} min="07:00" max="23:59" step="1800"
                 style={slotConflict ? { borderColor: "#dc2626" } : {}} />
             </div>
           </div>

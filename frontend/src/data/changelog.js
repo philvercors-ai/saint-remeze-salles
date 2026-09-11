@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.1";
+export const APP_VERSION = "1.12.2";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.2",
+    date: "2026-09-11",
+    label: "Réservations possibles jusqu'à minuit",
+    changes: [
+      "Le formulaire de réservation (simple et récurrente) autorise désormais des horaires jusqu'à 23h59, au lieu de 21h00 auparavant, pour correspondre à l'affichage du Planning",
+    ],
+  },
   {
     version: "1.12.1",
     date: "2026-09-11",
