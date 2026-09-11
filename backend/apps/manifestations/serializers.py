@@ -45,7 +45,9 @@ class ManifestationSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if not data.get("is_public", True):
+        if data.get("is_public", True):
+            data["subject_visible"] = True
+        else:
             request = self.context.get("request")
             user = getattr(request, "user", None)
             is_owner = (user and user.is_authenticated
@@ -53,8 +55,10 @@ class ManifestationSerializer(serializers.ModelSerializer):
                         and str(instance.user_id) == str(user.pk))
             is_agent = (user and user.is_authenticated
                         and user.role in ("agent", "admin"))
-            if not (is_owner or is_agent):
-                data["title"] = "Réservé"
+            can_view = bool(is_owner or is_agent)
+            data["subject_visible"] = can_view
+            if not can_view:
+                data["title"] = "PRIVATISÉE"
                 data["association"] = ""
                 data["contact_name"] = ""
                 data["contact_email"] = ""

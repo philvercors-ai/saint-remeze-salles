@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.2 — Septembre 2026
+> Version 1.12.3 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -663,6 +663,18 @@ Calculé côté serveur par `PlanningReservationSerializer` (champ
 `subject_visible`, jamais par nom de groupe côté frontend) — le frontend ne
 fait qu'afficher `title` (déjà masqué ou non par le serveur) et le badge
 « 🔒 Privatisée » quand `subject_visible` est vrai pour une réservation privée.
+
+> ⚠️ **Bug corrigé (v1.12.3)** : la page **Agenda** (`AgendaPage.jsx`, qui
+> réutilise le même endpoint `/api/reservations/planning/` en plus de
+> `/api/manifestations/`) ignorait totalement `subject_visible` et masquait
+> systématiquement tout événement `is_public=false`, **y compris pour son
+> propre demandeur** — un utilisateur connecté avec le compte ayant fait la
+> réservation privée voyait sa propre tuile affichée « Réservé » au lieu de
+> son vrai sujet. Corrigé : l'Agenda se fie désormais à `subject_visible`
+> exactement comme le Planning. `ManifestationSerializer` a reçu le même champ
+> `subject_visible` par cohérence (le masquage manifestation existait déjà
+> côté serveur pour owner/agent, mais l'ancien texte masqué « Réservé » a été
+> aligné sur « PRIVATISÉE »).
 
 **Modifier/supprimer depuis le Planning (v1.12.0)** : cliquer sur une tuile
 ouvre une fenêtre de modification (titre, date, horaires, participants, notes,
@@ -2209,5 +2221,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 11 septembre 2026 (v1.12.2) — Mairie de Saint Remèze*
+*Document mis à jour le 11 septembre 2026 (v1.12.3) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

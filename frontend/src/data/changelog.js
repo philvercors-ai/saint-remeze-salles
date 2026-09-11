@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.2";
+export const APP_VERSION = "1.12.3";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.3",
+    date: "2026-09-11",
+    label: "Correction : réservations privées masquées pour leur propre demandeur",
+    changes: [
+      "Dans l'Agenda, une réservation ou manifestation privée s'affichait comme « Réservé » même pour la personne connectée qui en était à l'origine — corrigé, elle voit maintenant son sujet réel avec la mention « Privatisée »",
+    ],
+  },
   {
     version: "1.12.2",
     date: "2026-09-11",

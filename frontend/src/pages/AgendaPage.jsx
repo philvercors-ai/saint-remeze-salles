@@ -69,8 +69,15 @@ export default function AgendaPage() {
   const past = events.filter((e) => (e.date || e.date_end) < today);
 
   const EventCard = ({ event }) => {
+    // subject_visible (calculé côté serveur : propriétaire, agent/admin, ou
+    // — pour une réservation — membre du groupe "Conseil Municipal") indique
+    // si le VIEWER CONNECTÉ a le droit de voir le sujet réel d'un événement
+    // privé. Se fier à ce champ, jamais à is_public seul : un événement privé
+    // dont on est le demandeur doit afficher son sujet normalement.
     const isPrivate = event.is_public === false;
-    if (isPrivate) {
+    const isMasked = isPrivate && !event.subject_visible;
+
+    if (isMasked) {
       return (
         <div style={{
           background: "#f8fafc", borderRadius: 10, padding: "14px 18px",
@@ -80,7 +87,7 @@ export default function AgendaPage() {
         }}>
           <span style={{ fontSize: 24, filter: "grayscale(1)", opacity: .5 }}>🔒</span>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Réservé</p>
+            <p style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>PRIVATISÉE</p>
             <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>
               {event._type === "reservation"
                 ? `${fmtDateFr(event.date)} · ${fmtTime(event.start_time)}–${fmtTime(event.end_time)}`
@@ -96,7 +103,9 @@ export default function AgendaPage() {
         <span style={{ fontSize: 28 }}>{event._type === "reservation" ? (event.room_emoji || "🏛️") : "🎪"}</span>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-            <p style={{ fontWeight: 600, fontSize: 14 }}>{event.title}</p>
+            <p style={{ fontWeight: 600, fontSize: 14 }}>
+              {isPrivate && "🔒 "}{event.title}
+            </p>
             <StatusBadge status={event.status} />
           </div>
           <p style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
@@ -106,6 +115,7 @@ export default function AgendaPage() {
             }
           </p>
           {event.association && <p style={{ color: "#9ca3af", fontSize: 11, marginTop: 2 }}>{event.association}</p>}
+          {isPrivate && <p style={{ color: "#94a3b8", fontSize: 11, fontStyle: "italic", marginTop: 2 }}>Privatisée</p>}
         </div>
       </div>
     );
