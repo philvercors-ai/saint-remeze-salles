@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from .models import Reservation
 
@@ -40,9 +41,32 @@ class ReservationSerializer(serializers.ModelSerializer):
                 )
         return data
 
+    @staticmethod
+    def _full_clean_or_400(instance):
+        # full_clean() lève django.core.exceptions.ValidationError, que le
+        # gestionnaire d'exceptions par défaut de DRF ne convertit PAS en 400
+        # (il ne reconnaît que rest_framework.exceptions.ValidationError) —
+        # sans cette conversion, un chevauchement de créneau plante en 500 au
+        # lieu de renvoyer une erreur de validation exploitable côté client.
+        try:
+            instance.full_clean()
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict)
+
     def create(self, validated_data):
         instance = Reservation(**validated_data)
-        instance.full_clean()  # Déclenche la validation chevauchement
+        self._full_clean_or_400(instance)  # Déclenche la validation chevauchement
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        # Sans cette surcharge (le ModelSerializer.update() par défaut ne
+        # déclenche pas full_clean()), modifier les horaires d'une réservation
+        # existante — ex. depuis le Planning — pourrait créer un chevauchement
+        # non détecté avec une autre réservation de la même salle.
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        self._full_clean_or_400(instance)
         instance.save()
         return instance
 
@@ -98,8 +122,13 @@ class RecurringReservationSerializer(serializers.Serializer):
 
 
 class PlanningReservationSerializer(serializers.ModelSerializer):
-    """Données minimales pour l'affichage du planning (public).
-    Les réservations privées sont masquées pour les non-propriétaires."""
+    """Données minimales pour l'affichage du planning (public — visible par
+    tous, quel que soit le groupe de réservation de l'utilisateur : le
+    Planning n'est jamais filtré par Room.allowed_groups, seule la création
+    de la réservation l'est). Le sujet des réservations privées est masqué
+    pour les non-propriétaires — sauf agents/admin et membres du groupe
+    "Conseil Municipal", qui voient le sujet réel en plus de la mention
+    "PRIVATISÉE" (via `subject_visible`, côté frontend)."""
     room_name = serializers.CharField(source="room.name", read_only=True)
     room_color = serializers.CharField(source="room.color", read_only=True)
     room_emoji = serializers.CharField(source="room.image_emoji", read_only=True)
@@ -109,17 +138,33 @@ class PlanningReservationSerializer(serializers.ModelSerializer):
         fields = ["id", "room", "room_name", "room_color", "room_emoji",
                   "title", "date", "start_time", "end_time", "status",
                   "recurrence_group", "is_public"]
+        # "subject_visible" et "can_edit" ne sont pas des champs du modèle —
+        # injectés manuellement dans to_representation() ci-dessous, jamais
+        # listés ici (DRF échouerait à les résoudre comme des champs réels).
+
+    def _is_owner(self, instance, user):
+        return bool(user and user.is_authenticated and instance.user_id
+                    and str(instance.user_id) == str(user.pk))
+
+    def _is_agent(self, user):
+        return bool(user and user.is_authenticated and user.role in ("agent", "admin"))
+
+    def _can_view_subject(self, instance, user):
+        if self._is_owner(instance, user) or self._is_agent(user):
+            return True
+        return bool(user and user.is_authenticated
+                    and user.reservation_groups.filter(name="Conseil Municipal").exists())
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if not data.get("is_public", True):
-            request = self.context.get("request")
-            user = getattr(request, "user", None)
-            is_owner = (user and user.is_authenticated
-                        and instance.user_id
-                        and str(instance.user_id) == str(user.pk))
-            is_agent = (user and user.is_authenticated
-                        and user.role in ("agent", "admin"))
-            if not (is_owner or is_agent):
-                data["title"] = "Réservé"
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        data["can_edit"] = self._is_owner(instance, user) or self._is_agent(user)
+        if data.get("is_public", True):
+            data["subject_visible"] = True
+        else:
+            can_view = self._can_view_subject(instance, user)
+            data["subject_visible"] = can_view
+            if not can_view:
+                data["title"] = "PRIVATISÉE"
         return data

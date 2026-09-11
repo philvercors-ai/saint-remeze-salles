@@ -129,6 +129,40 @@ class EmailService:
         )
         return cls._send(reservation.contact_email, "Réservation non accordée — Saint Remèze", html)
 
+    @classmethod
+    def send_recurring_reservation_approved(cls, reservations) -> bool:
+        """Un seul email de synthèse pour toute une série récurrente approuvée
+        d'un coup (approve_group), au lieu d'un email par occurrence."""
+        first = reservations[0]
+        html = cls._base_template(
+            title="Réservation approuvée ✓",
+            body=f"""
+                <p>Bonjour {escape(first.contact_name)},</p>
+                <p>Bonne nouvelle ! Votre série de réservations a été <strong style="color:#065f46">approuvée</strong> :</p>
+                {cls._recurrence_summary(reservations)}
+                {"<p><strong>Commentaire de la mairie :</strong> " + escape(first.admin_comment) + "</p>" if first.admin_comment else ""}
+                <p>En cas de question, contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
+            """,
+        )
+        return cls._send(first.contact_email, "Réservation approuvée — Saint Remèze", html)
+
+    @classmethod
+    def send_recurring_reservation_rejected(cls, reservations) -> bool:
+        """Un seul email de synthèse pour toute une série récurrente refusée
+        d'un coup (reject_group), au lieu d'un email par occurrence."""
+        first = reservations[0]
+        html = cls._base_template(
+            title="Réservation non accordée",
+            body=f"""
+                <p>Bonjour {escape(first.contact_name)},</p>
+                <p>Nous ne pouvons malheureusement pas donner suite à votre série de réservations :</p>
+                {cls._recurrence_summary(reservations)}
+                {"<p><strong>Motif :</strong> " + escape(first.admin_comment) + "</p>" if first.admin_comment else ""}
+                <p>Pour plus d'informations : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
+            """,
+        )
+        return cls._send(first.contact_email, "Réservation non accordée — Saint Remèze", html)
+
     # ── RGPD ──────────────────────────────────────────────────────────────────
 
     @classmethod
@@ -198,6 +232,31 @@ class EmailService:
                     <td style="padding:8px;">{reservation.start_time.strftime('%H:%M')} – {reservation.end_time.strftime('%H:%M')}</td></tr>
                 <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Participants</td>
                     <td style="padding:8px;">{reservation.attendees}</td></tr>
+            </table>
+        """
+
+    FR_WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+    @classmethod
+    def _recurrence_summary(cls, reservations) -> str:
+        """Synthétise toute une série récurrente en une seule ligne lisible,
+        ex. "lundi de 15h00 à 18h00 du 01/01/2027 au 31/12/2027 (12 séances)"
+        — au lieu de lister chaque occurrence individuellement."""
+        first = min(reservations, key=lambda r: r.date)
+        last = max(reservations, key=lambda r: r.date)
+        day_name = cls.FR_WEEKDAYS[first.date.weekday()]
+        return f"""
+            <table style="border-collapse:collapse;width:100%;margin:12px 0;">
+                <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Salle</td>
+                    <td style="padding:8px;">{escape(first.room.name)}</td></tr>
+                <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Événement</td>
+                    <td style="padding:8px;">{escape(first.title)}</td></tr>
+                <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Récurrence</td>
+                    <td style="padding:8px;">{day_name} de {first.start_time.strftime('%Hh%M')} à {first.end_time.strftime('%Hh%M')}
+                        du {first.date.strftime('%d/%m/%Y')} au {last.date.strftime('%d/%m/%Y')}
+                        ({len(reservations)} séance{"s" if len(reservations) > 1 else ""})</td></tr>
+                <tr><td style="padding:8px;background:#f7f4ef;font-weight:600">Participants</td>
+                    <td style="padding:8px;">{first.attendees}</td></tr>
             </table>
         """
 

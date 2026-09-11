@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { reservationsApi } from "../api/reservations";
 import { roomsApi } from "../api/rooms";
 import { getWeekDays, fmtDate, fmtDateFr, HOURS } from "../utils/dates";
@@ -49,24 +49,166 @@ function layoutDayEvents(events) {
   );
 }
 
+/** Modale de modification/suppression d'une réservation, ouverte en cliquant
+ * sur une tuile du planning (uniquement si can_edit — propriétaire ou
+ * agent/admin, calculé côté serveur). Charge les détails complets (la tuile
+ * planning n'expose que des champs minimaux) avant d'afficher le formulaire. */
+function EditReservationModal({ reservationId, onClose, onChanged }) {
+  const [form, setForm] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    reservationsApi.get(reservationId).then(({ data }) => {
+      if (cancelled) return;
+      setForm({
+        title: data.title,
+        date: data.date,
+        start_time: (data.start_time || "").slice(0, 5),
+        end_time: (data.end_time || "").slice(0, 5),
+        attendees: data.attendees,
+        notes: data.notes || "",
+        is_public: data.is_public,
+      });
+    }).catch(() => {
+      if (!cancelled) setError("Impossible de charger cette réservation.");
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [reservationId]);
+
+  const firstError = (data) => {
+    if (!data) return "Une erreur est survenue.";
+    if (typeof data.detail === "string") return data.detail;
+    const firstKey = Object.keys(data)[0];
+    const val = data[firstKey];
+    return Array.isArray(val) ? val[0] : String(val);
+  };
+
+  const save = () => {
+    setSaving(true);
+    setError("");
+    reservationsApi.update(reservationId, form)
+      .then(() => { onChanged(); onClose(); })
+      .catch((err) => setError(firstError(err.response?.data)))
+      .finally(() => setSaving(false));
+  };
+
+  const remove = () => {
+    if (!window.confirm("Supprimer définitivement cette réservation ?")) return;
+    setDeleting(true);
+    setError("");
+    reservationsApi.delete(reservationId)
+      .then(() => { onChanged(); onClose(); })
+      .catch(() => { setError("Impossible de supprimer cette réservation."); setDeleting(false); });
+  };
+
+  const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 13, marginTop: 4, marginBottom: 12, boxSizing: "border-box" };
+  const labelStyle = { fontSize: 12, fontWeight: 600, color: "#374151" };
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: "#fff", borderRadius: 12, padding: 24, width: "100%", maxWidth: 420, maxHeight: "90vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16, margin: 0 }}>Modifier la réservation</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", display: "flex" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {loading ? (
+          <p style={{ color: "#9ca3af" }}>Chargement…</p>
+        ) : !form ? (
+          <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>
+        ) : (
+          <>
+            <label style={labelStyle}>Titre</label>
+            <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+
+            <label style={labelStyle}>Date</label>
+            <input type="date" style={inputStyle} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Début</label>
+                <input type="time" style={inputStyle} value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Fin</label>
+                <input type="time" style={inputStyle} value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />
+              </div>
+            </div>
+
+            <label style={labelStyle}>Participants</label>
+            <input type="number" min="1" style={inputStyle} value={form.attendees} onChange={(e) => setForm({ ...form, attendees: Number(e.target.value) })} />
+
+            <label style={labelStyle}>Notes</label>
+            <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 16 }}>
+              <input type="checkbox" checked={form.is_public} onChange={(e) => setForm({ ...form, is_public: e.target.checked })} />
+              Réservation publique (sujet visible par tous dans le planning)
+            </label>
+
+            {error && <p style={{ color: "#dc2626", fontSize: 12, marginBottom: 12 }}>{error}</p>}
+
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+              <button
+                onClick={remove}
+                disabled={deleting || saving}
+                style={{ background: "#fff", border: "1px solid #fca5a5", color: "#dc2626", borderRadius: 6, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                {deleting ? "Suppression…" : "Supprimer"}
+              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={onClose} style={{ ...btnStyle, padding: "8px 16px" }}>Annuler</button>
+                <button
+                  onClick={save}
+                  disabled={saving || deleting}
+                  style={{ background: "#1a3a5a", border: "none", color: "#fff", borderRadius: 6, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                >
+                  {saving ? "Enregistrement…" : "Enregistrer"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PlanningPage() {
   const [week, setWeek]             = useState(new Date());
   const [reservations, setRes]      = useState([]);
   const [rooms, setRooms]           = useState([]);
   const [selectedRoom, setSel]      = useState("");
+  const [editingId, setEditingId]   = useState(null);
   const days = getWeekDays(week);
 
   useEffect(() => {
     roomsApi.list().then(({ data }) => setRooms(data.results || data));
   }, []);
 
-  useEffect(() => {
+  const loadReservations = () => {
     const params = { week: toISOWeekParam(week) };
     if (selectedRoom) params.room = selectedRoom;
     reservationsApi.planning(params).then(({ data }) => {
       setRes(data.reservations || []);
     }).catch(() => {});
-  }, [week, selectedRoom]);
+  };
+
+  useEffect(loadReservations, [week, selectedRoom]);
 
   /** Map roomId → couleur définie dans Django Admin (fiche de la salle) */
   const colorMap = useMemo(() => {
@@ -213,46 +355,62 @@ export default function PlanningPage() {
                   }}
                 >
                   {events.map((ev) => {
+                    // Une réservation privée conserve la couleur de la salle ;
+                    // seul le sujet est masqué ("PRIVATISÉE") pour qui n'y a
+                    // pas droit — propriétaire, agent/admin et membres du
+                    // groupe "Conseil Municipal" voient le vrai sujet
+                    // (subject_visible, calculé côté serveur).
                     const isPrivate = ev.is_public === false;
-                    const color = isPrivate ? "#94a3b8" : getRoomColor(ev);
+                    const showsRealSubject = isPrivate && ev.subject_visible;
+                    const color = getRoomColor(ev);
                     const top = ((ev.startMin - DAY_START_MIN) / 60) * HOUR_HEIGHT;
                     const height = Math.max(((ev.endMin - ev.startMin) / 60) * HOUR_HEIGHT - 2, 16);
                     const widthPct = 100 / ev.totalCols;
+                    const showDetails = height > 26;
                     return (
                       <div
                         key={ev.id}
-                        title={isPrivate
-                          ? `Créneau privé\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
-                          : `${ev.title}\n${ev.room_name}\n${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`
-                        }
+                        onClick={ev.can_edit ? () => setEditingId(ev.id) : undefined}
+                        title={[
+                          isPrivate && !showsRealSubject ? "Réservation privée (PRIVATISÉE)" : ev.title,
+                          ev.room_name,
+                          `${ev.start_time?.slice(0, 5)}–${ev.end_time?.slice(0, 5)}`,
+                          showsRealSubject ? "(Privatisée)" : null,
+                          ev.can_edit ? "Cliquer pour modifier/supprimer" : null,
+                        ].filter(Boolean).join("\n")}
                         style={{
                           position: "absolute",
                           top, height,
                           left: `${ev.col * widthPct}%`,
                           width: `calc(${widthPct}% - 3px)`,
-                          background: isPrivate ? "#f1f5f9" : color,
-                          color: isPrivate ? "#64748b" : "#fff",
+                          background: color,
+                          color: "#fff",
                           borderRadius: 4,
                           padding: "2px 5px",
                           fontSize: 10,
                           overflow: "hidden",
                           lineHeight: 1.35,
-                          borderLeft: `3px solid ${isPrivate ? "#94a3b8" : color}`,
-                          border: isPrivate ? "1px solid #cbd5e1" : "none",
+                          borderLeft: `3px solid ${color}`,
                           boxSizing: "border-box",
+                          cursor: ev.can_edit ? "pointer" : "default",
                         }}
                       >
                         <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {isPrivate ? "🔒 Réservé" : ev.title}
+                          {isPrivate && "🔒 "}{isPrivate && !showsRealSubject ? "PRIVATISÉE" : ev.title}
                         </div>
-                        {!isPrivate && height > 26 && (
+                        {showDetails && (
                           <div style={{ opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ev.room_name}
                           </div>
                         )}
-                        {!isPrivate && height > 26 && (
+                        {showDetails && (
                           <div style={{ opacity: 0.75, fontSize: 9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ev.start_time?.slice(0, 5)}–{ev.end_time?.slice(0, 5)}
+                          </div>
+                        )}
+                        {showsRealSubject && showDetails && (
+                          <div style={{ opacity: 0.9, fontSize: 9, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            🔒 Privatisée
                           </div>
                         )}
                       </div>
@@ -264,6 +422,14 @@ export default function PlanningPage() {
           </div>
         </div>
       </div>
+
+      {editingId && (
+        <EditReservationModal
+          reservationId={editingId}
+          onClose={() => setEditingId(null)}
+          onChanged={loadReservations}
+        />
+      )}
     </div>
   );
 }

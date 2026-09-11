@@ -229,13 +229,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
         """Approuve toutes les réservations en attente d'un groupe récurrent."""
         s = GroupActionSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        pending = Reservation.objects.filter(recurrence_group=s.validated_data["group_id"], status="pending")
-        count = pending.count()
+        pending = list(Reservation.objects.filter(recurrence_group=s.validated_data["group_id"], status="pending"))
+        count = len(pending)
         if count == 0:
             return Response({"detail": "Aucune réservation en attente dans ce groupe."}, status=status.HTTP_404_NOT_FOUND)
         for r in pending:
             r.approve(request.user)
-            EmailService.send_reservation_approved(r)
+        # Un seul email de synthèse pour toute la série, pas un par occurrence.
+        EmailService.send_recurring_reservation_approved(pending)
         return Response({"detail": f"{count} réservation(s) approuvée(s).", "count": count})
 
     @action(detail=False, methods=["post"], permission_classes=[IsAgent])
@@ -243,11 +244,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
         """Refuse toutes les réservations en attente d'un groupe récurrent."""
         s = GroupActionSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        pending = Reservation.objects.filter(recurrence_group=s.validated_data["group_id"], status="pending")
-        count = pending.count()
+        pending = list(Reservation.objects.filter(recurrence_group=s.validated_data["group_id"], status="pending"))
+        count = len(pending)
         if count == 0:
             return Response({"detail": "Aucune réservation en attente dans ce groupe."}, status=status.HTTP_404_NOT_FOUND)
+        comment = s.validated_data.get("comment", "")
         for r in pending:
-            r.reject(request.user, s.validated_data.get("comment", ""))
-            EmailService.send_reservation_rejected(r)
+            r.reject(request.user, comment)
+        # Un seul email de synthèse pour toute la série, pas un par occurrence.
+        EmailService.send_recurring_reservation_rejected(pending)
         return Response({"detail": f"{count} réservation(s) refusée(s).", "count": count})

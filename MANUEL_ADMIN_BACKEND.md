@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.11.8 — Septembre 2026
+> Version 1.12.0 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -557,6 +557,7 @@ Idem réservations.
 - `?start=2026-09-01&end=2026-09-30` (plage explicite, prioritaire sur `week` — utilisé par l'Agenda pour afficher au-delà d'une seule semaine)
 - `?room=<room_id>`
 - Sans aucun paramètre : **semaine courante uniquement** (piège classique — un appel sans `start`/`end` ni `week` ne renverra jamais un événement hors de la semaine en cours).
+- Champs calculés par réservation, selon le viewer courant : `subject_visible` (sujet réel visible ?) et `can_edit` (peut modifier/supprimer depuis le Planning ?) — voir section dédiée plus bas.
 
 **Payload création réservation :**
 ```json
@@ -623,6 +624,71 @@ Idem réservations.
 
 **Colonnes CSV export :**
 ID, Salle, Titre, Association, Contact, Email, Téléphone, Date, Début, Fin, Participants, Statut, Groupe récurrence, Créé le
+
+### Le Planning : visibilité, réservations privées, modification (v1.12.0)
+
+Le Planning (`PlanningPage.jsx`, `GET /api/reservations/planning/`) affiche les
+réservations de la semaine en cours, une tuile par réservation, colorée selon
+`Room.color` (voir plus haut).
+
+**Visibilité — jamais filtrée par groupe.** Le Planning est accessible à tous
+(`AllowAny`) et n'est **jamais** filtré par `Room.allowed_groups` : même une
+salle réservée à un groupe spécifique (ex. « Conseil Municipal ») affiche ses
+réservations à tout le monde sur le Planning — seule la *création* d'une
+réservation est soumise à cette restriction (`Room.user_can_reserve()`).
+Un utilisateur qui ne peut pas réserver une salle peut donc toujours consulter
+son planning.
+
+**Réservations privées (`is_public=False`)** : la tuile conserve la couleur de
+la salle (elle ne devient plus grise), mais son sujet est masqué et remplacé
+par **« PRIVATISÉE »** pour qui n'y a pas droit. Ont accès au sujet réel, en
+plus de la mention « Privatisée » affichée sous le titre :
+- le propriétaire de la réservation ;
+- les agents et administrateurs ;
+- les membres du groupe de réservation **« Conseil Municipal »**.
+
+Calculé côté serveur par `PlanningReservationSerializer` (champ
+`subject_visible`, jamais par nom de groupe côté frontend) — le frontend ne
+fait qu'afficher `title` (déjà masqué ou non par le serveur) et le badge
+« 🔒 Privatisée » quand `subject_visible` est vrai pour une réservation privée.
+
+**Modifier/supprimer depuis le Planning (v1.12.0)** : cliquer sur une tuile
+ouvre une fenêtre de modification (titre, date, horaires, participants, notes,
+visibilité publique/privée) avec un bouton Supprimer — uniquement si
+`can_edit` est vrai pour l'utilisateur connecté, c'est-à-dire s'il est
+**propriétaire de la réservation, agent ou administrateur** (même règle que
+l'API `PATCH`/`DELETE /api/reservations/{id}/`, déjà en place via
+`IsOwnerOrAgent` — le Planning ne fait qu'exposer cette capacité existante
+dans l'interface). Un administrateur peut ainsi supprimer n'importe quelle
+réservation directement depuis le Planning.
+
+> ⚠️ **Bug corrigé en même temps** : `ReservationSerializer` ne validait le
+> chevauchement de créneaux (`Reservation.clean()`, via `full_clean()`) qu'à
+> la **création** — une modification (`PATCH`) pouvait donc déplacer une
+> réservation sur un créneau déjà occupé sans être bloquée. Corrigé par une
+> surcharge de `update()` appelant aussi `full_clean()`. Par ailleurs,
+> `full_clean()` lève `django.core.exceptions.ValidationError`, que le
+> gestionnaire d'exceptions par défaut de DRF ne convertit **pas** en réponse
+> `400` (il ne reconnaît que `rest_framework.exceptions.ValidationError`) — un
+> chevauchement provoquait donc un plantage `500` au lieu d'un message
+> d'erreur exploitable, aussi bien à la création qu'à la modification. Les
+> deux sont maintenant systématiquement convertis en `400` avec le détail de
+> l'erreur.
+
+### Un seul email pour toute une série récurrente (v1.12.0)
+
+`POST /approve_group/` et `POST /reject_group/` envoyaient auparavant un email
+par occurrence de la série (ex. 12 emails pour une série hebdomadaire sur 3
+mois) — remplacé par un **unique email de synthèse**, envoyé une fois toute la
+série traitée, qui résume la récurrence en une ligne, par exemple :
+
+> lundi de 15h00 à 18h00 du 01/01/2027 au 31/12/2027 (52 séances)
+
+Implémenté par `EmailService.send_recurring_reservation_approved()` /
+`send_recurring_reservation_rejected()` (nouvelle méthode `_recurrence_summary()`,
+basée sur la première et la dernière occurrence de la série). Les emails
+d'approbation/refus au cas par cas (`POST /{id}/approve/`, `/{id}/reject/`,
+pour une réservation isolée hors série) sont inchangés.
 
 ---
 
@@ -2131,5 +2197,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 10 septembre 2026 (v1.11.8) — Mairie de Saint Remèze*
+*Document mis à jour le 11 septembre 2026 (v1.12.0) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

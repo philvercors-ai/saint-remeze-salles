@@ -1,6 +1,18 @@
-export const APP_VERSION = "1.11.8";
+export const APP_VERSION = "1.12.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.0",
+    date: "2026-09-11",
+    label: "Planning : réservations privées, modification, emails groupés",
+    changes: [
+      "Le Planning reste visible par tous, quel que soit le groupe de réservation, même pour une salle restreinte",
+      "Une réservation privée garde la couleur de sa salle mais affiche « PRIVATISÉE » à la place du sujet — visible en plus du sujet réel pour le propriétaire, les agents/admins et les membres du groupe « Conseil Municipal »",
+      "Cliquer sur une tuile du Planning permet de modifier ou supprimer sa propre réservation (agents et administrateurs : n'importe laquelle)",
+      "Correction : modifier les horaires d'une réservation existante ne vérifiait pas les chevauchements de créneaux, et une tentative de chevauchement provoquait une erreur serveur au lieu d'un message clair",
+      "La validation d'une série de réservations récurrentes envoie désormais un seul email de synthèse (ex. « lundi de 15h00 à 18h00 du 01/01/2027 au 31/12/2027 ») au lieu d'un email par occurrence",
+    ],
+  },
   {
     version: "1.11.8",
     date: "2026-09-10",
