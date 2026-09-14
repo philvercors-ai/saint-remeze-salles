@@ -12,8 +12,10 @@ const ALL = "all";
 const WEEK = "week";
 const MONTH = "month";
 
-// Vue par défaut : tout le passé récent affiché et tout le futur — pas de
-// fenêtre de date, pour ne jamais faire disparaître un événement éloigné.
+// "Tous les événements" : tout le passé récent affiché et tout le futur —
+// pas de fenêtre de date, pour ne jamais faire disparaître un événement
+// éloigné. Ce n'est plus la vue par défaut (voir mode initial ci-dessous),
+// mais reste disponible comme dernier filtre de la liste.
 function getRange(mode, anchor) {
   if (mode === MONTH) return { start: startOfMonth(anchor), end: endOfMonth(anchor) };
   if (mode === WEEK) return { start: startOfWeek(anchor, { weekStartsOn: 1 }), end: endOfWeek(anchor, { weekStartsOn: 1 }) };
@@ -27,7 +29,7 @@ function rangeLabel(mode, start, end) {
 }
 
 export default function AgendaPage() {
-  const [mode, setMode] = useState(ALL);
+  const [mode, setMode] = useState(WEEK);
   const [anchor, setAnchor] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,11 +140,11 @@ export default function AgendaPage() {
 
       {/* Filtres rapides */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
-        <button style={filterBtnStyle(mode === ALL)} onClick={goAll}>Tous les événements</button>
         <button style={filterBtnStyle(isCurrentWeek)} onClick={goToday}>Semaine en cours</button>
         <button style={filterBtnStyle(isNextWeek)} onClick={goNextWeek}>Semaine prochaine</button>
         <button style={filterBtnStyle(isCurrentMonth)} onClick={goThisMonth}>Mois en cours</button>
         <button style={filterBtnStyle(isNextMonth)} onClick={goNextMonth}>Mois prochain</button>
+        <button style={filterBtnStyle(mode === ALL)} onClick={goAll}>Tous les événements</button>
       </div>
 
       {/* Navigation période — pas de notion de "précédent/suivant" en vue "Tous" */}

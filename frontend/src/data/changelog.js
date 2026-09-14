@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.12.6";
+export const APP_VERSION = "1.12.7";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.7",
+    date: "2026-09-14",
+    label: "Agenda : la semaine en cours par défaut",
+    changes: [
+      "L'Agenda s'ouvre désormais directement sur la semaine en cours, au lieu de la liste complète de tous les événements",
+      "Le filtre « Tous les événements » est déplacé en dernière position dans la barre de filtres",
+    ],
+  },
   {
     version: "1.12.6",
     date: "2026-09-14",

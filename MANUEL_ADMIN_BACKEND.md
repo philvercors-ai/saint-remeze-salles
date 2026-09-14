@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.6 — Septembre 2026
+> Version 1.12.7 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -682,6 +682,14 @@ fait qu'afficher `title` (déjà masqué ou non par le serveur) et le badge
 > `subject_visible` par cohérence (le masquage manifestation existait déjà
 > côté serveur pour owner/agent, mais l'ancien texte masqué « Réservé » a été
 > aligné sur « PRIVATISÉE »).
+
+**Vue par défaut de l'Agenda (v1.12.7)** : l'Agenda s'ouvre désormais sur le
+filtre **« Semaine en cours »** (au lieu de « Tous les événements »), et ce
+filtre a été déplacé en dernière position dans la barre de filtres rapides
+— après « Semaine en cours », « Semaine prochaine », « Mois en cours » et
+« Mois prochain ». Reste un simple changement d'état initial et d'ordre
+d'affichage côté frontend (`AgendaPage.jsx`) ; le comportement de chaque
+filtre est inchangé.
 
 **Modifier/supprimer depuis le Planning (v1.12.0)** : cliquer sur une tuile
 ouvre une fenêtre de modification (titre, date, horaires, participants, notes,
@@ -2272,5 +2280,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 14 septembre 2026 (v1.12.6) — Mairie de Saint Remèze*
+*Document mis à jour le 14 septembre 2026 (v1.12.7) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
