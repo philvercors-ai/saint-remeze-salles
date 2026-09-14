@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.5 — Septembre 2026
+> Version 1.12.6 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -720,6 +720,38 @@ Implémenté par `EmailService.send_recurring_reservation_approved()` /
 basée sur la première et la dernière occurrence de la série). Les emails
 d'approbation/refus au cas par cas (`POST /{id}/approve/`, `/{id}/reject/`,
 pour une réservation isolée hors série) sont inchangés.
+
+### Email de suppression (v1.12.6)
+
+Le demandeur reçoit désormais un email quand sa réservation est supprimée —
+qu'il en soit lui-même à l'origine (confirmation) ou que ce soit un
+agent/administrateur (annulation). Trois chemins de suppression existent,
+chacun câblé séparément :
+
+| Suppression | Où | Email |
+|---|---|---|
+| `DELETE /api/reservations/{id}/` | Planning (propriétaire, agent, admin) | `send_reservation_deleted()` — une occurrence, un email |
+| Django Admin — bouton « Delete » sur une fiche | `ReservationAdmin.delete_model()` | `send_reservation_deleted()` |
+| Django Admin — action groupée « Delete selected » | `ReservationAdmin.delete_queryset()` | **un seul email par série récurrente sélectionnée**, `send_reservation_deleted()` pour les réservations isolées |
+
+**Suppression groupée d'une série (Django Admin)** : `delete_queryset()`
+regroupe d'abord la sélection par `recurrence_group` avant de supprimer quoi
+que ce soit — si plusieurs occurrences d'une même série sont sélectionnées
+ensemble, un seul email de synthèse part via
+`send_recurring_reservation_deleted()` (même `_recurrence_summary()` que pour
+l'approbation groupée), au lieu d'un email par occurrence supprimée. Les
+réservations isolées de la sélection (sans `recurrence_group`, ou une série
+dont une seule occurrence est sélectionnée) reçoivent chacune leur propre
+email. La suppression elle-même reste objet par objet (`obj.delete()` en
+boucle, jamais `QuerySet.delete()` — limitation MongoDB, voir
+`MongoBulkDeleteMixin` ci-dessus) ; cette méthode **remplace** celle du mixin
+pour ce modèle précisément afin d'intercaler la logique d'email avant la
+suppression effective.
+
+> ⚠️ Cliquer sur une tuile privée dans le Planning et la supprimer via la
+> modale (v1.12.0) déclenche `DELETE /api/reservations/{id}/`, donc un email —
+> normal, y compris pour le propriétaire qui supprime sa propre réservation
+> (confirmation de suppression, comme un email de réception de commande).
 
 ---
 
@@ -2240,5 +2272,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 11 septembre 2026 (v1.12.5) — Mairie de Saint Remèze*
+*Document mis à jour le 14 septembre 2026 (v1.12.6) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

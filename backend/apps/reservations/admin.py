@@ -15,6 +15,36 @@ class ReservationAdmin(MongoBulkDeleteMixin, admin.ModelAdmin):
     date_hierarchy = "date"
     actions = ["approve_reservations", "reject_reservations"]
 
+    def delete_model(self, request, obj):
+        EmailService.send_reservation_deleted(obj)
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        # Surcharge de MongoBulkDeleteMixin.delete_queryset() : reprend la
+        # même suppression objet par objet (requise sur MongoDB, voir ce
+        # mixin), mais regroupe d'abord par série récurrente pour n'envoyer
+        # qu'un seul email de synthèse par série sélectionnée, au lieu d'un
+        # email par occurrence.
+        objs = list(queryset)
+        by_group = {}
+        singles = []
+        for obj in objs:
+            if obj.recurrence_group:
+                by_group.setdefault(obj.recurrence_group, []).append(obj)
+            else:
+                singles.append(obj)
+
+        for obj in singles:
+            EmailService.send_reservation_deleted(obj)
+        for items in by_group.values():
+            if len(items) > 1:
+                EmailService.send_recurring_reservation_deleted(items)
+            else:
+                EmailService.send_reservation_deleted(items[0])
+
+        for obj in objs:
+            obj.delete()
+
     def approve_reservations(self, request, queryset):
         for r in queryset.filter(status="pending"):
             r.approve(request.user)

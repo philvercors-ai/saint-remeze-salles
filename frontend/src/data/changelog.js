@@ -1,6 +1,15 @@
-export const APP_VERSION = "1.12.5";
+export const APP_VERSION = "1.12.6";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.6",
+    date: "2026-09-14",
+    label: "Email de notification à la suppression d'une réservation",
+    changes: [
+      "Le demandeur reçoit désormais un email quand sa réservation est supprimée, qu'elle le soit par lui-même ou par la mairie",
+      "Suppression d'une série récurrente entière depuis le Django Admin : un seul email de synthèse est envoyé, pas un par occurrence",
+    ],
+  },
   {
     version: "1.12.5",
     date: "2026-09-11",

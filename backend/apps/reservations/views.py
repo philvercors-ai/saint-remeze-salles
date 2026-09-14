@@ -72,6 +72,15 @@ class ReservationViewSet(viewsets.ModelViewSet):
         reservation = serializer.save(user=user)
         EmailService.send_reservation_received(reservation)
 
+    def perform_destroy(self, instance):
+        # Notifie le demandeur — que la suppression vienne de lui-même
+        # (confirmation) ou d'un agent/admin (annulation). Toujours une seule
+        # occurrence ici : l'API ne permet de supprimer qu'une réservation à
+        # la fois (voir ReservationAdmin.delete_queryset pour la suppression
+        # groupée d'une série entière depuis le Django Admin).
+        EmailService.send_reservation_deleted(instance)
+        instance.delete()
+
     # ── Actions standard ────────────────────────────────────────────────────────
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])

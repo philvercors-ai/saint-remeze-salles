@@ -163,6 +163,41 @@ class EmailService:
         )
         return cls._send(first.contact_email, "Réservation non accordée — Saint Remèze", html)
 
+    @classmethod
+    def send_reservation_deleted(cls, reservation) -> bool:
+        """Notifie le demandeur qu'une réservation isolée a été supprimée —
+        que ce soit par lui-même (confirmation) ou par la mairie."""
+        html = cls._base_template(
+            title="Réservation supprimée",
+            body=f"""
+                <p>Bonjour {escape(reservation.contact_name)},</p>
+                <p>La réservation suivante a été <strong style="color:#991b1b">supprimée</strong> :</p>
+                {cls._reservation_summary(reservation)}
+                <p>Si vous n'êtes pas à l'origine de cette suppression ou pour toute question,
+                contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
+            """,
+        )
+        return cls._send(reservation.contact_email, "Réservation supprimée — Saint Remèze", html)
+
+    @classmethod
+    def send_recurring_reservation_deleted(cls, reservations) -> bool:
+        """Un seul email de synthèse quand plusieurs occurrences d'une même
+        série récurrente sont supprimées d'un coup, au lieu d'un email par
+        occurrence (ex. suppression groupée depuis le Django Admin)."""
+        first = reservations[0]
+        html = cls._base_template(
+            title="Réservation supprimée",
+            body=f"""
+                <p>Bonjour {escape(first.contact_name)},</p>
+                <p>La série de réservations suivante a été <strong style="color:#991b1b">supprimée</strong>
+                ({len(reservations)} occurrence{"s" if len(reservations) > 1 else ""}) :</p>
+                {cls._recurrence_summary(reservations)}
+                <p>Si vous n'êtes pas à l'origine de cette suppression ou pour toute question,
+                contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
+            """,
+        )
+        return cls._send(first.contact_email, "Réservation supprimée — Saint Remèze", html)
+
     # ── RGPD ──────────────────────────────────────────────────────────────────
 
     @classmethod
