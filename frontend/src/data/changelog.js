@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.7";
+export const APP_VERSION = "1.12.8";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.8",
+    date: "2026-09-14",
+    label: "Correction : ordre des prochains événements sur l'accueil",
+    changes: [
+      "La section « Prochains événements » de l'accueil n'était pas triée par date d'événement (elle suivait l'ordre de création) — corrigé, les événements s'affichent maintenant dans l'ordre chronologique",
+    ],
+  },
   {
     version: "1.12.7",
     date: "2026-09-14",

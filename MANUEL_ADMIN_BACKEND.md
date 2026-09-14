@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.7 — Septembre 2026
+> Version 1.12.8 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -1020,6 +1020,15 @@ salle du conseil) :
 > `daily_rate_individual`, la section associations affiche
 > `daily_rate_association` — les deux tarifs bruts de la salle, indépendants
 > du viewer connecté (prop `rateField` de `RoomSection`).
+
+> ⚠️ **Bug corrigé (v1.12.8)** : la section « Prochains événements » de
+> l'accueil (les 5 prochaines réservations approuvées) n'était pas triée par
+> date/heure d'événement — elle héritait de l'ordre renvoyé par le backend
+> (`Reservation.Meta.ordering = ["-created_at"]`, par date de **création**).
+> Une réservation créée récemment pour un événement lointain pouvait donc
+> apparaître avant une réservation plus proche dans le temps. Corrigé côté
+> frontend (`DashboardPage.jsx`) : tri explicite par `date` puis `start_time`
+> avant de ne garder que les 5 premières.
 
 ### Fixtures initiales
 
@@ -2280,5 +2289,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 14 septembre 2026 (v1.12.7) — Mairie de Saint Remèze*
+*Document mis à jour le 14 septembre 2026 (v1.12.8) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

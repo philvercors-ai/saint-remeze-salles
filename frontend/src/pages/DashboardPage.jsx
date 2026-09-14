@@ -54,7 +54,13 @@ export default function DashboardPage() {
       setRooms(r.data.results || r.data);
       const all = p.data.reservations || [];
       const today = new Date().toISOString().slice(0, 10);
-      setUpcoming(all.filter((r) => r.date >= today && r.status === "approved").slice(0, 5));
+      // Le backend renvoie les réservations triées par date de création
+      // (Reservation.Meta.ordering), pas par date d'événement — trier
+      // explicitement par date puis heure de début pour un ordre chronologique.
+      const sorted = all
+        .filter((r) => r.date >= today && r.status === "approved")
+        .sort((a, b) => (a.date + a.start_time < b.date + b.start_time ? -1 : 1));
+      setUpcoming(sorted.slice(0, 5));
     }).finally(() => setLoading(false));
   }, []);
 
