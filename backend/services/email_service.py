@@ -164,15 +164,17 @@ class EmailService:
         return cls._send(first.contact_email, "Réservation non accordée — Saint Remèze", html)
 
     @classmethod
-    def send_reservation_deleted(cls, reservation) -> bool:
+    def send_reservation_deleted(cls, reservation, comment: str = "") -> bool:
         """Notifie le demandeur qu'une réservation isolée a été supprimée —
-        que ce soit par lui-même (confirmation) ou par la mairie."""
+        que ce soit par lui-même (confirmation) ou par la mairie. `comment`
+        (optionnel) : motif saisi dans la modale de suppression du Planning."""
         html = cls._base_template(
             title="Réservation supprimée",
             body=f"""
                 <p>Bonjour {escape(reservation.contact_name)},</p>
                 <p>La réservation suivante a été <strong style="color:#991b1b">supprimée</strong> :</p>
                 {cls._reservation_summary(reservation)}
+                {"<p><strong>Motif :</strong> " + escape(comment) + "</p>" if comment else ""}
                 <p>Si vous n'êtes pas à l'origine de cette suppression ou pour toute question,
                 contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,
@@ -180,7 +182,7 @@ class EmailService:
         return cls._send(reservation.contact_email, "Réservation supprimée — Saint Remèze", html)
 
     @classmethod
-    def send_recurring_reservation_deleted(cls, reservations) -> bool:
+    def send_recurring_reservation_deleted(cls, reservations, comment: str = "") -> bool:
         """Un seul email de synthèse quand plusieurs occurrences d'une même
         série récurrente sont supprimées d'un coup, au lieu d'un email par
         occurrence (ex. suppression groupée depuis le Django Admin)."""
@@ -192,6 +194,7 @@ class EmailService:
                 <p>La série de réservations suivante a été <strong style="color:#991b1b">supprimée</strong>
                 ({len(reservations)} occurrence{"s" if len(reservations) > 1 else ""}) :</p>
                 {cls._recurrence_summary(reservations)}
+                {"<p><strong>Motif :</strong> " + escape(comment) + "</p>" if comment else ""}
                 <p>Si vous n'êtes pas à l'origine de cette suppression ou pour toute question,
                 contactez-nous : <a href="mailto:mairie@saintremeze.fr">mairie@saintremeze.fr</a></p>
             """,

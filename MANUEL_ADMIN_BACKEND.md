@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.9 — Septembre 2026
+> Version 1.12.10 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -768,6 +768,20 @@ suppression effective.
 > modale (v1.12.0) déclenche `DELETE /api/reservations/{id}/`, donc un email —
 > normal, y compris pour le propriétaire qui supprime sa propre réservation
 > (confirmation de suppression, comme un email de réception de commande).
+
+**Motif de suppression (v1.12.10)** : la modale de suppression du Planning
+demande désormais un **motif optionnel** avant de confirmer — un clic sur
+« Supprimer » fait apparaître un champ texte (« Motif de la suppression »)
+et un bouton « Confirmer la suppression » (plus de `window.confirm()`
+simple). Le motif est envoyé dans le corps de la requête `DELETE`
+(`{"comment": "..."}`, lu via `self.request.data.get("comment", "")` dans
+`ReservationViewSet.perform_destroy()`) et apparaît dans l'email de
+suppression sous forme **« Motif : ... »**, comme pour un refus. Laissé
+vide, l'email de suppression ne mentionne aucun motif — comportement
+inchangé par rapport à v1.12.6. Uniquement disponible pour la suppression
+individuelle (Planning) ; les suppressions depuis le Django Admin (fiche
+seule ou action groupée) n'ont pas ce champ et envoient toujours un motif
+vide.
 
 ---
 
@@ -2297,5 +2311,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 14 septembre 2026 (v1.12.9) — Mairie de Saint Remèze*
+*Document mis à jour le 14 septembre 2026 (v1.12.10) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*

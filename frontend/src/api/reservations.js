@@ -6,7 +6,7 @@ export const reservationsApi = {
   create: (data) => client.post("/reservations/", data),
   createRecurring: (data) => client.post("/reservations/recurring/", data),
   update: (id, data) => client.patch(`/reservations/${id}/`, data),
-  delete: (id) => client.delete(`/reservations/${id}/`),
+  delete: (id, comment = "") => client.delete(`/reservations/${id}/`, { data: { comment } }),
   approve: (id, comment = "") => client.post(`/reservations/${id}/approve/`, { comment }),
   reject: (id, comment = "") => client.post(`/reservations/${id}/reject/`, { comment }),
   approveGroup: (group_id, comment = "") => client.post("/reservations/approve_group/", { group_id, comment }),

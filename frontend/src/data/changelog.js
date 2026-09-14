@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.9";
+export const APP_VERSION = "1.12.10";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.10",
+    date: "2026-09-14",
+    label: "Motif de suppression d'une réservation",
+    changes: [
+      "La suppression d'une réservation depuis le Planning demande maintenant un motif optionnel, inclus dans l'email envoyé au demandeur",
+    ],
+  },
   {
     version: "1.12.9",
     date: "2026-09-14",

@@ -59,6 +59,8 @@ function EditReservationModal({ reservationId, onClose, onChanged }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteComment, setDeleteComment] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -99,10 +101,9 @@ function EditReservationModal({ reservationId, onClose, onChanged }) {
   };
 
   const remove = () => {
-    if (!window.confirm("Supprimer définitivement cette réservation ?")) return;
     setDeleting(true);
     setError("");
-    reservationsApi.delete(reservationId)
+    reservationsApi.delete(reservationId, deleteComment)
       .then(() => { onChanged(); onClose(); })
       .catch(() => { setError("Impossible de supprimer cette réservation."); setDeleting(false); });
   };
@@ -162,13 +163,44 @@ function EditReservationModal({ reservationId, onClose, onChanged }) {
 
             {error && <p style={{ color: "#dc2626", fontSize: 12, marginBottom: 12 }}>{error}</p>}
 
+            {confirmingDelete && (
+              <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 14 }}>
+                <label style={{ ...labelStyle, color: "#991b1b" }}>
+                  Motif de la suppression (optionnel — envoyé par email au demandeur)
+                </label>
+                <textarea
+                  autoFocus
+                  style={{ ...inputStyle, minHeight: 50, marginBottom: 8, resize: "vertical" }}
+                  placeholder="Ex. : salle nécessaire pour un impératif municipal…"
+                  value={deleteComment}
+                  onChange={(e) => setDeleteComment(e.target.value)}
+                />
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button
+                    onClick={() => { setConfirmingDelete(false); setDeleteComment(""); }}
+                    disabled={deleting}
+                    style={{ ...btnStyle, padding: "7px 14px" }}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={remove}
+                    disabled={deleting}
+                    style={{ background: "#dc2626", border: "none", color: "#fff", borderRadius: 6, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    {deleting ? "Suppression…" : "Confirmer la suppression"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
               <button
-                onClick={remove}
-                disabled={deleting || saving}
+                onClick={() => setConfirmingDelete(true)}
+                disabled={deleting || saving || confirmingDelete}
                 style={{ background: "#fff", border: "1px solid #fca5a5", color: "#dc2626", borderRadius: 6, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
-                {deleting ? "Suppression…" : "Supprimer"}
+                Supprimer
               </button>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={onClose} style={{ ...btnStyle, padding: "8px 16px" }}>Annuler</button>

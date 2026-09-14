@@ -77,8 +77,10 @@ class ReservationViewSet(viewsets.ModelViewSet):
         # (confirmation) ou d'un agent/admin (annulation). Toujours une seule
         # occurrence ici : l'API ne permet de supprimer qu'une réservation à
         # la fois (voir ReservationAdmin.delete_queryset pour la suppression
-        # groupée d'une série entière depuis le Django Admin).
-        EmailService.send_reservation_deleted(instance)
+        # groupée d'une série entière depuis le Django Admin). "comment"
+        # (optionnel) : motif saisi dans la modale de suppression du Planning.
+        comment = self.request.data.get("comment", "")
+        EmailService.send_reservation_deleted(instance, comment=comment)
         instance.delete()
 
     # ── Actions standard ────────────────────────────────────────────────────────
