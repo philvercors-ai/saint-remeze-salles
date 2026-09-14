@@ -50,10 +50,14 @@ export default function AgendaPage() {
         // chevauche la période affichée, pas seulement si son premier jour y tombe.
         .filter((m) => m.date_start <= endStr && m.date_end >= startStr)
         .map((m) => ({ ...m, _type: "manifestation" }));
+      // Tri chronologique : date en clé principale, heure de début en
+      // départage pour les réservations (les manifestations n'ont pas
+      // d'heure précise — chaîne vide, donc affichées en premier le même
+      // jour, comme des événements "toute la journée").
       const all = [...reservations, ...manifestations].sort((a, b) => {
-        const da = a.date || a.date_start;
-        const db = b.date || b.date_start;
-        return da < db ? -1 : da > db ? 1 : 0;
+        const ka = (a.date || a.date_start) + (a.start_time || "");
+        const kb = (b.date || b.date_start) + (b.start_time || "");
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
       });
       setEvents(all);
     }).finally(() => setLoading(false));

@@ -1,6 +1,14 @@
-export const APP_VERSION = "1.12.8";
+export const APP_VERSION = "1.12.9";
 
 export const CHANGELOG = [
+  {
+    version: "1.12.9",
+    date: "2026-09-14",
+    label: "Correction : ordre chronologique dans l'Agenda",
+    changes: [
+      "Les événements d'une même journée n'étaient pas triés par heure dans l'Agenda — corrigé, ils s'affichent maintenant par heure de début croissante",
+    ],
+  },
   {
     version: "1.12.8",
     date: "2026-09-14",

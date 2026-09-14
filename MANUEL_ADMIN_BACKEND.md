@@ -1,7 +1,7 @@
 # Manuel Administrateur & Backend — Salles Communales de Saint Remèze
 
 > Documentation technique à l'usage des administrateurs système et développeurs
-> Version 1.12.8 — Septembre 2026
+> Version 1.12.9 — Septembre 2026
 > Consultable aussi dans l'application via l'icône « Manuel administrateur » du bandeau (réservée au rôle admin, rendu à `/manuel-admin`).
 
 ---
@@ -690,6 +690,14 @@ filtre a été déplacé en dernière position dans la barre de filtres rapides
 « Mois prochain ». Reste un simple changement d'état initial et d'ordre
 d'affichage côté frontend (`AgendaPage.jsx`) ; le comportement de chaque
 filtre est inchangé.
+
+> ⚠️ **Bug corrigé (v1.12.9)** : la liste de l'Agenda ne triait les
+> événements (réservations + manifestations mélangées) que par **date**, sans
+> départager les événements du même jour par heure — leur ordre au sein d'une
+> journée dépendait alors de l'ordre de retour de l'API, pas de l'heure
+> réelle. Corrigé : tri par date puis heure de début (`start_time` pour une
+> réservation ; une manifestation, sans heure précise, s'affiche en premier
+> le jour concerné, comme un événement « toute la journée »).
 
 **Modifier/supprimer depuis le Planning (v1.12.0)** : cliquer sur une tuile
 ouvre une fenêtre de modification (titre, date, horaires, participants, notes,
@@ -2289,5 +2297,5 @@ Personne responsable de la conformité RGPD au sein de l'organisation. Contact :
 
 ---
 
-*Document mis à jour le 14 septembre 2026 (v1.12.8) — Mairie de Saint Remèze*
+*Document mis à jour le 14 septembre 2026 (v1.12.9) — Mairie de Saint Remèze*
 *Contact technique : philvercors@gmail.com*
